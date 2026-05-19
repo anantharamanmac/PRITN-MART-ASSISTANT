@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves } from '@/lib/db';
 import Navbar from '@/components/Navbar';
+import PrinterLoader from '@/components/PrinterLoader';
 
 export default function WorkerDashboard() {
   const router = useRouter();
@@ -27,6 +28,17 @@ export default function WorkerDashboard() {
     });
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    // Silent background refresh every 1 minute
+    const interval = setInterval(() => {
+      loadAttendance(user.uid);
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   const loadAttendance = async (uid: string) => {
     try {
@@ -92,11 +104,11 @@ export default function WorkerDashboard() {
     }
   };
 
-  if (!user || loading) return <div className="flex justify-center mt-20">Loading...</div>;
+  if (!user || loading) return <PrinterLoader text="Loading Workspace..." fullscreen />;
 
-  const isPunchedIn = attendance && attendance.status === 'present' && !attendance.punchOut;
-  const isPunchedOut = attendance && attendance.status === 'present' && attendance.punchOut;
-  const isLeave = attendance && attendance.status === 'leave';
+  const isLeave = attendance && attendance.status === 'leave' && !attendance.punchIn;
+  const isPunchedIn = attendance && attendance.punchIn && !attendance.punchOut;
+  const isPunchedOut = attendance && attendance.punchOut;
 
   return (
     <>
@@ -121,11 +133,20 @@ export default function WorkerDashboard() {
                   <div className="text-2xl font-bold text-success">{attendance.totalHours.toFixed(1)} hrs</div>
                   <div className="text-sm text-secondary mt-1">Total Worked</div>
                 </div>
-                {attendance.overtimeHours > 0 && (
-                  <div className="badge badge-admin mt-2 text-danger border-danger/30 bg-danger/10">
-                    Overtime: {attendance.overtimeHours.toFixed(1)} hrs
-                  </div>
-                )}
+                <div className="mt-2 flex gap-2 flex-wrap justify-center">
+                  <span className={`badge ${
+                    attendance.status === 'present' ? 'badge-worker' : 
+                    attendance.status === 'half-day' ? 'badge-half-day' : 
+                    'badge-leave'
+                  }`}>
+                    {attendance.status}
+                  </span>
+                  {attendance.overtimeHours > 0 && (
+                    <span className="badge badge-admin text-danger border-danger/30 bg-danger/10">
+                      Overtime: {attendance.overtimeHours.toFixed(1)} hrs
+                    </span>
+                  )}
+                </div>
                 <p className="mt-6 text-secondary text-sm">Shift completed for today.</p>
               </>
             ) : (

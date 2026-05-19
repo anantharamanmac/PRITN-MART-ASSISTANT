@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { signInWithGoogle, listenToAuthChanges, AppUser } from '@/lib/auth';
+import PrinterLoader from '@/components/PrinterLoader';
 
 export default function Home() {
   const router = useRouter();
@@ -33,11 +34,7 @@ export default function Home() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl font-semibold animate-pulse">Loading...</div>
-      </div>
-    );
+    return <PrinterLoader text="Securing connection..." fullscreen />;
   }
 
   return (

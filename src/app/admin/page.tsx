@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getPendingUsers, approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile } from '@/lib/db';
 import Navbar from '@/components/Navbar';
+import PrinterLoader from '@/components/PrinterLoader';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -35,6 +36,17 @@ export default function AdminDashboard() {
     });
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    // Silent background refresh every 1 minute
+    const interval = setInterval(() => {
+      loadData();
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   const loadData = async () => {
     try {
@@ -91,7 +103,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!currentUser || loading) return <div className="flex justify-center mt-20">Loading...</div>;
+  if (!currentUser || loading) return <PrinterLoader text="Loading Admin Panel..." fullscreen />;
 
   return (
     <>
@@ -140,15 +152,27 @@ export default function AdminDashboard() {
                 {attendances.map((a, i) => (
                   <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
                     <div className="flex justify-between mb-2">
-                      <div className="font-semibold text-sm">
-                        {allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}
+                      <div>
+                        <div className="font-semibold text-sm">
+                          {allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}
+                        </div>
+                        {allUsers.find(u => u.uid === a.userId)?.designation && (
+                          <div className="text-[10px] text-teal-400 capitalize">
+                            {allUsers.find(u => u.uid === a.userId)?.designation}
+                          </div>
+                        )}
                       </div>
-                      <span className={`badge ${a.status === 'present' ? 'badge-worker' : 'badge-pending'}`}>
+                      <span className={`badge ${
+                        a.status === 'present' ? 'badge-worker' : 
+                        a.status === 'half-day' ? 'badge-half-day' : 
+                        a.status === 'leave' ? 'badge-leave' : 
+                        'badge-pending'
+                      }`}>
                         {a.status}
                       </span>
                     </div>
-                    {a.status === 'present' && (
-                      <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2">
+                    {a.punchIn && (
+                      <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
                         <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString() : 'N/A'}</div>
                         <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : 'Working'}</div>
                         <div>Total: {a.totalHours.toFixed(2)} hrs</div>

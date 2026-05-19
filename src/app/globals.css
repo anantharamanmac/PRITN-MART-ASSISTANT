@@ -256,6 +256,18 @@ select.input-field option {
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
+.badge-half-day {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fdba74;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.badge-leave {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 /* Nav Bar */
 .navbar {
   display: flex;
@@ -411,3 +423,135 @@ select.input-field option {
 .border-\[rgba\(245\,158\,11\,0\.3\)\] { border-color: rgba(245,158,11,0.3); }
 .bg-\[rgba\(16\,185\,129\,0\.1\)\] { background: rgba(16,185,129,0.1); }
 .border-\[rgba\(16\,185\,129\,0\.3\)\] { border-color: rgba(16,185,129,0.3); }
+
+/* Printing Factory Loader Styles */
+.printer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.printer-wrapper {
+  position: relative;
+  width: 80px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Printer Head/Body */
+.printer-machine {
+  position: absolute;
+  width: 70px;
+  height: 35px;
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  top: 10px;
+}
+
+/* Paper moving down */
+.printer-paper {
+  position: absolute;
+  width: 50px;
+  height: 45px;
+  background: linear-gradient(to bottom, #ffffff 40%, var(--accent) 100%);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  top: 15px;
+  z-index: 5;
+  animation: paper-print 2s infinite ease-in-out;
+  transform-origin: top center;
+}
+
+/* Print Head laser scanner line */
+.printer-laser {
+  position: absolute;
+  width: 2px;
+  height: 31px;
+  background: var(--secondary);
+  left: 6px;
+  top: 0px;
+  z-index: 15;
+  box-shadow: 0 0 8px var(--secondary);
+  animation: laser-scan 2s infinite ease-in-out;
+}
+
+/* Roller gears spinning */
+.printer-gears {
+  display: flex;
+  gap: 12px;
+  margin-top: 5px;
+}
+
+.printer-gear {
+  width: 14px;
+  height: 14px;
+  border: 2px dotted var(--primary);
+  border-radius: 50%;
+  animation: gear-spin 2s infinite linear;
+}
+
+.printer-gear.reverse {
+  animation-direction: reverse;
+}
+
+/* CMYK ink droplets loader */
+.cmyk-ink-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.cmyk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: dot-pulse 1.2s infinite ease-in-out;
+}
+
+.cmyk-cyan { background-color: #00ffff; animation-delay: 0s; box-shadow: 0 0 6px #00ffff; }
+.cmyk-magenta { background-color: #ff00ff; animation-delay: 0.2s; box-shadow: 0 0 6px #ff00ff; }
+.cmyk-yellow { background-color: #ffff00; animation-delay: 0.4s; box-shadow: 0 0 6px #ffff00; }
+.cmyk-key { background-color: #ffffff; animation-delay: 0.6s; box-shadow: 0 0 6px #ffffff; }
+
+@keyframes paper-print {
+  0% {
+    transform: translateY(-20px) scaleY(0.1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(12px) scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(28px) scaleY(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes laser-scan {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(54px);
+  }
+}
+
+@keyframes gear-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 1; }
+}

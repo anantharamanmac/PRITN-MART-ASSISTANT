@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getUserAttendanceHistory, getUserTasks, AttendanceRecord } from '@/lib/db';
 import Navbar from '@/components/Navbar';
+import PrinterLoader from '@/components/PrinterLoader';
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function HistoryPage() {
     }
   };
 
-  if (!user || loading) return <div className="flex justify-center mt-20">Loading...</div>;
+  if (!user || loading) return <PrinterLoader text="Loading History..." fullscreen />;
 
   const filteredAttendances = attendances.filter(a => {
     let match = true;
@@ -127,11 +128,16 @@ export default function HistoryPage() {
                   <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
                     <div className="flex justify-between mb-2">
                       <div className="font-semibold">{a.date}</div>
-                      <span className={`badge ${a.status === 'present' ? 'badge-worker' : 'badge-pending'}`}>
+                      <span className={`badge ${
+                        a.status === 'present' ? 'badge-worker' : 
+                        a.status === 'half-day' ? 'badge-half-day' : 
+                        a.status === 'leave' ? 'badge-leave' : 
+                        'badge-pending'
+                      }`}>
                         {a.status}
                       </span>
                     </div>
-                    {a.status === 'present' && (
+                    {a.punchIn && (
                       <div className="text-sm text-secondary grid grid-cols-2 gap-y-1">
                         <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString() : '-'}</div>
                         <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : '-'}</div>
