@@ -154,6 +154,12 @@ export const getAllAttendance = async (date: string): Promise<AttendanceRecord[]
   return snap.docs.map(doc => doc.data() as AttendanceRecord);
 };
 
+// Admin: Get all attendance records in the database
+export const getAllAttendanceRecords = async (): Promise<AttendanceRecord[]> => {
+  const snap = await getDocs(collection(db, 'attendance'));
+  return snap.docs.map(doc => doc.data() as AttendanceRecord);
+};
+
 // Worker: Get own attendance history
 export const getUserAttendanceHistory = async (userId: string): Promise<AttendanceRecord[]> => {
   const q = query(collection(db, 'attendance'), where('userId', '==', userId));

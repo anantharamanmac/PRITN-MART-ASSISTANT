@@ -13,6 +13,8 @@
   --accent: #14b8a6;
   --danger: #ef4444;
   --success: #10b981;
+  --warning: #f59e0b;
+  --warning-glow: rgba(245, 158, 11, 0.35);
   
   --glass-bg: rgba(15, 15, 20, 0.6);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -554,4 +556,125 @@ select.input-field option {
 @keyframes dot-pulse {
   0%, 100% { transform: scale(0.6); opacity: 0.4; }
   50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Warning / Alert custom styling */
+.border-warning-glow {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.text-warning-glow {
+  color: #f59e0b !important;
+}
+
+.bg-warning-glow {
+  background: rgba(245, 158, 11, 0.08) !important;
+}
+
+.shadow-warning-glow {
+  box-shadow: 0 0 40px rgba(245, 158, 11, 0.15) !important;
+}
+
+/* T-Shirt Printing Animation */
+.tshirt-print-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.tshirt-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.tshirt-silhouette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.tshirt-ink-reveal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  animation: reveal-ink 3s infinite ease-in-out;
+}
+
+.tshirt-squeegee {
+  position: absolute;
+  width: 60px;
+  height: 4px;
+  background: var(--secondary);
+  box-shadow: 0 0 8px var(--secondary);
+  left: 10px;
+  z-index: 3;
+  border-radius: 2px;
+  animation: squeegee-move 3s infinite ease-in-out;
+}
+
+@keyframes reveal-ink {
+  0%, 100% {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50%, 85% {
+    clip-path: inset(0 0 0% 0);
+    opacity: 1;
+  }
+  95% {
+    opacity: 0;
+  }
+}
+
+@keyframes squeegee-move {
+  0%, 100% {
+    top: 8px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50%, 80% {
+    top: 75px;
+    opacity: 1;
+  }
+  90% {
+    opacity: 0;
+  }
+}
+
+/* Sidebar Nav Item Styling */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.sidebar-link:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.sidebar-link.active {
+  color: #ffffff;
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
 }

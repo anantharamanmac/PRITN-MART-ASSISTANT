@@ -9,6 +9,7 @@ import PrinterLoader from '@/components/PrinterLoader';
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [showDevModal, setShowDevModal] = useState(false);
 
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
@@ -18,6 +19,11 @@ export default function Home() {
         else router.push('/pending');
       } else {
         setLoading(false);
+        // Only trigger popup if user is logged out on the landing page
+        const isDismissed = sessionStorage.getItem('dev_modal_dismissed');
+        if (!isDismissed) {
+          setShowDevModal(true);
+        }
       }
     });
     return () => unsubscribe();
@@ -33,8 +39,71 @@ export default function Home() {
     }
   };
 
+  const dismissModal = () => {
+    sessionStorage.setItem('dev_modal_dismissed', 'true');
+    setShowDevModal(false);
+  };
+
   if (loading) {
     return <PrinterLoader text="Securing connection..." fullscreen />;
+  }
+
+  if (showDevModal) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-[#0a0a0f] p-4 text-center">
+        <div className="glass-card max-w-md w-full border-warning-glow shadow-warning-glow p-6 relative overflow-hidden animate-scale-up">
+          {/* Accent Line */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[var(--warning)] via-yellow-400 to-[var(--warning)]" />
+          
+          {/* Close Mark (X) */}
+          <button 
+            onClick={dismissModal}
+            className="absolute top-3 right-3 text-secondary hover:text-white transition-colors duration-200 p-1"
+            aria-label="Close"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          
+          {/* Screen Printing T-shirt Animation */}
+          <div className="tshirt-print-container">
+            <div className="tshirt-wrapper">
+              {/* Silhouette T-shirt outline */}
+              <svg className="tshirt-silhouette" viewBox="0 0 100 100" width="80" height="80">
+                <path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z" fill="rgba(255, 255, 255, 0.03)" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="2"/>
+              </svg>
+              
+              {/* Reveal T-shirt with Print Mart logo */}
+              <div className="tshirt-ink-reveal">
+                <svg viewBox="0 0 100 100" width="80" height="80">
+                  <path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z" fill="rgba(99, 102, 241, 0.1)" stroke="var(--primary)" strokeWidth="2"/>
+                  {/* Glowing Printed Circle + PM Logo Text */}
+                  <circle cx="50" cy="48" r="9" fill="none" stroke="var(--secondary)" strokeWidth="2" />
+                  <text x="50" y="51" fill="var(--secondary)" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">PM</text>
+                </svg>
+              </div>
+              
+              {/* Screen Squeegee Bar */}
+              <div className="tshirt-squeegee"></div>
+            </div>
+          </div>
+          
+          <h3 className="text-xl font-bold text-white mb-2 tracking-wide font-display">System Under Development</h3>
+          <p className="text-xs text-secondary mb-6 leading-relaxed">
+            Print Mart Assistant is currently in active development. Calibration of shifts, live reporting panels, and automated databases is ongoing.
+          </p>
+          
+          <button 
+            onClick={dismissModal} 
+            className="btn w-full bg-gradient-to-r from-[var(--warning)] to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-none text-black font-bold tracking-wide shadow-[0_4px_15px_rgba(245,158,11,0.25)] transition-all duration-300"
+          >
+            Continue to Site
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (

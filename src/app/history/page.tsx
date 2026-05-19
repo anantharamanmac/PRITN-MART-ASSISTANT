@@ -16,6 +16,7 @@ export default function HistoryPage() {
 
   // Search and Filter States
   const [searchDate, setSearchDate] = useState('');
+  const [searchMonth, setSearchMonth] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function HistoryPage() {
   const filteredAttendances = attendances.filter(a => {
     let match = true;
     if (searchDate && a.date !== searchDate) match = false;
+    if (searchMonth && !a.date.startsWith(searchMonth)) match = false;
     
     if (filterStatus === 'present' && a.status !== 'present') match = false;
     if (filterStatus === 'leave' && a.status !== 'leave') match = false;
@@ -59,11 +61,72 @@ export default function HistoryPage() {
     return match;
   });
 
+  const filteredTasks = tasks.filter(t => {
+    let match = true;
+    if (searchDate && t.date !== searchDate) match = false;
+    if (searchMonth && !t.date?.startsWith(searchMonth)) match = false;
+    return match;
+  });
+
   return (
     <>
       <Navbar user={user} />
       <main className="container animate-fade-in">
-        <h1 className="title !text-4xl mb-8">My History</h1>
+        <h1 className="title !text-4xl mb-6">My History</h1>
+
+        {/* Unified Search & Filters Panel (Full Width) */}
+        <div className="glass-card mb-8">
+          <h2 className="text-xs text-white font-semibold uppercase tracking-wider mb-4">Search & Filter Controls</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Search by Day</label>
+              <input 
+                type="date" 
+                className="input-field w-full !py-1.5 !px-3 !text-sm"
+                value={searchDate}
+                onChange={(e) => {
+                  setSearchDate(e.target.value);
+                  if (e.target.value) setSearchMonth('');
+                }}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Search by Month</label>
+              <input 
+                type="month" 
+                className="input-field w-full !py-1.5 !px-3 !text-sm"
+                value={searchMonth}
+                onChange={(e) => {
+                  setSearchMonth(e.target.value);
+                  if (e.target.value) setSearchDate('');
+                }}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Attendance Status</label>
+              <select 
+                className="input-field w-full !py-1.5 !px-3 !text-sm"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">All Records</option>
+                <option value="present">Present Only</option>
+                <option value="leave">Leave Only</option>
+                <option value="overtime">Overtime Days</option>
+              </select>
+            </div>
+          </div>
+          {(searchDate || searchMonth || filterStatus !== 'all') && (
+            <div className="flex justify-end mt-4 pt-3 border-t border-[rgba(255,255,255,0.05)]">
+              <button 
+                onClick={() => { setSearchDate(''); setSearchMonth(''); setFilterStatus('all'); }}
+                className="btn btn-outline !text-xs !py-1 !px-3 h-[30px]"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )}
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
@@ -82,42 +145,6 @@ export default function HistoryPage() {
               <div className="text-xs text-secondary max-w-[200px] text-right">
                 Total hours overtime calculated from present days.
               </div>
-            </div>
-            
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
-              <div className="flex-1">
-                <label className="text-xs text-secondary mb-1 block">Search by Date</label>
-                <input 
-                  type="date" 
-                  className="input-field w-full !py-1.5 !px-3 !text-sm"
-                  value={searchDate}
-                  onChange={(e) => setSearchDate(e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-secondary mb-1 block">Filter Status</label>
-                <select 
-                  className="input-field w-full !py-1.5 !px-3 !text-sm"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">All Records</option>
-                  <option value="present">Present Only</option>
-                  <option value="leave">Leave Only</option>
-                  <option value="overtime">Overtime Days</option>
-                </select>
-              </div>
-              {(searchDate || filterStatus !== 'all') && (
-                <div className="flex items-end">
-                  <button 
-                    onClick={() => { setSearchDate(''); setFilterStatus('all'); }}
-                    className="btn btn-outline !text-xs !py-1.5 h-[36px]"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              )}
             </div>
 
             {filteredAttendances.length === 0 ? (
@@ -156,11 +183,11 @@ export default function HistoryPage() {
           {/* Task History */}
           <div className="glass-card">
             <h2 className="subtitle !text-xl !text-white !mb-4">Tasks Completed</h2>
-            {tasks.length === 0 ? (
-              <p className="text-secondary text-sm">No tasks found.</p>
+            {filteredTasks.length === 0 ? (
+              <p className="text-secondary text-sm">No matching tasks found.</p>
             ) : (
               <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2">
-                {tasks.map((t, i) => (
+                {filteredTasks.map((t, i) => (
                   <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
                     <div className="text-xs text-primary mb-2 font-semibold">
                       {new Date(t.createdAt.toDate()).toLocaleDateString()}

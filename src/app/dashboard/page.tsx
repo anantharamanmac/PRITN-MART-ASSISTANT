@@ -32,10 +32,10 @@ export default function WorkerDashboard() {
   useEffect(() => {
     if (!user) return;
     
-    // Silent background refresh every 1 minute
+    // Silent background refresh every 2 minutes
     const interval = setInterval(() => {
       loadAttendance(user.uid);
-    }, 60000);
+    }, 120000);
     
     return () => clearInterval(interval);
   }, [user]);
