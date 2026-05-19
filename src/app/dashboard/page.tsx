@@ -14,6 +14,7 @@ export default function WorkerDashboard() {
   const [attendance, setAttendance] = useState<AttendanceRecord | null>(null);
   const [taskText, setTaskText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
@@ -39,6 +40,27 @@ export default function WorkerDashboard() {
     
     return () => clearInterval(interval);
   }, [user]);
+
+  useEffect(() => {
+    if (!attendance || !attendance.punchIn || attendance.punchOut) return;
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [attendance]);
+
+  const getLiveHours = () => {
+    if (!attendance || !attendance.punchIn) return '0h 00m 00s';
+    const punchInTime = attendance.punchIn.toDate 
+      ? attendance.punchIn.toDate().getTime() 
+      : new Date(attendance.punchIn).getTime();
+    const diffMs = currentTime.getTime() - punchInTime;
+    const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
+    const hrs = Math.floor(diffHrs);
+    const mins = Math.floor((diffHrs % 1) * 60);
+    const secs = Math.floor((((diffHrs % 1) * 60) % 1) * 60);
+    return `${hrs}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+  };
 
   const loadAttendance = async (uid: string) => {
     try {
@@ -163,9 +185,14 @@ export default function WorkerDashboard() {
                     {isPunchedIn ? 'PUNCH OUT' : 'PUNCH IN'}
                   </span>
                   {isPunchedIn && (
-                    <span className="text-sm font-normal mt-1 text-white/90 bg-black/20 px-3 py-1 rounded-full">
-                      In: {new Date(attendance.punchIn.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </span>
+                    <div className="flex flex-col items-center mt-1">
+                      <span className="text-xs font-semibold text-amber-300 animate-pulse">
+                        {getLiveHours()}
+                      </span>
+                      <span className="text-[10px] font-normal mt-1 text-white/90 bg-black/20 px-2 py-0.5 rounded-full">
+                        In: {new Date(attendance.punchIn.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
                   )}
                 </button>
                 

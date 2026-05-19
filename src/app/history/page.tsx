@@ -35,10 +35,11 @@ export default function HistoryPage() {
 
   const loadHistory = async (uid: string) => {
     try {
-      const attData = await getUserAttendanceHistory(uid);
+      const [attData, taskData] = await Promise.all([
+        getUserAttendanceHistory(uid),
+        getUserTasks(uid)
+      ]);
       setAttendances(attData);
-      
-      const taskData = await getUserTasks(uid);
       setTasks(taskData);
     } catch (error) {
       console.error("Failed to load history", error);

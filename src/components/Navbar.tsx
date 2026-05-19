@@ -6,7 +6,7 @@ import { signOutUser, AppUser } from '@/lib/auth';
 
 export default function Navbar({ user }: { user: AppUser }) {
   const pathname = usePathname();
-  
+
   const handleSignOut = async () => {
     await signOutUser();
     // Redirect handled by auth listener in pages

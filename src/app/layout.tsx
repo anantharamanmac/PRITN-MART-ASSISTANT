@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Toaster 
+        <Toaster
           position="bottom-center"
           toastOptions={{
             style: {

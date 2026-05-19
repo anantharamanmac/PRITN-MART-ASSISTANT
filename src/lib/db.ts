@@ -160,6 +160,17 @@ export const getAllAttendanceRecords = async (): Promise<AttendanceRecord[]> => 
   return snap.docs.map(doc => doc.data() as AttendanceRecord);
 };
 
+// Admin: Get attendance records for a specific month (YYYY-MM)
+export const getAttendanceForMonth = async (monthStr: string): Promise<AttendanceRecord[]> => {
+  const q = query(
+    collection(db, 'attendance'),
+    where('date', '>=', `${monthStr}-01`),
+    where('date', '<=', `${monthStr}-31`)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => doc.data() as AttendanceRecord);
+};
+
 // Worker: Get own attendance history
 export const getUserAttendanceHistory = async (userId: string): Promise<AttendanceRecord[]> => {
   const q = query(collection(db, 'attendance'), where('userId', '==', userId));
@@ -195,9 +206,14 @@ export const getHolidays = async (): Promise<string[]> => {
 };
 
 export const fillMissingLeaves = async (userId: string) => {
-  // 1. Get user to find their start date
+  // 1. Fetch user snapshot, attendance history, and holidays in parallel
   const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
+  const [userSnap, attendanceHistory, holidays] = await Promise.all([
+    getDoc(userRef),
+    getUserAttendanceHistory(userId),
+    getHolidays()
+  ]);
+
   if (!userSnap.exists()) return;
   const userData = userSnap.data();
   if (!userData.createdAt) return;
@@ -206,12 +222,8 @@ export const fillMissingLeaves = async (userId: string) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // 2. Get all existing attendances for user
-  const attendanceHistory = await getUserAttendanceHistory(userId);
+  // 2. Map existing dates and holidays
   const existingDates = new Set(attendanceHistory.map(a => a.date));
-
-  // 3. Get all holidays
-  const holidays = await getHolidays();
   const holidaySet = new Set(holidays);
 
   // 4. Iterate from start date to yesterday

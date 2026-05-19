@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getAllUsers, getAllAttendanceRecords, AttendanceRecord } from '@/lib/db';
+import { getAllUsers, getAttendanceForMonth, AttendanceRecord } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 
@@ -14,6 +14,13 @@ export default function AdminHours() {
   const [allAttendance, setAllAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState('');
+  const [now, setNow] = useState(new Date());
+
+  const formatHrsMins = (decimalHrs: number) => {
+    const hrs = Math.floor(decimalHrs);
+    const mins = Math.round((decimalHrs - hrs) * 60);
+    return `${hrs}h ${mins}m`;
+  };
   
   const currentMonthStr = () => {
     const d = new Date();
@@ -23,6 +30,13 @@ export default function AdminHours() {
   const [searchMonth, setSearchMonth] = useState(currentMonthStr());
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
       if (!appUser) {
         router.push('/');
@@ -30,19 +44,26 @@ export default function AdminHours() {
         router.push('/dashboard');
       } else {
         setCurrentUser(appUser);
-        loadData();
       }
     });
     return () => unsubscribe();
   }, [router]);
 
-  const loadData = async () => {
+  useEffect(() => {
+    if (!currentUser) return;
+    loadData(searchMonth);
+  }, [currentUser, searchMonth]);
+
+  const loadData = async (month: string) => {
+    setLoading(true);
     try {
-      const usersList = await getAllUsers();
+      const [usersList, attendanceList] = await Promise.all([
+        getAllUsers(),
+        getAttendanceForMonth(month)
+      ]);
+      
       // Keep approved members (excluding pending)
       setAllUsers(usersList.filter(u => u.role !== 'pending'));
-      
-      const attendanceList = await getAllAttendanceRecords();
       setAllAttendance(attendanceList);
     } catch (error) {
       console.error("Error loading hours data", error);
@@ -51,7 +72,7 @@ export default function AdminHours() {
     }
   };
 
-  if (!currentUser || loading) return <PrinterLoader text="Loading Employee Reports..." fullscreen />;
+  if (!currentUser || loading) return <PrinterLoader text="Loading Employee Reports..." fullscreen type="tshirt" />;
 
   // Filter users by search query
   const filteredUsers = allUsers.filter(u => 
@@ -70,8 +91,22 @@ export default function AdminHours() {
     const leaveDays = records.filter(r => r.status === 'leave').length;
     const workingDays = presentDays + halfDays;
 
-    const totalHours = records.reduce((sum, r) => sum + (r.totalHours || 0), 0);
-    const overtimeHours = records.reduce((sum, r) => sum + (r.overtimeHours || 0), 0);
+    const totalHours = records.reduce((sum, r) => {
+      if (r.punchOut) return sum + (r.totalHours || 0);
+      if (!r.punchIn) return sum;
+      const inTime = r.punchIn.toDate ? r.punchIn.toDate().getTime() : new Date(r.punchIn).getTime();
+      const activeHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+      return sum + activeHrs;
+    }, 0);
+
+    const overtimeHours = records.reduce((sum, r) => {
+      if (r.punchOut) return sum + (r.overtimeHours || 0);
+      if (!r.punchIn) return sum;
+      const inTime = r.punchIn.toDate ? r.punchIn.toDate().getTime() : new Date(r.punchIn).getTime();
+      const activeHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+      const activeOvertime = activeHrs > 9 ? activeHrs - 9 : 0;
+      return sum + activeOvertime;
+    }, 0);
 
     return {
       user,
@@ -122,8 +157,9 @@ export default function AdminHours() {
               <div className="glass-card !p-5 flex justify-between items-center border border-[rgba(99,102,241,0.15)] bg-[rgba(99,102,241,0.02)]">
                 <div>
                   <div className="text-xs text-secondary uppercase font-bold tracking-wider">Total Monthly Hours Logged</div>
-                  <div className="text-3xl font-extrabold text-gradient mt-1">
-                    {totalHoursLogged.toFixed(1)} hrs
+                  <div className="text-3xl font-extrabold text-gradient mt-1 flex items-baseline gap-1">
+                    <span>{formatHrsMins(totalHoursLogged)}</span>
+                    <span className="text-xs font-normal text-secondary">({totalHoursLogged.toFixed(1)}h)</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/25">
@@ -137,8 +173,9 @@ export default function AdminHours() {
               <div className="glass-card !p-5 flex justify-between items-center border border-[rgba(236,72,153,0.15)] bg-[rgba(236,72,153,0.02)]">
                 <div>
                   <div className="text-xs text-secondary uppercase font-bold tracking-wider">Total Monthly Overtime</div>
-                  <div className="text-3xl font-extrabold text-pink-500 mt-1">
-                    {totalOvertimeLogged.toFixed(1)} hrs
+                  <div className="text-3xl font-extrabold text-pink-500 mt-1 flex items-baseline gap-1">
+                    <span>{formatHrsMins(totalOvertimeLogged)}</span>
+                    <span className="text-xs font-normal text-secondary">({totalOvertimeLogged.toFixed(1)}h)</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center border border-pink-500/25">
@@ -222,13 +259,13 @@ export default function AdminHours() {
                         <div>
                           <div className="text-[10px] text-secondary uppercase font-bold">Total Hours</div>
                           <div className="font-semibold text-gradient mt-0.5">
-                            {totalHours.toFixed(1)} hrs
+                            {formatHrsMins(totalHours)} <span className="text-[10px] text-secondary font-normal">({totalHours.toFixed(1)}h)</span>
                           </div>
                         </div>
                         <div>
                           <div className="text-[10px] text-secondary uppercase font-bold">Overtime</div>
                           <div className={`font-semibold mt-0.5 ${overtimeHours > 0 ? 'text-pink-500 font-extrabold' : 'text-secondary'}`}>
-                            {overtimeHours.toFixed(1)} hrs
+                            {formatHrsMins(overtimeHours)} <span className="text-[10px] opacity-75 font-normal">({overtimeHours.toFixed(1)}h)</span>
                           </div>
                         </div>
                       </div>

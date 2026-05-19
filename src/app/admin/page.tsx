@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(new Date());
   
   const [holidayDate, setHolidayDate] = useState('');
   const [holidayDesc, setHolidayDesc] = useState('');
@@ -48,14 +49,23 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, [currentUser]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const loadData = async () => {
     try {
-      const usersList = await getAllUsers();
+      const today = getTodayDateString();
+      const [usersList, atts] = await Promise.all([
+        getAllUsers(),
+        getAllAttendance(today)
+      ]);
+      
       setAllUsers(usersList);
       setPendingUsers(usersList.filter(u => u.role === 'pending'));
-      
-      const today = getTodayDateString();
-      const atts = await getAllAttendance(today);
       setAttendances(atts);
     } catch (error) {
       console.error("Error loading admin data", error);
@@ -103,7 +113,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!currentUser || loading) return <PrinterLoader text="Loading Admin Panel..." fullscreen />;
+  if (!currentUser || loading) return <PrinterLoader text="Loading Admin Panel..." fullscreen type="tshirt" />;
 
   return (
     <>
@@ -196,12 +206,39 @@ export default function AdminDashboard() {
                         </div>
                         {a.punchIn && (
                           <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
-                            <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString() : 'N/A'}</div>
-                            <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : 'Working'}</div>
-                            <div>Total: {a.totalHours.toFixed(2)} hrs</div>
-                            <div className={a.overtimeHours > 0 ? 'text-danger font-semibold' : ''}>
-                              Overtime: {a.overtimeHours.toFixed(2)} hrs
-                            </div>
+                            <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A'}</div>
+                            <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Working'}</div>
+                            {(() => {
+                              const isWorking = !a.punchOut;
+                              const stats = a.punchOut ? {
+                                totalHours: a.totalHours,
+                                overtimeHours: a.overtimeHours
+                              } : (() => {
+                                if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
+                                const inTime = a.punchIn.toDate ? a.punchIn.toDate().getTime() : new Date(a.punchIn).getTime();
+                                const diffHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+                                return {
+                                  totalHours: diffHrs,
+                                  overtimeHours: diffHrs > 9 ? diffHrs - 9 : 0
+                                };
+                              })();
+                              const totalHrs = Math.floor(stats.totalHours);
+                              const totalMins = Math.round((stats.totalHours - totalHrs) * 60);
+                              
+                              const otHrs = Math.floor(stats.overtimeHours);
+                              const otMins = Math.round((stats.overtimeHours - otHrs) * 60);
+
+                              return (
+                                <>
+                                  <div className={isWorking ? 'text-teal-400 font-semibold' : ''}>
+                                    Total: {totalHrs}h {totalMins}m <span className="text-[10px] opacity-75">({stats.totalHours.toFixed(2)} hrs)</span> {isWorking && <span className="text-[9px] uppercase tracking-wider bg-teal-500/10 px-1 py-0.5 rounded border border-teal-500/20 animate-pulse ml-0.5">Live</span>}
+                                  </div>
+                                  <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold' : ''}>
+                                    Overtime: {otHrs}h {otMins}m <span className="text-[10px] opacity-75">({stats.overtimeHours.toFixed(2)} hrs)</span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
