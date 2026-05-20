@@ -8,6 +8,68 @@ import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, A
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  angle: number;
+  speed: number;
+  spin: number;
+  rotation: number;
+}
+
+const playCheckInSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, start: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.5, start + duration);
+      gain.gain.setValueAtTime(0.15, start);
+      gain.gain.exponentialRampToValueAtTime(0.01, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration);
+    };
+    playTone(523.25, now, 0.15); // C5
+    playTone(659.25, now + 0.08, 0.2); // E5
+    playTone(783.99, now + 0.16, 0.35); // G5
+  } catch (e) {
+    console.warn("Web Audio API blocked or not supported", e);
+  }
+};
+
+const playCheckOutSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, start: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, start);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.8, start + duration);
+      gain.gain.setValueAtTime(0.18, start);
+      gain.gain.exponentialRampToValueAtTime(0.01, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration);
+    };
+    playTone(587.33, now, 0.2); // D5
+    playTone(440.00, now + 0.1, 0.25); // A4
+    playTone(349.23, now + 0.2, 0.45); // F4
+  } catch (e) {
+    console.warn("Web Audio API blocked or not supported", e);
+  }
+};
+
 export default function WorkerDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<AppUser | null>(null);
@@ -15,6 +77,7 @@ export default function WorkerDashboard() {
   const [taskText, setTaskText] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
@@ -82,22 +145,84 @@ export default function WorkerDashboard() {
     }
   };
 
-  const handlePunchIn = async () => {
+  const triggerBurst = (clientX: number, clientY: number, colors = ['#818cf8', '#c084fc', '#f472b6', '#34d399', '#fb7185']) => {
+    const newParticles: Particle[] = Array.from({ length: 40 }).map((_, idx) => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 6;
+      const size = 5 + Math.random() * 7;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      return {
+        id: Math.random() + idx + Date.now(),
+        x: clientX,
+        y: clientY,
+        color,
+        size,
+        angle,
+        speed,
+        spin: (Math.random() - 0.5) * 8,
+        rotation: Math.random() * 360
+      };
+    });
+    setParticles(prev => [...prev, ...newParticles]);
+
+    const startTime = Date.now();
+    const duration = 1200;
+
+    const updateFrame = () => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= duration) {
+        setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+        return;
+      }
+
+      const progress = elapsed / duration;
+      setParticles(prev =>
+        prev.map(p => {
+          if (!newParticles.find(np => np.id === p.id)) return p;
+          const rad = p.angle;
+          const currentSpeed = p.speed * (1 - progress * 0.7);
+          const dx = Math.cos(rad) * currentSpeed;
+          const dy = Math.sin(rad) * currentSpeed + progress * 6;
+          return {
+            ...p,
+            x: p.x + dx,
+            y: p.y + dy,
+            rotation: p.rotation + p.spin
+          };
+        })
+      );
+      requestAnimationFrame(updateFrame);
+    };
+
+    requestAnimationFrame(updateFrame);
+  };
+
+  const handlePunchIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!user) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.clientX || (rect.left + rect.width / 2);
+    const clientY = e.clientY || (rect.top + rect.height / 2);
     try {
       await punchIn(user.uid);
       await loadAttendance(user.uid);
+      playCheckInSound();
+      triggerBurst(clientX, clientY, ['#34d399', '#059669', '#10b981', '#6ee7b7', '#a7f3d0']);
       toast.success("Successfully punched in!");
     } catch (error) {
       toast.error("Error punching in.");
     }
   };
 
-  const handlePunchOut = async () => {
+  const handlePunchOut = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!user) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.clientX || (rect.left + rect.width / 2);
+    const clientY = e.clientY || (rect.top + rect.height / 2);
     try {
       await punchOut(user.uid);
       await loadAttendance(user.uid);
+      playCheckOutSound();
+      triggerBurst(clientX, clientY, ['#f87171', '#ef4444', '#dc2626', '#fca5a5', '#fb7185']);
       toast.success("Successfully punched out!");
     } catch (error) {
       toast.error("Error punching out.");
@@ -179,28 +304,30 @@ export default function WorkerDashboard() {
               </>
             ) : (
               <>
-                <button 
-                  onClick={isPunchedIn ? handlePunchOut : handlePunchIn}
-                  className={`w-48 h-48 rounded-full flex flex-col items-center justify-center text-center overflow-hidden text-xl font-bold transition-all duration-300 ${
-                    isPunchedIn 
-                      ? 'bg-gradient-to-br from-orange-500 to-red-600 shadow-[0_0_30px_rgba(239,68,68,0.4)] hover:shadow-[0_0_50px_rgba(239,68,68,0.6)] border-4 border-red-400' 
-                      : 'bg-gradient-to-br from-teal-400 to-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] border-4 border-emerald-400'
-                  }`}
-                >
-                  <span className="text-white drop-shadow-md leading-tight px-4">
-                    {isPunchedIn ? 'PUNCH OUT' : 'PUNCH IN'}
-                  </span>
-                  {isPunchedIn && (
-                    <div className="flex flex-col items-center mt-1">
-                      <span className="text-xs font-semibold text-amber-300 animate-pulse">
-                        {getLiveHours()}
-                      </span>
-                      <span className="text-[10px] font-normal mt-1 text-white/90 bg-black/20 px-2 py-0.5 rounded-full">
-                        In: {new Date(attendance.punchIn.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </span>
-                    </div>
-                  )}
-                </button>
+                <div className={isPunchedIn ? "pulse-glowing-ring animate-fade-in" : "pulse-glowing-ring-green animate-fade-in"}>
+                  <button 
+                    onClick={(e) => isPunchedIn ? handlePunchOut(e) : handlePunchIn(e)}
+                    className={`w-48 h-48 rounded-full flex flex-col items-center justify-center text-center overflow-hidden text-xl font-bold transition-all duration-300 ${
+                      isPunchedIn 
+                        ? 'bg-gradient-to-br from-orange-500 to-red-600 shadow-[0_0_30px_rgba(239,68,68,0.4)] hover:shadow-[0_0_50px_rgba(239,68,68,0.6)] border-4 border-red-400' 
+                        : 'bg-gradient-to-br from-teal-400 to-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] border-4 border-emerald-400'
+                    }`}
+                  >
+                    <span className="text-white drop-shadow-md leading-tight px-4">
+                      {isPunchedIn ? 'PUNCH OUT' : 'PUNCH IN'}
+                    </span>
+                    {isPunchedIn && (
+                      <div className="flex flex-col items-center mt-1">
+                        <span className="text-xs font-semibold text-amber-300 animate-pulse">
+                          {getLiveHours()}
+                        </span>
+                        <span className="text-[10px] font-normal mt-1 text-white/90 bg-black/20 px-2 py-0.5 rounded-full">
+                          In: {new Date(attendance.punchIn.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                </div>
                 
                 {!isPunchedIn && (
                   <button 
@@ -243,6 +370,25 @@ export default function WorkerDashboard() {
           
         </div>
       </main>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 99999, overflow: 'hidden' }}>
+        {particles.map(p => (
+          <div
+            key={p.id}
+            style={{
+              position: 'absolute',
+              left: p.x,
+              top: p.y,
+              width: p.size,
+              height: p.size,
+              backgroundColor: p.color,
+              borderRadius: p.size % 3 === 0 ? '0%' : '50%',
+              transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`,
+              opacity: 1 - (p.y / window.innerHeight) * 0.2,
+              transition: 'opacity 0.2s ease'
+            }}
+          />
+        ))}
+      </div>
     </>
   );
 }

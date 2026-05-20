@@ -1351,3 +1351,202 @@ select.input-field option {
     font-size: 9px !important;
   }
 }
+
+/* Pulsing Glowing Rings for Punch Buttons */
+.pulse-glowing-ring {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+.pulse-glowing-ring::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  animation: pulse-ring 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+.pulse-glowing-ring::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  right: -16px;
+  bottom: -16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(239, 68, 68, 0.2);
+  animation: pulse-ring-outer 4s linear infinite;
+  pointer-events: none;
+}
+
+.pulse-glowing-ring-green {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+.pulse-glowing-ring-green::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  animation: pulse-ring 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+.pulse-glowing-ring-green::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  right: -16px;
+  bottom: -16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(16, 185, 129, 0.2);
+  animation: pulse-ring-outer 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulse-ring-outer {
+  0% {
+    transform: rotate(0deg) scale(0.98);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.02);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.98);
+  }
+}
+
+/* Stylish Google Auth Button */
+.stylish-google-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 360px;
+  padding: 8px;
+  padding-right: 24px;
+  border-radius: 16px;
+  background: rgba(15, 15, 25, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.stylish-google-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px;
+  padding: 1.5px;
+  background: linear-gradient(135deg, #6366f1, #d946ef, #14b8a6);
+  -webkit-mask: 
+     linear-gradient(#fff 0 0) content-box, 
+     linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  opacity: 0.6;
+}
+
+.stylish-google-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stylish-google-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3), 0 0 15px rgba(217, 70, 239, 0.15);
+}
+
+.stylish-google-btn:hover::before {
+  opacity: 1;
+}
+
+.stylish-google-btn:hover::after {
+  transform: translate(-50%, -50%) scale(2.2);
+}
+
+.stylish-google-btn-logo-container {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.stylish-google-btn-text {
+  position: relative;
+  z-index: 1;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stylish-google-btn-chevron {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, color 0.3s ease;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.stylish-google-btn:hover .stylish-google-btn-chevron {
+  transform: translateX(3px);
+  color: #14b8a6;
+}
