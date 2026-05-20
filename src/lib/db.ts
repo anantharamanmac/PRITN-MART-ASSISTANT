@@ -1,7 +1,8 @@
 import { db } from './firebase';
-import { 
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, 
-  query, where, orderBy, serverTimestamp, addDoc, Timestamp 
+import {
+  collection, doc, getDoc, getDocs, setDoc, updateDoc,
+  query, where, orderBy, serverTimestamp, addDoc, Timestamp,
+  deleteDoc
 } from 'firebase/firestore';
 import { AppUser } from './auth';
 
@@ -38,7 +39,7 @@ export const getTodayAttendance = async (userId: string): Promise<AttendanceReco
 export const punchIn = async (userId: string) => {
   const dateStr = getTodayDateString();
   const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
-  
+
   const record: AttendanceRecord = {
     userId,
     date: dateStr,
@@ -57,19 +58,19 @@ export const punchOut = async (userId: string) => {
   const dateStr = getTodayDateString();
   const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
   const snap = await getDoc(docRef);
-  
+
   if (!snap.exists()) throw new Error("No punch in record found for today.");
-  
+
   const data = snap.data() as AttendanceRecord;
   if (data.punchOut) throw new Error("Already punched out.");
 
   const punchInTime = (data.punchIn as Timestamp).toDate().getTime();
   const punchOutDate = new Date();
   const punchOutTime = punchOutDate.getTime();
-  
+
   const totalMs = punchOutTime - punchInTime;
   const totalHours = totalMs / (1000 * 60 * 60);
-  
+
   // Standard shift is 9 hours
   let overtimeHours = 0;
   if (totalHours > 9) {
@@ -203,6 +204,21 @@ export const markHoliday = async (date: string, description: string) => {
 export const getHolidays = async (): Promise<string[]> => {
   const snap = await getDocs(collection(db, 'holidays'));
   return snap.docs.map(doc => doc.id); // Returns array of date strings 'YYYY-MM-DD'
+};
+
+export interface HolidayRecord {
+  date: string;
+  description: string;
+}
+
+export const getHolidayRecords = async (): Promise<HolidayRecord[]> => {
+  const snap = await getDocs(collection(db, 'holidays'));
+  return snap.docs.map(doc => doc.data() as HolidayRecord);
+};
+
+export const deleteHoliday = async (date: string) => {
+  const docRef = doc(db, 'holidays', date);
+  await deleteDoc(docRef);
 };
 
 export const fillMissingLeaves = async (userId: string) => {

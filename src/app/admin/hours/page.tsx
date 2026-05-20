@@ -21,7 +21,7 @@ export default function AdminHours() {
     const mins = Math.round((decimalHrs - hrs) * 60);
     return `${hrs}h ${mins}m`;
   };
-  
+
   const currentMonthStr = () => {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -61,7 +61,7 @@ export default function AdminHours() {
         getAllUsers(),
         getAttendanceForMonth(month)
       ]);
-      
+
       // Keep approved members (excluding pending)
       setAllUsers(usersList.filter(u => u.role !== 'pending'));
       setAllAttendance(attendanceList);
@@ -75,14 +75,14 @@ export default function AdminHours() {
   if (!currentUser || loading) return <PrinterLoader text="Loading Employee Reports..." fullscreen type="tshirt" />;
 
   // Filter users by search query
-  const filteredUsers = allUsers.filter(u => 
+  const filteredUsers = allUsers.filter(u =>
     u.displayName.toLowerCase().includes(searchName.toLowerCase())
   );
 
   // Compute aggregated stats for the selected month
   const userStatsList = filteredUsers.map(user => {
-    const records = allAttendance.filter(a => 
-      a.userId === user.uid && 
+    const records = allAttendance.filter(a =>
+      a.userId === user.uid &&
       a.date.startsWith(searchMonth)
     );
 
@@ -128,7 +128,7 @@ export default function AdminHours() {
       <Navbar user={currentUser} />
       <main className="container animate-fade-in">
         <h1 className="title !text-4xl mb-8">Admin Console</h1>
-        
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
           <aside className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-3">
@@ -177,6 +177,9 @@ export default function AdminHours() {
                     <span>{formatHrsMins(totalOvertimeLogged)}</span>
                     <span className="text-xs font-normal text-secondary">({totalOvertimeLogged.toFixed(1)}h)</span>
                   </div>
+                  <div className="text-xs font-bold text-pink-400 mt-1">
+                    Est. Overtime Pay: ₹{Math.round(totalOvertimeLogged * 100).toLocaleString('en-IN')}
+                  </div>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center border border-pink-500/25">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -192,9 +195,9 @@ export default function AdminHours() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-secondary mb-1 block">Search Employee Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Search by name..." 
+                  <input
+                    type="text"
+                    placeholder="Search by name..."
                     className="input-field w-full !py-1.5 !px-3 !text-sm"
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
@@ -202,8 +205,8 @@ export default function AdminHours() {
                 </div>
                 <div>
                   <label className="text-xs text-secondary mb-1 block">Select Month</label>
-                  <input 
-                    type="month" 
+                  <input
+                    type="month"
                     className="input-field w-full !py-1.5 !px-3 !text-sm"
                     value={searchMonth}
                     onChange={(e) => setSearchMonth(e.target.value)}
@@ -267,6 +270,11 @@ export default function AdminHours() {
                           <div className={`font-semibold mt-0.5 ${overtimeHours > 0 ? 'text-pink-500 font-extrabold' : 'text-secondary'}`}>
                             {formatHrsMins(overtimeHours)} <span className="text-[10px] opacity-75 font-normal">({overtimeHours.toFixed(1)}h)</span>
                           </div>
+                          {overtimeHours > 0 && (
+                            <div className="text-[10px] text-pink-400 font-semibold mt-0.5">
+                              Est. Pay: ₹{Math.round(overtimeHours * 100).toLocaleString('en-IN')}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

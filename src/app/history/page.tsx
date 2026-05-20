@@ -60,7 +60,7 @@ export default function HistoryPage() {
     let match = true;
     if (searchDate && a.date !== searchDate) match = false;
     if (searchMonth && !a.date.startsWith(searchMonth)) match = false;
-    
+
     if (filterStatus === 'present' && a.status !== 'present') match = false;
     if (filterStatus === 'leave' && a.status !== 'leave') match = false;
     if (filterStatus === 'overtime' && (a.status !== 'present' || !(a.overtimeHours > 0))) match = false;
@@ -75,6 +75,9 @@ export default function HistoryPage() {
     return match;
   });
 
+  const totalOvertime = filteredAttendances.reduce((acc, curr) => acc + (curr.overtimeHours || 0), 0);
+  const totalOvertimePay = totalOvertime * 100;
+
   return (
     <>
       <Navbar user={user} />
@@ -87,8 +90,8 @@ export default function HistoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-xs text-secondary mb-1 block">Search by Day</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="input-field w-full !py-1.5 !px-3 !text-sm"
                 value={searchDate}
                 onChange={(e) => {
@@ -99,8 +102,8 @@ export default function HistoryPage() {
             </div>
             <div>
               <label className="text-xs text-secondary mb-1 block">Search by Month</label>
-              <input 
-                type="month" 
+              <input
+                type="month"
                 className="input-field w-full !py-1.5 !px-3 !text-sm"
                 value={searchMonth}
                 onChange={(e) => {
@@ -111,7 +114,7 @@ export default function HistoryPage() {
             </div>
             <div>
               <label className="text-xs text-secondary mb-1 block">Attendance Status</label>
-              <select 
+              <select
                 className="input-field w-full !py-1.5 !px-3 !text-sm"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -125,7 +128,7 @@ export default function HistoryPage() {
           </div>
           {(searchDate || searchMonth || filterStatus !== 'all') && (
             <div className="flex justify-end mt-4 pt-3 border-t border-[rgba(255,255,255,0.05)]">
-              <button 
+              <button
                 onClick={() => { setSearchDate(''); setSearchMonth(''); setFilterStatus('all'); }}
                 className="btn btn-outline !text-xs !py-1 !px-3 h-[30px]"
               >
@@ -134,9 +137,9 @@ export default function HistoryPage() {
             </div>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
+
           {/* Attendance History */}
           <div className="glass-card">
             <h2 className="subtitle !text-xl !text-white !mb-4">Attendance Records</h2>
@@ -146,11 +149,14 @@ export default function HistoryPage() {
               <div>
                 <div className="text-xs text-secondary uppercase font-bold tracking-wider">Total Overtime Hours</div>
                 <div className="text-2xl font-bold text-gradient mt-1">
-                  {formatHrsMins(filteredAttendances.reduce((acc, curr) => acc + (curr.overtimeHours || 0), 0))}
+                  {formatHrsMins(totalOvertime)}
+                </div>
+                <div className="text-xs font-bold text-teal-400 mt-1">
+                  Est. Overtime Pay: ₹{Math.round(totalOvertimePay).toLocaleString('en-IN')}
                 </div>
               </div>
               <div className="text-xs text-secondary max-w-[200px] text-right">
-                Total hours overtime calculated from present days.
+                Total hours overtime calculated from present days (Rate: ₹100/hr).
               </div>
             </div>
 
@@ -162,12 +168,11 @@ export default function HistoryPage() {
                   <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
                     <div className="flex justify-between mb-2">
                       <div className="font-semibold">{a.date}</div>
-                      <span className={`badge ${
-                        a.status === 'present' ? 'badge-worker' : 
-                        a.status === 'half-day' ? 'badge-half-day' : 
-                        a.status === 'leave' ? 'badge-leave' : 
-                        'badge-pending'
-                      }`}>
+                      <span className={`badge ${a.status === 'present' ? 'badge-worker' :
+                          a.status === 'half-day' ? 'badge-half-day' :
+                            a.status === 'leave' ? 'badge-leave' :
+                              'badge-pending'
+                        }`}>
                         {a.status}
                       </span>
                     </div>
@@ -177,7 +182,12 @@ export default function HistoryPage() {
                         <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : '-'}</div>
                         <div>Total: {formatHrsMins(a.totalHours || 0)}</div>
                         {a.overtimeHours > 0 && (
-                          <div className="text-danger font-semibold">Overtime: {formatHrsMins(a.overtimeHours)}</div>
+                          <div className="text-danger font-semibold flex items-center gap-1.5 flex-wrap">
+                            <span>Overtime: {formatHrsMins(a.overtimeHours)}</span>
+                            <span className="text-[10px] opacity-90 px-1.5 py-0.5 rounded bg-danger/10 border border-danger/25 text-pink-400">
+                              Est. Pay: ₹{Math.round(a.overtimeHours * 100).toLocaleString('en-IN')}
+                            </span>
+                          </div>
                         )}
                       </div>
                     )}
@@ -205,7 +215,7 @@ export default function HistoryPage() {
               </div>
             )}
           </div>
-          
+
         </div>
       </main>
     </>
