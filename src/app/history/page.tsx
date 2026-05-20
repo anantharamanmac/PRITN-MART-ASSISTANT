@@ -19,6 +19,12 @@ export default function HistoryPage() {
   const [searchMonth, setSearchMonth] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
+  const formatHrsMins = (decimalHrs: number) => {
+    const hrs = Math.floor(decimalHrs);
+    const mins = Math.round((decimalHrs - hrs) * 60);
+    return `${hrs}h ${mins}m`;
+  };
+
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
       if (!appUser) {
@@ -140,7 +146,7 @@ export default function HistoryPage() {
               <div>
                 <div className="text-xs text-secondary uppercase font-bold tracking-wider">Total Overtime Hours</div>
                 <div className="text-2xl font-bold text-gradient mt-1">
-                  {filteredAttendances.reduce((acc, curr) => acc + (curr.overtimeHours || 0), 0).toFixed(2)} hrs
+                  {formatHrsMins(filteredAttendances.reduce((acc, curr) => acc + (curr.overtimeHours || 0), 0))}
                 </div>
               </div>
               <div className="text-xs text-secondary max-w-[200px] text-right">
@@ -169,9 +175,9 @@ export default function HistoryPage() {
                       <div className="text-sm text-secondary grid grid-cols-2 gap-y-1">
                         <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString() : '-'}</div>
                         <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : '-'}</div>
-                        <div>Total: {a.totalHours?.toFixed(2)} hrs</div>
+                        <div>Total: {formatHrsMins(a.totalHours || 0)}</div>
                         {a.overtimeHours > 0 && (
-                          <div className="text-danger font-semibold">Overtime: {a.overtimeHours.toFixed(2)} hrs</div>
+                          <div className="text-danger font-semibold">Overtime: {formatHrsMins(a.overtimeHours)}</div>
                         )}
                       </div>
                     )}

@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Print Mart Assistant",
   description: "Attendance and Work Tracker",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  }
 };
 
 export default function RootLayout({

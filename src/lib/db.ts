@@ -226,13 +226,21 @@ export const fillMissingLeaves = async (userId: string) => {
   const existingDates = new Set(attendanceHistory.map(a => a.date));
   const holidaySet = new Set(holidays);
 
-  // 4. Iterate from start date to yesterday
+  // Only check today if it is after 11:00 AM local time
+  const now = new Date();
+  const isAfter11AM = now.getHours() >= 11;
+  const limitDate = new Date(today);
+  if (isAfter11AM) {
+    limitDate.setDate(limitDate.getDate() + 1); // Extend limit to include today
+  }
+
+  // 4. Iterate from start date
   let currentDate = new Date(startDate);
   currentDate.setHours(0, 0, 0, 0);
 
   const batchPromises = [];
 
-  while (currentDate < today) {
+  while (currentDate < limitDate) {
     const dateStr = currentDate.toISOString().split('T')[0];
     const isSunday = currentDate.getDay() === 0;
 

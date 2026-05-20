@@ -108,7 +108,8 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-      <div className="glass-card max-w-2xl w-full animate-fade-in">
+      <div className="glass-card max-w-2xl w-full animate-fade-in flex flex-col items-center">
+        <img src="/logo.png" alt="Print Mart Logo" className="h-20 w-auto mb-6 object-contain" />
         <h1 className="title">
           <span className="text-gradient">Print Mart</span> Assistant
         </h1>

@@ -62,6 +62,12 @@ export default function WorkerDashboard() {
     return `${hrs}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
   };
 
+  const formatHrsMins = (decimalHrs: number) => {
+    const hrs = Math.floor(decimalHrs);
+    const mins = Math.round((decimalHrs - hrs) * 60);
+    return `${hrs}h ${mins}m`;
+  };
+
   const loadAttendance = async (uid: string) => {
     try {
       // First, backfill any missing days!
@@ -152,7 +158,7 @@ export default function WorkerDashboard() {
             ) : isPunchedOut ? (
               <>
                 <div className="p-6 rounded-full bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.3)] mb-4 w-48 h-48 flex flex-col items-center justify-center">
-                  <div className="text-2xl font-bold text-success">{attendance.totalHours.toFixed(1)} hrs</div>
+                  <div className="text-2xl font-bold text-success">{formatHrsMins(attendance.totalHours)}</div>
                   <div className="text-sm text-secondary mt-1">Total Worked</div>
                 </div>
                 <div className="mt-2 flex gap-2 flex-wrap justify-center">
@@ -165,7 +171,7 @@ export default function WorkerDashboard() {
                   </span>
                   {attendance.overtimeHours > 0 && (
                     <span className="badge badge-admin text-danger border-danger/30 bg-danger/10">
-                      Overtime: {attendance.overtimeHours.toFixed(1)} hrs
+                      Overtime: {formatHrsMins(attendance.overtimeHours)}
                     </span>
                   )}
                 </div>
