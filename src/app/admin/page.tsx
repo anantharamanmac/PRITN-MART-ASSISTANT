@@ -4,9 +4,23 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getPendingUsers, approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
+
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // returns distance in meters
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -30,6 +44,40 @@ export default function AdminDashboard() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editNameValue, setEditNameValue] = useState('');
   const [editDesignationValue, setEditDesignationValue] = useState('');
+  const [editWorkModeValue, setEditWorkModeValue] = useState<'office' | 'remote'>('office');
+
+  // Office Location configuration state
+  const [officeLat, setOfficeLat] = useState('12.9716');
+  const [officeLng, setOfficeLng] = useState('77.5946');
+  const [officeRadius, setOfficeRadius] = useState('200');
+  const [officeSettings, setOfficeSettings] = useState<OfficeSettings | null>(null);
+  const [savingOffice, setSavingOffice] = useState(false);
+  const [fetchingAdminLocation, setFetchingAdminLocation] = useState(false);
+
+  const loadData = async () => {
+    try {
+      const today = getTodayDateString();
+      const [usersList, atts, holidays, officeData] = await Promise.all([
+        getAllUsers(),
+        getAllAttendance(today),
+        getHolidayRecords(),
+        getOfficeSettings()
+      ]);
+
+      setAllUsers(usersList);
+      setPendingUsers(usersList.filter(u => u.role === 'pending'));
+      setAttendances(atts);
+      setHolidayRecords(holidays);
+      setOfficeSettings(officeData);
+      setOfficeLat(officeData.latitude.toString());
+      setOfficeLng(officeData.longitude.toString());
+      setOfficeRadius(officeData.radius.toString());
+    } catch (error) {
+      console.error("Error loading admin data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
@@ -74,26 +122,6 @@ export default function AdminDashboard() {
     };
   }, [showHolidayModal]);
 
-  const loadData = async () => {
-    try {
-      const today = getTodayDateString();
-      const [usersList, atts, holidays] = await Promise.all([
-        getAllUsers(),
-        getAllAttendance(today),
-        getHolidayRecords()
-      ]);
-
-      setAllUsers(usersList);
-      setPendingUsers(usersList.filter(u => u.role === 'pending'));
-      setAttendances(atts);
-      setHolidayRecords(holidays);
-    } catch (error) {
-      console.error("Error loading admin data", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleApprove = async (userId: string) => {
     try {
       await approveUser(userId);
@@ -110,14 +138,60 @@ export default function AdminDashboard() {
     try {
       await updateUserProfile(userId, {
         displayName: editNameValue.trim(),
-        designation: editDesignationValue.trim()
+        designation: editDesignationValue.trim(),
+        workMode: editWorkModeValue
       });
       setEditingUserId(null);
       await loadData(); // Reload to update UI
       toast.success("Profile updated successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update profile.");
     }
+  };
+
+  const handleSaveOfficeSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingOffice(true);
+    try {
+      const lat = parseFloat(officeLat);
+      const lng = parseFloat(officeLng);
+      const rad = parseFloat(officeRadius);
+      if (isNaN(lat) || isNaN(lng) || isNaN(rad)) {
+        toast.error("Please enter valid coordinates and radius.");
+        setSavingOffice(false);
+        return;
+      }
+      await updateOfficeSettings({ latitude: lat, longitude: lng, radius: rad });
+      setOfficeSettings({ latitude: lat, longitude: lng, radius: rad });
+      toast.success("Office settings updated successfully!");
+    } catch {
+      toast.error("Failed to update office settings.");
+    } finally {
+      setSavingOffice(false);
+    }
+  };
+
+  const handleFetchAdminLocation = () => {
+    setFetchingAdminLocation(true);
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      setFetchingAdminLocation(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setOfficeLat(pos.coords.latitude.toString());
+        setOfficeLng(pos.coords.longitude.toString());
+        toast.success("Coordinates updated to your current position!");
+        setFetchingAdminLocation(false);
+      },
+      (err) => {
+        console.error("GPS Error:", err);
+        toast.error("Failed to fetch location. Please check browser permissions.");
+        setFetchingAdminLocation(false);
+      },
+      { enableHighAccuracy: true }
+    );
   };
 
   const handleMarkHoliday = async (e: React.FormEvent) => {
@@ -129,7 +203,7 @@ export default function AdminDashboard() {
       setHolidayDesc('');
       await loadData();
       toast.success("Holiday marked successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to mark holiday.");
     }
   };
@@ -141,7 +215,7 @@ export default function AdminDashboard() {
       setEditHolidayDescValue('');
       await loadData();
       toast.success("Holiday description updated!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update holiday.");
     }
   };
@@ -155,7 +229,7 @@ export default function AdminDashboard() {
       }
       await loadData();
       toast.success("Holiday deleted successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete holiday.");
     }
   };
@@ -241,7 +315,7 @@ export default function AdminDashboard() {
       <div className="modal-backdrop" onClick={() => setShowHolidayModal(false)}>
         <div className="glass-card modal-content-wrapper text-left animate-fade-in" onClick={(e) => e.stopPropagation()}>
           <div className="modal-accent-bar" />
-          
+
           <button className="close-modal-btn" onClick={() => setShowHolidayModal(false)} title="Close Modal">
             ✕
           </button>
@@ -393,7 +467,7 @@ export default function AdminDashboard() {
                   <div className="editor-card-container flex flex-col gap-3">
                     <div className="text-xs text-secondary font-semibold uppercase mb-1">Status</div>
                     <div className="text-sm text-secondary italic mb-2">No holiday registered for this date.</div>
-                    
+
                     <div className="flex flex-col gap-3">
                       <div>
                         <label className="text-xs text-secondary mb-1 block">Holiday Name / Description</label>
@@ -412,7 +486,7 @@ export default function AdminDashboard() {
                             setHolidayDesc('');
                             await loadData();
                             toast.success("Holiday marked successfully!");
-                          } catch (error) {
+                          } catch {
                             toast.error("Failed to mark holiday.");
                           }
                         }}
@@ -497,7 +571,7 @@ export default function AdminDashboard() {
               {/* Today's Attendance Column */}
               <div className="glass-card">
                 <h2 className="subtitle !text-xl !text-white !mb-4 flex justify-between items-center">
-                  Today's Attendance
+                  {"Today's Attendance"}
                   <span className="badge badge-admin">{attendances.length} Records</span>
                 </h2>
 
@@ -509,8 +583,14 @@ export default function AdminDashboard() {
                       <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
                         <div className="flex justify-between mb-2">
                           <div>
-                            <div className="font-semibold text-sm">
-                              {allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}
+                            <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                              <span>{allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}</span>
+                              <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded ${a.workMode === 'remote'
+                                  ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
+                                  : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
+                                }`}>
+                                {a.workMode || 'office'}
+                              </span>
                             </div>
                             {allUsers.find(u => u.uid === a.userId)?.designation && (
                               <div className="text-[10px] text-teal-400 capitalize">
@@ -519,9 +599,9 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           <span className={`badge ${a.status === 'present' ? 'badge-worker' :
-                              a.status === 'half-day' ? 'badge-half-day' :
-                                a.status === 'leave' ? 'badge-leave' :
-                                  'badge-pending'
+                            a.status === 'half-day' ? 'badge-half-day' :
+                              a.status === 'leave' ? 'badge-leave' :
+                                'badge-pending'
                             }`}>
                             {a.status}
                           </span>
@@ -530,15 +610,46 @@ export default function AdminDashboard() {
                           <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
                             <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
                             <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Working'}</div>
+                            {a.punchInLocation && officeSettings && (
+                              <div className="col-span-2 text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/10 rounded-lg p-1.5 mt-1 flex items-center gap-1.5">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="flex-shrink-0">
+                                  <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+                                  <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                <span>
+                                  Verified GPS:{' '}
+                                  <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${a.punchInLocation.latitude},${a.punchInLocation.longitude}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline font-semibold hover:text-white text-indigo-400"
+                                    title="View coordinates on Google Maps"
+                                  >
+                                    {(() => {
+                                      const dist = calculateDistance(
+                                        a.punchInLocation.latitude,
+                                        a.punchInLocation.longitude,
+                                        officeSettings.latitude,
+                                        officeSettings.longitude
+                                      );
+                                      return dist >= 1000
+                                        ? `${(dist / 1000).toFixed(2)} km`
+                                        : `${Math.round(dist)}m`;
+                                    })()}{' '}
+                                    from office
+                                  </a>
+                                </span>
+                              </div>
+                            )}
                             {(() => {
                               const isWorking = !a.punchOut;
                               const stats = a.punchOut ? {
                                 totalHours: a.totalHours,
                                 overtimeHours: a.overtimeHours
                               } : (() => {
-                                if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
-                                const inTime = a.punchIn.toDate ? a.punchIn.toDate().getTime() : new Date(a.punchIn).getTime();
-                                const diffHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+                                 if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
+                                 const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
+                                 const diffHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
                                 return {
                                   totalHours: diffHrs,
                                   overtimeHours: diffHrs > 9 ? diffHrs - 9 : 0
@@ -607,6 +718,17 @@ export default function AdminDashboard() {
                               placeholder="Designation (e.g. Designer)"
                             />
                           </div>
+                          <div className="w-28">
+                            <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Work Mode</label>
+                            <select
+                              className="input-field !p-1.5 !text-xs w-full"
+                              value={editWorkModeValue}
+                              onChange={(e) => setEditWorkModeValue(e.target.value as 'office' | 'remote')}
+                            >
+                              <option value="office">Office</option>
+                              <option value="remote">Remote</option>
+                            </select>
+                          </div>
                         </div>
                       ) : (
                         <div className="min-w-0 flex-1">
@@ -621,6 +743,12 @@ export default function AdminDashboard() {
                                 No Designation
                               </span>
                             )}
+                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${user.workMode === 'remote'
+                                ? 'text-pink-400 bg-pink-500/10 border-pink-500/25'
+                                : 'text-teal-400 bg-teal-500/10 border-teal-500/25'
+                              }`}>
+                              {user.workMode || 'office'}
+                            </span>
                           </div>
                           <div className="text-xs text-secondary truncate">{user.email}</div>
                         </div>
@@ -644,6 +772,7 @@ export default function AdminDashboard() {
                               setEditingUserId(user.uid);
                               setEditNameValue(user.displayName);
                               setEditDesignationValue(user.designation || '');
+                              setEditWorkModeValue(user.workMode || 'office');
                             }}
                             className="team-edit-btn"
                           >
@@ -660,13 +789,76 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Office Location Settings */}
+            <div className="glass-card mt-8">
+              <h2 className="subtitle !text-xl !text-white !mb-4 flex items-center gap-2">
+                🏢 Office Location Settings
+              </h2>
+              <form onSubmit={handleSaveOfficeSettings} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="input-group !mb-0">
+                  <label className="input-label">Latitude</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g. 12.9716"
+                    value={officeLat}
+                    onChange={(e) => setOfficeLat(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="input-group !mb-0">
+                  <label className="input-label">Longitude</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g. 77.5946"
+                    value={officeLng}
+                    onChange={(e) => setOfficeLng(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="input-group !mb-0">
+                  <label className="input-label">Radius (meters)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    placeholder="e.g. 200"
+                    value={officeRadius}
+                    onChange={(e) => setOfficeRadius(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleFetchAdminLocation}
+                    disabled={fetchingAdminLocation}
+                    className="btn btn-outline flex-grow h-[46px] text-xs !px-3"
+                    title="Detect current coordinates via GPS"
+                  >
+                    {fetchingAdminLocation ? 'GPS...' : 'Detect'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingOffice}
+                    className="btn btn-primary flex-grow h-[46px] text-xs !px-4"
+                  >
+                    {savingOffice ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </form>
+              <p className="text-xs text-secondary mt-4">
+                Configure the geographical center coordinates and validation radius of your workspace. Employees with an **Office** shift mode will only be allowed to punch in when within this proximity.
+              </p>
+            </div>
+
             {/* Holiday Management */}
             <div className="glass-card mt-8 max-w-2xl">
               <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
                 <h2 className="subtitle !text-xl !text-white !mb-0 flex items-center gap-2">
                   Holiday Management
                 </h2>
-                <button 
+                <button
                   type="button"
                   onClick={() => { setShowHolidayModal(true); loadData(); }}
                   className="open-calendar-trigger"

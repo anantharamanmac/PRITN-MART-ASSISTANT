@@ -1,6 +1,6 @@
 import { signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
 import { auth, googleProvider, db } from './firebase';
-import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, onSnapshot, Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'pending' | 'worker' | 'admin';
 
@@ -11,18 +11,19 @@ export interface AppUser {
   photoURL: string;
   role: UserRole;
   designation?: string;
-  createdAt: any;
+  workMode?: 'office' | 'remote';
+  createdAt: Timestamp;
 }
 
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
-    
+
     // Check if user exists in Firestore
     const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
-    
+
     if (!userDoc.exists()) {
       // First time login, create with 'pending' role
       const newUser: AppUser = {
@@ -31,11 +32,12 @@ export const signInWithGoogle = async () => {
         displayName: user.displayName || '',
         photoURL: user.photoURL || '',
         role: 'pending',
-        createdAt: serverTimestamp(),
+        workMode: 'office',
+        createdAt: serverTimestamp() as unknown as Timestamp,
       };
       await setDoc(userDocRef, newUser);
     }
-    
+
     return user;
   } catch (error) {
     console.error("Error signing in with Google:", error);
@@ -63,7 +65,7 @@ export const listenToAuthChanges = (callback: (user: User | null, appUser: AppUs
 
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
-      
+
       // Use onSnapshot for real-time updates!
       unsubscribeSnapshot = onSnapshot(userDocRef, async (userDoc) => {
         if (userDoc.exists()) {
@@ -79,7 +81,8 @@ export const listenToAuthChanges = (callback: (user: User | null, appUser: AppUs
             displayName: user.displayName || '',
             photoURL: user.photoURL || '',
             role: 'pending',
-            createdAt: serverTimestamp(),
+            workMode: 'office',
+            createdAt: serverTimestamp() as unknown as Timestamp,
           };
           try {
             await setDoc(userDocRef, newUser);

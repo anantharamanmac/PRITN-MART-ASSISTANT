@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { signInWithGoogle, listenToAuthChanges, AppUser } from '@/lib/auth';
+import { signInWithGoogle, listenToAuthChanges } from '@/lib/auth';
 import PrinterLoader from '@/components/PrinterLoader';
 
 export default function Home() {

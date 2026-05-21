@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getUserAttendanceHistory, getUserTasks, AttendanceRecord } from '@/lib/db';
+import { getUserAttendanceHistory, getUserTasks, AttendanceRecord, WorkTask } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 
@@ -11,7 +11,7 @@ export default function HistoryPage() {
   const router = useRouter();
   const [user, setUser] = useState<AppUser | null>(null);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<WorkTask[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Search and Filter States
@@ -24,20 +24,6 @@ export default function HistoryPage() {
     const mins = Math.round((decimalHrs - hrs) * 60);
     return `${hrs}h ${mins}m`;
   };
-
-  useEffect(() => {
-    const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
-      if (!appUser) {
-        router.push('/');
-      } else if (appUser.role === 'pending') {
-        router.push('/pending');
-      } else {
-        setUser(appUser);
-        loadHistory(appUser.uid);
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
 
   const loadHistory = async (uid: string) => {
     try {
@@ -53,6 +39,20 @@ export default function HistoryPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
+      if (!appUser) {
+        router.push('/');
+      } else if (appUser.role === 'pending') {
+        router.push('/pending');
+      } else {
+        setUser(appUser);
+        loadHistory(appUser.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   if (!user || loading) return <PrinterLoader text="Loading History..." fullscreen />;
 

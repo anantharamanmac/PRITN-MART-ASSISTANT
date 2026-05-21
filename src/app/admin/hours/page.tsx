@@ -49,12 +49,8 @@ export default function AdminHours() {
     return () => unsubscribe();
   }, [router]);
 
-  useEffect(() => {
-    if (!currentUser) return;
-    loadData(searchMonth);
-  }, [currentUser, searchMonth]);
-
   const loadData = async (month: string) => {
+    await Promise.resolve();
     setLoading(true);
     try {
       const [usersList, attendanceList] = await Promise.all([
@@ -71,6 +67,14 @@ export default function AdminHours() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const t = setTimeout(() => {
+      loadData(searchMonth);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [currentUser, searchMonth]);
 
   if (!currentUser || loading) return <PrinterLoader text="Loading Employee Reports..." fullscreen type="tshirt" />;
 
@@ -94,7 +98,7 @@ export default function AdminHours() {
     const totalHours = records.reduce((sum, r) => {
       if (r.punchOut) return sum + (r.totalHours || 0);
       if (!r.punchIn) return sum;
-      const inTime = r.punchIn.toDate ? r.punchIn.toDate().getTime() : new Date(r.punchIn).getTime();
+      const inTime = typeof r.punchIn.toDate === 'function' ? r.punchIn.toDate().getTime() : new Date(r.punchIn as unknown as string).getTime();
       const activeHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
       return sum + activeHrs;
     }, 0);
@@ -102,7 +106,7 @@ export default function AdminHours() {
     const overtimeHours = records.reduce((sum, r) => {
       if (r.punchOut) return sum + (r.overtimeHours || 0);
       if (!r.punchIn) return sum;
-      const inTime = r.punchIn.toDate ? r.punchIn.toDate().getTime() : new Date(r.punchIn).getTime();
+      const inTime = typeof r.punchIn.toDate === 'function' ? r.punchIn.toDate().getTime() : new Date(r.punchIn as unknown as string).getTime();
       const activeHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
       const activeOvertime = activeHrs > 9 ? activeHrs - 9 : 0;
       return sum + activeOvertime;
