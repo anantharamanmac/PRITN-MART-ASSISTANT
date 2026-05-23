@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getAllUsers, getAttendanceForMonth, AttendanceRecord } from '@/lib/db';
+import { getAllUsers, getAttendanceForMonth, AttendanceRecord, getBreakTimeMs } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 
@@ -99,7 +99,8 @@ export default function AdminHours() {
       if (r.punchOut) return sum + (r.totalHours || 0);
       if (!r.punchIn) return sum;
       const inTime = typeof r.punchIn.toDate === 'function' ? r.punchIn.toDate().getTime() : new Date(r.punchIn as unknown as string).getTime();
-      const activeHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+      const breakMs = getBreakTimeMs(r.breaks, now.getTime());
+      const activeHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
       return sum + activeHrs;
     }, 0);
 
@@ -107,7 +108,8 @@ export default function AdminHours() {
       if (r.punchOut) return sum + (r.overtimeHours || 0);
       if (!r.punchIn) return sum;
       const inTime = typeof r.punchIn.toDate === 'function' ? r.punchIn.toDate().getTime() : new Date(r.punchIn as unknown as string).getTime();
-      const activeHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+      const breakMs = getBreakTimeMs(r.breaks, now.getTime());
+      const activeHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
       const activeOvertime = activeHrs > 9 ? activeHrs - 9 : 0;
       return sum + activeOvertime;
     }, 0);

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings } from '@/lib/db';
+import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings, pauseWork, resumeWork, getBreakTimeMs } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 
@@ -191,13 +191,33 @@ export default function WorkerDashboard() {
     const punchInTime = typeof attendance.punchIn.toDate === 'function'
       ? attendance.punchIn.toDate().getTime()
       : new Date(attendance.punchIn as unknown as string).getTime();
-    const diffMs = currentTime.getTime() - punchInTime;
+    const breakMs = getBreakTimeMs(attendance.breaks, currentTime.getTime());
+    const diffMs = Math.max(0, currentTime.getTime() - punchInTime - breakMs);
     const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
     const hrs = Math.floor(diffHrs);
     const mins = Math.floor((diffHrs % 1) * 60);
     const secs = Math.floor((((diffHrs % 1) * 60) % 1) * 60);
     return `${hrs}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
   };
+
+  const getLiveBreakTime = () => {
+    if (!attendance || !attendance.breaks || attendance.breaks.length === 0) return '';
+    const lastBreak = attendance.breaks[attendance.breaks.length - 1];
+    if (lastBreak.end !== null) return '';
+    const breakStartTime = typeof lastBreak.start.toDate === 'function'
+      ? lastBreak.start.toDate().getTime()
+      : new Date(lastBreak.start as unknown as string).getTime();
+    const diffMs = currentTime.getTime() - breakStartTime;
+    const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
+    const hrs = Math.floor(diffHrs);
+    const mins = Math.floor((diffHrs % 1) * 60);
+    const secs = Math.floor((((diffHrs % 1) * 60) % 1) * 60);
+    if (hrs > 0) {
+      return `${hrs}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+    }
+    return `${mins}m ${String(secs).padStart(2, '0')}s`;
+  };
+
 
   const formatHrsMins = (decimalHrs: number) => {
     const hrs = Math.floor(decimalHrs);
@@ -373,6 +393,30 @@ export default function WorkerDashboard() {
     }
   };
 
+  const handlePauseWork = async () => {
+    if (!user) return;
+    try {
+      await pauseWork(user.uid);
+      await loadAttendance(user.uid);
+      toast.success("Work paused. Have a nice break!");
+    } catch (error) {
+      console.error("Error pausing work:", error);
+      toast.error("Error pausing work.");
+    }
+  };
+
+  const handleResumeWork = async () => {
+    if (!user) return;
+    try {
+      await resumeWork(user.uid);
+      await loadAttendance(user.uid);
+      toast.success("Welcome back! Work resumed.");
+    } catch (error) {
+      console.error("Error resuming work:", error);
+      toast.error("Error resuming work.");
+    }
+  };
+
   const handleApplyLeave = async () => {
     if (!user) return;
     // Keeping native confirm for intentional friction
@@ -406,6 +450,7 @@ export default function WorkerDashboard() {
   const isLeave = attendance && attendance.status === 'leave' && !attendance.punchIn;
   const isPunchedIn = attendance && attendance.punchIn && !attendance.punchOut;
   const isPunchedOut = attendance && attendance.punchOut;
+  const isOnBreak = !!(attendance && attendance.breaks && attendance.breaks.some(b => b.end === null));
 
   return (
     <>
@@ -456,7 +501,7 @@ export default function WorkerDashboard() {
               </>
             ) : (
               <>
-                <div className={isPunchedIn ? "pulse-glowing-ring animate-fade-in" : "pulse-glowing-ring-green animate-fade-in"}>
+                <div className={isPunchedIn ? (isOnBreak ? "pulse-glowing-ring-amber animate-fade-in" : "pulse-glowing-ring animate-fade-in") : "pulse-glowing-ring-green animate-fade-in"}>
                   <button
                     onClick={(e) => isPunchedIn ? handlePunchOut(e) : handlePunchIn(e)}
                     disabled={verifyingLocation}
@@ -473,7 +518,7 @@ export default function WorkerDashboard() {
                     {isPunchedIn && (
                       <div className="flex flex-col items-center mt-1">
                         <span className="text-xs font-semibold text-amber-300 animate-pulse">
-                          {getLiveHours()}
+                          {getLiveHours()} {isOnBreak ? '(Paused)' : ''}
                         </span>
                         <span className="text-[10px] font-normal mt-1 text-white/90 bg-black/20 px-2 py-0.5 rounded-full">
                           In: {new Date(attendance.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -482,6 +527,38 @@ export default function WorkerDashboard() {
                     )}
                   </button>
                 </div>
+
+                {isPunchedIn && user.workMode === 'remote' && (
+                  <div className="flex flex-col items-center mt-6">
+                    <button
+                      onClick={isOnBreak ? handleResumeWork : handlePauseWork}
+                      className={`btn ${isOnBreak ? 'btn-resume' : 'btn-pause'}`}
+                    >
+                      {isOnBreak ? (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                          Resume Work
+                        </>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                          </svg>
+                          Pause Break
+                        </>
+                      )}
+                    </button>
+                    {isOnBreak && (
+                      <p className="mt-3 text-sm font-semibold text-amber-400 animate-pulse bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                        Break Time: {getLiveBreakTime()}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {!isPunchedIn && (
                   <button

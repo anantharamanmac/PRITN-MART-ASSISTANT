@@ -180,6 +180,33 @@ a {
   filter: brightness(1.1);
 }
 
+.btn-pause {
+  background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 4px 15px var(--warning-glow);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-pause:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--warning-glow);
+  filter: brightness(1.1);
+}
+
+.btn-resume {
+  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.btn-resume:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+  filter: brightness(1.1);
+}
+
+
 /* Forms */
 .input-group {
   display: flex;
@@ -1416,6 +1443,39 @@ select.input-field option {
   animation: pulse-ring-outer 4s linear infinite;
   pointer-events: none;
 }
+
+.pulse-glowing-ring-amber {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+.pulse-glowing-ring-amber::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(245, 158, 11, 0.4);
+  animation: pulse-ring 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+.pulse-glowing-ring-amber::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  right: -16px;
+  bottom: -16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(245, 158, 11, 0.2);
+  animation: pulse-ring-outer 4s linear infinite;
+  pointer-events: none;
+}
+
 
 @keyframes pulse-ring {
   0% {

@@ -6,6 +6,11 @@ import {
 } from 'firebase/firestore';
 import { AppUser } from './auth';
 
+export interface BreakInterval {
+  start: Timestamp;
+  end: Timestamp | null;
+}
+
 export interface AttendanceRecord {
   id?: string;
   userId: string;
@@ -19,6 +24,7 @@ export interface AttendanceRecord {
   workMode?: 'office' | 'remote';
   punchInLocation?: { latitude: number; longitude: number; accuracy?: number } | null;
   punchOutLocation?: { latitude: number; longitude: number; accuracy?: number } | null;
+  breaks?: BreakInterval[];
 }
 
 // Get current date string in YYYY-MM-DD format
@@ -62,6 +68,68 @@ export const punchIn = async (
   await setDoc(docRef, record);
 };
 
+// Helper to calculate total break time in milliseconds
+export const getBreakTimeMs = (breaks?: BreakInterval[], upToTime: number = Date.now()): number => {
+  if (!breaks || breaks.length === 0) return 0;
+  let totalMs = 0;
+  for (const b of breaks) {
+    if (!b.start) continue;
+    const startMs = typeof b.start.toDate === 'function' ? b.start.toDate().getTime() : new Date(b.start as unknown as string).getTime();
+    const endMs = b.end 
+      ? (typeof b.end.toDate === 'function' ? b.end.toDate().getTime() : new Date(b.end as unknown as string).getTime())
+      : upToTime;
+    totalMs += Math.max(0, endMs - startMs);
+  }
+  return totalMs;
+};
+
+// Pause Work (Remote worker only)
+export const pauseWork = async (userId: string) => {
+  const dateStr = getTodayDateString();
+  const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) throw new Error("No punch in record found for today.");
+
+  const data = snap.data() as AttendanceRecord;
+  if (data.punchOut) throw new Error("Already punched out.");
+
+  const breaks = data.breaks || [];
+  
+  // Check if already paused
+  const hasActiveBreak = breaks.some(b => b.end === null);
+  if (hasActiveBreak) throw new Error("Already on break.");
+
+  breaks.push({
+    start: Timestamp.now(),
+    end: null
+  });
+
+  await updateDoc(docRef, { breaks });
+};
+
+// Resume Work (Remote worker only)
+export const resumeWork = async (userId: string) => {
+  const dateStr = getTodayDateString();
+  const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) throw new Error("No punch in record found for today.");
+
+  const data = snap.data() as AttendanceRecord;
+  if (data.punchOut) throw new Error("Already punched out.");
+
+  const breaks = data.breaks || [];
+  
+  // Find the active break
+  const activeBreakIndex = breaks.findIndex(b => b.end === null);
+  if (activeBreakIndex === -1) throw new Error("Not currently on break.");
+
+  breaks[activeBreakIndex].end = Timestamp.now();
+
+  await updateDoc(docRef, { breaks });
+};
+
 // Punch Out and Calculate Hours
 export const punchOut = async (
   userId: string,
@@ -80,8 +148,21 @@ export const punchOut = async (
   const punchOutDate = new Date();
   const punchOutTime = punchOutDate.getTime();
 
-  const totalMs = punchOutTime - punchInTime;
-  const totalHours = totalMs / (1000 * 60 * 60);
+  // Handle active breaks if user punches out while on break
+  const breaks = data.breaks || [];
+  const hasActiveBreak = breaks.some(b => b.end === null);
+  const updatedBreaks = breaks.map(b => {
+    if (b.end === null) {
+      return { ...b, end: Timestamp.fromDate(punchOutDate) };
+    }
+    return b;
+  });
+
+  // Calculate total break duration
+  const totalBreakMs = getBreakTimeMs(updatedBreaks, punchOutTime);
+
+  const totalMs = punchOutTime - punchInTime - totalBreakMs;
+  const totalHours = Math.max(0, totalMs / (1000 * 60 * 60));
 
   // Standard shift is 9 hours
   let overtimeHours = 0;
@@ -109,7 +190,8 @@ export const punchOut = async (
     totalHours,
     overtimeHours,
     status,
-    punchOutLocation: location || null
+    punchOutLocation: location || null,
+    ...(hasActiveBreak ? { breaks: updatedBreaks } : {})
   });
 };
 

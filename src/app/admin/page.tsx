@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 
@@ -649,7 +649,8 @@ export default function AdminDashboard() {
                               } : (() => {
                                  if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
                                  const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
-                                 const diffHrs = Math.max(0, (now.getTime() - inTime) / (1000 * 60 * 60));
+                                 const breakMs = getBreakTimeMs(a.breaks, now.getTime());
+                                 const diffHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
                                 return {
                                   totalHours: diffHrs,
                                   overtimeHours: diffHrs > 9 ? diffHrs - 9 : 0
@@ -661,10 +662,18 @@ export default function AdminDashboard() {
                               const otHrs = Math.floor(stats.overtimeHours);
                               const otMins = Math.round((stats.overtimeHours - otHrs) * 60);
 
+                              const isOnBreak = !!(a.breaks && a.breaks.some(b => b.end === null));
+
                               return (
                                 <>
                                   <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold' : ''}>
-                                    Total: {totalHrs}h {totalMins}m <span className="text-[10px] opacity-75">({stats.totalHours.toFixed(2)} hrs)</span> {isWorking && <span className="text-[9px] uppercase tracking-wider bg-teal-500/10 px-1 py-0.5 rounded border border-teal-500/20 animate-pulse ml-0.5">Live</span>}
+                                    Total: {totalHrs}h {totalMins}m <span className="text-[10px] opacity-75">({stats.totalHours.toFixed(2)} hrs)</span> {isWorking && (
+                                      isOnBreak ? (
+                                        <span className="text-[9px] uppercase tracking-wider bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 animate-pulse ml-1 text-amber-400 font-bold">On Break</span>
+                                      ) : (
+                                        <span className="text-[9px] uppercase tracking-wider bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20 animate-pulse ml-1 text-teal-400 font-bold">Live</span>
+                                      )
+                                    )}
                                   </div>
                                   <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold flex items-center gap-1.5 flex-wrap' : ''}>
                                     <span>Overtime: {otHrs}h {otMins}m <span className="text-[10px] opacity-75">({stats.overtimeHours.toFixed(2)} hrs)</span></span>
