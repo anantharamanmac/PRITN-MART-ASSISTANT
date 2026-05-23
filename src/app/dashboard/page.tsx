@@ -170,10 +170,10 @@ export default function WorkerDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Silent background refresh every 2 minutes
+    // Silent background refresh every 1 minute
     const interval = setInterval(() => {
       loadAttendance(user.uid);
-    }, 120000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [user]);
@@ -575,6 +575,21 @@ export default function WorkerDashboard() {
                     Apply for Leave
                   </button>
                 )}
+                
+                <a
+                  href="/overtime-calculator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 text-xs font-semibold text-indigo-400 hover:text-white underline transition-colors flex items-center gap-1.5 justify-center"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <line x1="9" y1="9" x2="15" y2="9" />
+                    <line x1="9" y1="13" x2="15" y2="13" />
+                    <line x1="9" y1="17" x2="15" y2="17" />
+                  </svg>
+                  Open Overtime Calculator
+                </a>
               </>
             )}
           </div>

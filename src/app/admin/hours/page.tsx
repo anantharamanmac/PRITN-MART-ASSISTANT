@@ -76,6 +76,17 @@ export default function AdminHours() {
     return () => clearTimeout(t);
   }, [currentUser, searchMonth]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Silent background refresh every 1 minute
+    const interval = setInterval(() => {
+      loadData(searchMonth);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [currentUser, searchMonth]);
+
   if (!currentUser || loading) return <PrinterLoader text="Loading Employee Reports..." fullscreen type="tshirt" />;
 
   // Filter users by search query
@@ -197,7 +208,17 @@ export default function AdminHours() {
 
             {/* Filters controls card */}
             <div className="glass-card mb-6">
-              <h2 className="text-xs text-white font-semibold uppercase tracking-wider mb-4">Report Controls</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xs text-white font-semibold uppercase tracking-wider">Report Controls</h2>
+                <a
+                  href="/overtime-calculator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="open-calendar-trigger !py-1 !px-2.5 !text-xs"
+                >
+                  🧮 Calculator Tool
+                </a>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-secondary mb-1 block">Search Employee Name</label>

@@ -96,10 +96,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // Silent background refresh every 2 minutes
+    // Silent background refresh every 1 minute
     const interval = setInterval(() => {
       loadData();
-    }, 120000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [currentUser]);
