@@ -46,10 +46,10 @@ export default function OvertimeCalculator() {
     if (!punchInStr) return '';
     const [hrs, mins] = punchInStr.split(':').map(Number);
     if (isNaN(hrs) || isNaN(mins)) return '';
-    
+
     let endHrs = hrs + 9;
     if (endHrs >= 24) endHrs -= 24;
-    
+
     return `${String(endHrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
@@ -237,113 +237,218 @@ export default function OvertimeCalculator() {
         <div className="glass-card mb-8">
           <h2 className="subtitle !text-xl !text-white !mb-4">Logged Days</h2>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10 text-secondary text-xs uppercase tracking-wider font-bold">
-                  <th className="pb-3 pr-4 min-w-[140px]">Date</th>
-                  <th className="pb-3 px-4 min-w-[110px]">Punch In</th>
-                  <th className="pb-3 px-4 min-w-[140px]">Expected Out (9h)</th>
-                  <th className="pb-3 px-4 min-w-[110px]">Actual Punch Out</th>
-                  <th className="pb-3 px-4 min-w-[110px]">Worked Hours</th>
-                  <th className="pb-3 px-4 min-w-[110px]">Overtime</th>
-                  <th className="pb-3 pl-4 text-right"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {shifts.map((shift, index) => {
-                  const shiftStats = calculateShiftStats(shift);
-                  return (
-                    <tr key={shift.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.01] transition-colors">
-                      {/* Date */}
-                      <td className="py-3 pr-4">
+          {/* Desktop View */}
+          <div className="calculator-desktop-view">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-secondary text-xs uppercase tracking-wider font-bold">
+                    <th className="pb-3 pr-4 min-w-[140px]">Date</th>
+                    <th className="pb-3 px-4 min-w-[110px]">Punch In</th>
+                    <th className="pb-3 px-4 min-w-[140px]">Expected Out (9h)</th>
+                    <th className="pb-3 px-4 min-w-[110px]">Actual Punch Out</th>
+                    <th className="pb-3 px-4 min-w-[110px]">Worked Hours</th>
+                    <th className="pb-3 px-4 min-w-[110px]">Overtime</th>
+                    <th className="pb-3 pl-4 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shifts.map((shift, index) => {
+                    const shiftStats = calculateShiftStats(shift);
+                    return (
+                      <tr key={shift.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.01] transition-colors">
+                        {/* Date */}
+                        <td className="py-3 pr-4">
+                          <input
+                            type="date"
+                            className="input-field !py-1.5 !px-3 !text-sm w-full"
+                            value={shift.date}
+                            onChange={(e) => handleFieldChange(shift.id, 'date', e.target.value)}
+                          />
+                        </td>
+
+                        {/* Punch In */}
+                        <td className="py-3 px-4">
+                          <input
+                            type="time"
+                            className="input-field !py-1.5 !px-3 !text-sm w-full"
+                            value={shift.punchIn}
+                            onChange={(e) => handlePunchInChange(shift.id, e.target.value)}
+                          />
+                        </td>
+
+                        {/* Expected Out */}
+                        <td className="py-3 px-4 text-sm text-secondary font-medium">
+                          <span className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 inline-block w-full text-center">
+                            {shift.expectedPunchOut || 'N/A'}
+                          </span>
+                        </td>
+
+                        {/* Actual Out */}
+                        <td className="py-3 px-4">
+                          <input
+                            type="time"
+                            className="input-field !py-1.5 !px-3 !text-sm w-full"
+                            value={shift.actualPunchOut}
+                            onChange={(e) => handleFieldChange(shift.id, 'actualPunchOut', e.target.value)}
+                          />
+                        </td>
+
+                        {/* Net worked hours */}
+                        <td className="py-3 px-4 text-sm font-semibold text-white">
+                          {formatHrsMins(shiftStats.totalHours)}
+                        </td>
+
+                        {/* Overtime Hours */}
+                        <td className="py-3 px-4 text-sm font-bold text-pink-400">
+                          {shiftStats.overtimeHours > 0 ? (
+                            <span>+{shiftStats.overtimeHours.toFixed(2)}h</span>
+                          ) : (
+                            <span className="text-secondary font-normal">-</span>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 pl-4 text-right">
+                          <button
+                            onClick={() => removeShift(shift.id)}
+                            disabled={shifts.length === 1}
+                            className="team-btn-cancel !py-1 !px-2.5 !text-xs !height-auto border-red-500/20 hover:border-red-500 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Remove Shift"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/5">
+              <button onClick={addShift} className="btn btn-outline !text-xs !py-2 !px-4">
+                ➕ Add Day / Shift
+              </button>
+              <button
+                onClick={() => {
+                  setShifts([
+                    {
+                      id: String(Date.now()),
+                      date: new Date().toISOString().split('T')[0],
+                      punchIn: '09:00',
+                      expectedPunchOut: '18:00',
+                      actualPunchOut: '18:00'
+                    }
+                  ]);
+                }}
+                className="btn btn-outline border-red-500/25 text-red-400 hover:bg-red-500/5 hover:border-red-500/50 !text-xs !py-2 !px-4"
+              >
+                Reset Calculator
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile View */}
+          <div className="calculator-mobile-view">
+            <div className="flex flex-col gap-4">
+              {shifts.map((shift, index) => {
+                const shiftStats = calculateShiftStats(shift);
+                return (
+                  <div key={shift.id} className="mobile-shift-card">
+                    {/* Header */}
+                    <div className="mobile-shift-card-header">
+                      <span className="mobile-shift-card-title">Day / Shift #{index + 1}</span>
+                      <button
+                        onClick={() => removeShift(shift.id)}
+                        disabled={shifts.length === 1}
+                        className="team-btn-cancel !py-1 !px-2.5 !text-xs !height-auto border-red-500/20 hover:border-red-500 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Remove Shift"
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+
+                    {/* Grid */}
+                    <div className="mobile-shift-grid">
+                      <div className="mobile-shift-field mobile-shift-field-full">
+                        <label className="mobile-shift-label">Date</label>
                         <input
                           type="date"
                           className="input-field !py-1.5 !px-3 !text-sm w-full"
                           value={shift.date}
                           onChange={(e) => handleFieldChange(shift.id, 'date', e.target.value)}
                         />
-                      </td>
+                      </div>
 
-                      {/* Punch In */}
-                      <td className="py-3 px-4">
+                      <div className="mobile-shift-field">
+                        <label className="mobile-shift-label">Punch In</label>
                         <input
                           type="time"
                           className="input-field !py-1.5 !px-3 !text-sm w-full"
                           value={shift.punchIn}
                           onChange={(e) => handlePunchInChange(shift.id, e.target.value)}
                         />
-                      </td>
+                      </div>
 
-                      {/* Expected Out */}
-                      <td className="py-3 px-4 text-sm text-secondary font-medium">
-                        <span className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 inline-block w-full text-center">
-                          {shift.expectedPunchOut || 'N/A'}
-                        </span>
-                      </td>
-
-                      {/* Actual Out */}
-                      <td className="py-3 px-4">
+                      <div className="mobile-shift-field">
+                        <label className="mobile-shift-label">Actual Punch Out</label>
                         <input
                           type="time"
                           className="input-field !py-1.5 !px-3 !text-sm w-full"
                           value={shift.actualPunchOut}
                           onChange={(e) => handleFieldChange(shift.id, 'actualPunchOut', e.target.value)}
                         />
-                      </td>
+                      </div>
 
-                      {/* Net worked hours */}
-                      <td className="py-3 px-4 text-sm font-semibold text-white">
-                        {formatHrsMins(shiftStats.totalHours)}
-                      </td>
+                      <div className="mobile-shift-field">
+                        <label className="mobile-shift-label">Expected Out (9h)</label>
+                        <div className="mobile-shift-value-box">
+                          {shift.expectedPunchOut || 'N/A'}
+                        </div>
+                      </div>
 
-                      {/* Overtime Hours */}
-                      <td className="py-3 px-4 text-sm font-bold text-pink-400">
-                        {shiftStats.overtimeHours > 0 ? (
-                          <span>+{shiftStats.overtimeHours.toFixed(2)}h</span>
-                        ) : (
-                          <span className="text-secondary font-normal">-</span>
-                        )}
-                      </td>
+                      <div className="mobile-shift-field">
+                        <label className="mobile-shift-label">Worked / OT</label>
+                        <div className="mobile-shift-value-box total-hours">
+                          <span>{formatHrsMins(shiftStats.totalHours)}</span>
+                          {shiftStats.overtimeHours > 0 ? (
+                            <span className="text-[10px] text-pink-400 font-extrabold mt-0.5">
+                              +{shiftStats.overtimeHours.toFixed(2)}h OT
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-secondary font-normal mt-0.5">-</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                      {/* Actions */}
-                      <td className="py-3 pl-4 text-right">
-                        <button
-                          onClick={() => removeShift(shift.id)}
-                          disabled={shifts.length === 1}
-                          className="team-btn-cancel !py-1 !px-2.5 !text-xs !height-auto border-red-500/20 hover:border-red-500 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Remove Shift"
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/5">
-            <button onClick={addShift} className="btn btn-outline !text-xs !py-2 !px-4">
-              ➕ Add Day / Shift
-            </button>
-            <button
-              onClick={() => {
-                setShifts([
-                  {
-                    id: String(Date.now()),
-                    date: new Date().toISOString().split('T')[0],
-                    punchIn: '09:00',
-                    expectedPunchOut: '18:00',
-                    actualPunchOut: '18:00'
-                  }
-                ]);
-              }}
-              className="btn btn-outline border-red-500/25 text-red-400 hover:bg-red-500/5 hover:border-red-500/50 !text-xs !py-2 !px-4"
-            >
-              Reset Calculator
-            </button>
+            {/* Mobile Actions */}
+            <div className="mobile-action-buttons">
+              <button onClick={addShift} className="btn btn-outline !text-xs !py-3 !px-4">
+                ➕ Add Day / Shift
+              </button>
+              <button
+                onClick={() => {
+                  setShifts([
+                    {
+                      id: String(Date.now()),
+                      date: new Date().toISOString().split('T')[0],
+                      punchIn: '09:00',
+                      expectedPunchOut: '18:00',
+                      actualPunchOut: '18:00'
+                    }
+                  ]);
+                }}
+                className="btn btn-outline border-red-500/25 text-red-400 hover:bg-red-500/5 hover:border-red-500/50 !text-xs !py-3 !px-4"
+              >
+                Reset Calculator
+              </button>
+            </div>
           </div>
         </div>
       </main>

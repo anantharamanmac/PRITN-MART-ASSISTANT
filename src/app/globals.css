@@ -1633,3 +1633,113 @@ select.input-field option {
     transform: translate3d(8px, 0, 0);
   }
 }
+
+/* Overtime Calculator Responsive Helper Styles */
+@media (max-width: 767px) {
+  .calculator-desktop-view {
+    display: none !important;
+  }
+  
+  .calculator-mobile-view {
+    display: block !important;
+  }
+
+  .mobile-shift-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .mobile-shift-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 0.75rem;
+  }
+
+  .mobile-shift-card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+  }
+
+  .mobile-shift-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  @media (min-width: 480px) {
+    .mobile-shift-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .mobile-shift-field-full {
+      grid-column: span 2;
+    }
+  }
+
+  .mobile-shift-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .mobile-shift-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: block;
+  }
+
+  .mobile-shift-value-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-shift-value-box.total-hours {
+    color: #ffffff;
+    font-weight: 600;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+
+  .mobile-shift-value-box.overtime-hours {
+    color: var(--secondary);
+    font-weight: 700;
+  }
+
+  .mobile-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .calculator-desktop-view {
+    display: block !important;
+  }
+  
+  .calculator-mobile-view {
+    display: none !important;
+  }
+}
