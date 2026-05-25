@@ -6,6 +6,7 @@ import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getUserAttendanceHistory, getUserTasks, AttendanceRecord, WorkTask } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
+import Pagination from '@/components/Pagination';
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -16,8 +17,19 @@ export default function HistoryPage() {
 
   // Search and Filter States
   const [searchDate, setSearchDate] = useState('');
+
   const [searchMonth, setSearchMonth] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+
+  // Pagination States
+  const [attendancePage, setAttendancePage] = useState(1);
+  const [taskPage, setTaskPage] = useState(1);
+
+  // Reset pages when filters change
+  useEffect(() => {
+    setAttendancePage(1);
+    setTaskPage(1);
+  }, [searchDate, searchMonth, filterStatus]);
 
   const formatHrsMins = (decimalHrs: number) => {
     const hrs = Math.floor(decimalHrs);
@@ -74,6 +86,13 @@ export default function HistoryPage() {
     if (searchMonth && !t.date?.startsWith(searchMonth)) match = false;
     return match;
   });
+
+  const ITEMS_PER_PAGE = 10;
+  const startIndexAtt = (attendancePage - 1) * ITEMS_PER_PAGE;
+  const paginatedAttendances = filteredAttendances.slice(startIndexAtt, startIndexAtt + ITEMS_PER_PAGE);
+
+  const startIndexTasks = (taskPage - 1) * ITEMS_PER_PAGE;
+  const paginatedTasks = filteredTasks.slice(startIndexTasks, startIndexTasks + ITEMS_PER_PAGE);
 
   const totalOvertime = filteredAttendances.reduce((acc, curr) => acc + (curr.overtimeHours || 0), 0);
   const totalOvertimePay = totalOvertime * 100;
@@ -163,37 +182,46 @@ export default function HistoryPage() {
             {filteredAttendances.length === 0 ? (
               <p className="text-secondary text-sm">No matching attendance records found.</p>
             ) : (
-              <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2">
-                {filteredAttendances.map((a, i) => (
-                  <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
-                    <div className="flex justify-between mb-2">
-                      <div className="font-semibold">{a.date}</div>
-                      <span className={`badge ${a.status === 'present' ? 'badge-worker' :
-                          a.status === 'half-day' ? 'badge-half-day' :
-                            a.status === 'leave' ? 'badge-leave' :
-                              'badge-pending'
-                        }`}>
-                        {a.status}
-                      </span>
-                    </div>
-                    {a.punchIn && (
-                      <div className="text-sm text-secondary grid grid-cols-2 gap-y-1">
-                        <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString() : '-'}</div>
-                        <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : '-'}</div>
-                        <div>Total: {formatHrsMins(a.totalHours || 0)}</div>
-                        {a.overtimeHours > 0 && (
-                          <div className="text-danger font-semibold flex items-center gap-1.5 flex-wrap">
-                            <span>Overtime: {formatHrsMins(a.overtimeHours)}</span>
-                            <span className="text-[10px] opacity-90 px-1.5 py-0.5 rounded bg-danger/10 border border-danger/25 text-pink-400">
-                              Est. Pay: ₹{Math.round(a.overtimeHours * 100).toLocaleString('en-IN')}
-                            </span>
-                          </div>
-                        )}
+              <>
+                <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 mb-2">
+                  {paginatedAttendances.map((a, i) => (
+                    <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
+                      <div className="flex justify-between mb-2">
+                        <div className="font-semibold">{a.date}</div>
+                        <span className={`badge ${a.status === 'present' ? 'badge-worker' :
+                            a.status === 'half-day' ? 'badge-half-day' :
+                              a.status === 'leave' ? 'badge-leave' :
+                                'badge-pending'
+                          }`}>
+                          {a.status}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {a.punchIn && (
+                        <div className="text-sm text-secondary grid grid-cols-2 gap-y-1">
+                          <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString() : '-'}</div>
+                          <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString() : '-'}</div>
+                          <div>Total: {formatHrsMins(a.totalHours || 0)}</div>
+                          {a.overtimeHours > 0 && (
+                            <div className="text-danger font-semibold flex items-center gap-1.5 flex-wrap">
+                              <span>Overtime: {formatHrsMins(a.overtimeHours)}</span>
+                              <span className="text-[10px] opacity-90 px-1.5 py-0.5 rounded bg-danger/10 border border-danger/25 text-pink-400">
+                                Est. Pay: ₹{Math.round(a.overtimeHours * 100).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Pagination
+                  totalItems={filteredAttendances.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  currentPage={attendancePage}
+                  onPageChange={setAttendancePage}
+                  label="attendance records"
+                />
+              </>
             )}
           </div>
 
@@ -203,16 +231,25 @@ export default function HistoryPage() {
             {filteredTasks.length === 0 ? (
               <p className="text-secondary text-sm">No matching tasks found.</p>
             ) : (
-              <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2">
-                {filteredTasks.map((t, i) => (
-                  <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
-                    <div className="text-xs text-primary mb-2 font-semibold">
-                      {new Date(t.createdAt.toDate()).toLocaleDateString()}
+              <>
+                <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 mb-2">
+                  {paginatedTasks.map((t, i) => (
+                    <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
+                      <div className="text-xs text-primary mb-2 font-semibold">
+                        {new Date(t.createdAt.toDate()).toLocaleDateString()}
+                      </div>
+                      <p className="text-sm text-white whitespace-pre-wrap">{t.description}</p>
                     </div>
-                    <p className="text-sm text-white whitespace-pre-wrap">{t.description}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                <Pagination
+                  totalItems={filteredTasks.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  currentPage={taskPage}
+                  onPageChange={setTaskPage}
+                  label="tasks"
+                />
+              </>
             )}
           </div>
 

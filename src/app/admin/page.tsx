@@ -7,6 +7,7 @@ import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
+import Pagination from '@/components/Pagination';
 
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371000; // Earth radius in meters
@@ -53,6 +54,11 @@ export default function AdminDashboard() {
   const [officeSettings, setOfficeSettings] = useState<OfficeSettings | null>(null);
   const [savingOffice, setSavingOffice] = useState(false);
   const [fetchingAdminLocation, setFetchingAdminLocation] = useState(false);
+
+  // Pagination States
+  const [pendingUsersPage, setPendingUsersPage] = useState(1);
+  const [attendancesPage, setAttendancesPage] = useState(1);
+  const [allUsersPage, setAllUsersPage] = useState(1);
 
   const loadData = async () => {
     try {
@@ -512,6 +518,25 @@ export default function AdminDashboard() {
 
   if (!currentUser || loading) return <PrinterLoader text="Loading Admin Panel..." fullscreen type="tshirt" />;
 
+  const ITEMS_PER_PAGE = 10;
+
+  // Active page bounding
+  const totalPendingPages = Math.ceil(pendingUsers.length / ITEMS_PER_PAGE);
+  const activePendingPage = Math.min(pendingUsersPage, Math.max(1, totalPendingPages));
+  const startIndexPending = (activePendingPage - 1) * ITEMS_PER_PAGE;
+  const paginatedPendingUsers = pendingUsers.slice(startIndexPending, startIndexPending + ITEMS_PER_PAGE);
+
+  const totalAttendancesPages = Math.ceil(attendances.length / ITEMS_PER_PAGE);
+  const activeAttendancesPage = Math.min(attendancesPage, Math.max(1, totalAttendancesPages));
+  const startIndexAtt = (activeAttendancesPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAttendances = attendances.slice(startIndexAtt, startIndexAtt + ITEMS_PER_PAGE);
+
+  const teamUsers = allUsers.filter(u => u.role !== 'pending');
+  const totalTeamPages = Math.ceil(teamUsers.length / ITEMS_PER_PAGE);
+  const activeTeamPage = Math.min(allUsersPage, Math.max(1, totalTeamPages));
+  const startIndexTeam = (activeTeamPage - 1) * ITEMS_PER_PAGE;
+  const paginatedTeamUsers = teamUsers.slice(startIndexTeam, startIndexTeam + ITEMS_PER_PAGE);
+
   return (
     <>
       <Navbar user={currentUser} />
@@ -552,19 +577,28 @@ export default function AdminDashboard() {
                 {pendingUsers.length === 0 ? (
                   <p className="text-secondary text-sm">No pending users found.</p>
                 ) : (
-                  <div className="flex flex-col gap-4">
-                    {pendingUsers.map(u => (
-                      <div key={u.uid} className="flex justify-between items-center p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
-                        <div>
-                          <div className="font-semibold">{u.displayName}</div>
-                          <div className="text-sm text-secondary">{u.email}</div>
+                  <>
+                    <div className="flex flex-col gap-4 mb-2">
+                      {paginatedPendingUsers.map(u => (
+                        <div key={u.uid} className="flex justify-between items-center p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
+                          <div>
+                            <div className="font-semibold">{u.displayName}</div>
+                            <div className="text-sm text-secondary">{u.email}</div>
+                          </div>
+                          <button onClick={() => handleApprove(u.uid)} className="btn btn-success" style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}>
+                            Approve
+                          </button>
                         </div>
-                        <button onClick={() => handleApprove(u.uid)} className="btn btn-success" style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}>
-                          Approve
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                    <Pagination
+                      totalItems={pendingUsers.length}
+                      itemsPerPage={ITEMS_PER_PAGE}
+                      currentPage={activePendingPage}
+                      onPageChange={setPendingUsersPage}
+                      label="pending users"
+                    />
+                  </>
                 )}
               </div>
 
@@ -578,119 +612,128 @@ export default function AdminDashboard() {
                 {attendances.length === 0 ? (
                   <p className="text-secondary text-sm">No attendance records for today.</p>
                 ) : (
-                  <div className="flex flex-col gap-4">
-                    {attendances.map((a, i) => (
-                      <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
-                        <div className="flex justify-between mb-2">
-                          <div>
-                            <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
-                              <span>{allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}</span>
-                              <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded ${a.workMode === 'remote'
-                                  ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
-                                  : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
-                                }`}>
-                                {a.workMode || 'office'}
-                              </span>
-                            </div>
-                            {allUsers.find(u => u.uid === a.userId)?.designation && (
-                              <div className="text-[10px] text-teal-400 capitalize">
-                                {allUsers.find(u => u.uid === a.userId)?.designation}
-                              </div>
-                            )}
-                          </div>
-                          <span className={`badge ${a.status === 'present' ? 'badge-worker' :
-                            a.status === 'half-day' ? 'badge-half-day' :
-                              a.status === 'leave' ? 'badge-leave' :
-                                'badge-pending'
-                            }`}>
-                            {a.status}
-                          </span>
-                        </div>
-                        {a.punchIn && (
-                          <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
-                            <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
-                            <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Working'}</div>
-                            {a.punchInLocation && officeSettings && (
-                              <div className="col-span-2 text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/10 rounded-lg p-1.5 mt-1 flex items-center gap-1.5">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="flex-shrink-0">
-                                  <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
-                                  <circle cx="12" cy="10" r="3" />
-                                </svg>
-                                <span>
-                                  Verified GPS:{' '}
-                                  <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${a.punchInLocation.latitude},${a.punchInLocation.longitude}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="underline font-semibold hover:text-white text-indigo-400"
-                                    title="View coordinates on Google Maps"
-                                  >
-                                    {(() => {
-                                      const dist = calculateDistance(
-                                        a.punchInLocation.latitude,
-                                        a.punchInLocation.longitude,
-                                        officeSettings.latitude,
-                                        officeSettings.longitude
-                                      );
-                                      return dist >= 1000
-                                        ? `${(dist / 1000).toFixed(2)} km`
-                                        : `${Math.round(dist)}m`;
-                                    })()}{' '}
-                                    from office
-                                  </a>
+                  <>
+                    <div className="flex flex-col gap-4 mb-2">
+                      {paginatedAttendances.map((a, i) => (
+                        <div key={i} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl">
+                          <div className="flex justify-between mb-2">
+                            <div>
+                              <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                                <span>{allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}</span>
+                                <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded ${a.workMode === 'remote'
+                                    ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
+                                    : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
+                                  }`}>
+                                  {a.workMode || 'office'}
                                 </span>
                               </div>
-                            )}
-                            {(() => {
-                              const isWorking = !a.punchOut;
-                              const stats = a.punchOut ? {
-                                totalHours: a.totalHours,
-                                overtimeHours: a.overtimeHours
-                              } : (() => {
-                                 if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
-                                 const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
-                                 const breakMs = getBreakTimeMs(a.breaks, now.getTime());
-                                 const diffHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
-                                return {
-                                  totalHours: diffHrs,
-                                  overtimeHours: diffHrs > 9 ? diffHrs - 9 : 0
-                                };
-                              })();
-                              const totalHrs = Math.floor(stats.totalHours);
-                              const totalMins = Math.round((stats.totalHours - totalHrs) * 60);
-
-                              const otHrs = Math.floor(stats.overtimeHours);
-                              const otMins = Math.round((stats.overtimeHours - otHrs) * 60);
-
-                              const isOnBreak = !!(a.breaks && a.breaks.some(b => b.end === null));
-
-                              return (
-                                <>
-                                  <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold' : ''}>
-                                    Total: {totalHrs}h {totalMins}m <span className="text-[10px] opacity-75">({stats.totalHours.toFixed(2)} hrs)</span> {isWorking && (
-                                      isOnBreak ? (
-                                        <span className="text-[9px] uppercase tracking-wider bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 animate-pulse ml-1 text-amber-400 font-bold">On Break</span>
-                                      ) : (
-                                        <span className="text-[9px] uppercase tracking-wider bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20 animate-pulse ml-1 text-teal-400 font-bold">Live</span>
-                                      )
-                                    )}
-                                  </div>
-                                  <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold flex items-center gap-1.5 flex-wrap' : ''}>
-                                    <span>Overtime: {otHrs}h {otMins}m <span className="text-[10px] opacity-75">({stats.overtimeHours.toFixed(2)} hrs)</span></span>
-                                    {stats.overtimeHours > 0 && (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-danger/10 border border-danger/25 text-pink-400 font-bold">
-                                        ₹{Math.round(stats.overtimeHours * 100)}
-                                      </span>
-                                    )}
-                                  </div>
-                                </>
-                              );
-                            })()}
+                              {allUsers.find(u => u.uid === a.userId)?.designation && (
+                                <div className="text-[10px] text-teal-400 capitalize">
+                                  {allUsers.find(u => u.uid === a.userId)?.designation}
+                                </div>
+                              )}
+                            </div>
+                            <span className={`badge ${a.status === 'present' ? 'badge-worker' :
+                              a.status === 'half-day' ? 'badge-half-day' :
+                                a.status === 'leave' ? 'badge-leave' :
+                                  'badge-pending'
+                              }`}>
+                              {a.status}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          {a.punchIn && (
+                            <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
+                              <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
+                              <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Working'}</div>
+                              {a.punchInLocation && officeSettings && (
+                                <div className="col-span-2 text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/10 rounded-lg p-1.5 mt-1 flex items-center gap-1.5">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="flex-shrink-0">
+                                    <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                  </svg>
+                                  <span>
+                                    Verified GPS:{' '}
+                                    <a
+                                      href={`https://www.google.com/maps/search/?api=1&query=${a.punchInLocation.latitude},${a.punchInLocation.longitude}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="underline font-semibold hover:text-white text-indigo-400"
+                                      title="View coordinates on Google Maps"
+                                    >
+                                      {(() => {
+                                        const dist = calculateDistance(
+                                          a.punchInLocation.latitude,
+                                          a.punchInLocation.longitude,
+                                          officeSettings.latitude,
+                                          officeSettings.longitude
+                                        );
+                                        return dist >= 1000
+                                          ? `${(dist / 1000).toFixed(2)} km`
+                                          : `${Math.round(dist)}m`;
+                                      })()}{' '}
+                                      from office
+                                    </a>
+                                  </span>
+                                </div>
+                              )}
+                              {(() => {
+                                const isWorking = !a.punchOut;
+                                const stats = a.punchOut ? {
+                                  totalHours: a.totalHours,
+                                  overtimeHours: a.overtimeHours
+                                } : (() => {
+                                   if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
+                                   const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
+                                   const breakMs = getBreakTimeMs(a.breaks, now.getTime());
+                                   const diffHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
+                                  return {
+                                    totalHours: diffHrs,
+                                    overtimeHours: diffHrs > 9 ? diffHrs - 9 : 0
+                                  };
+                                })();
+                                const totalHrs = Math.floor(stats.totalHours);
+                                const totalMins = Math.round((stats.totalHours - totalHrs) * 60);
+
+                                const otHrs = Math.floor(stats.overtimeHours);
+                                const otMins = Math.round((stats.overtimeHours - otHrs) * 60);
+
+                                const isOnBreak = !!(a.breaks && a.breaks.some(b => b.end === null));
+
+                                return (
+                                  <>
+                                    <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold' : ''}>
+                                      Total: {totalHrs}h {totalMins}m <span className="text-[10px] opacity-75">({stats.totalHours.toFixed(2)} hrs)</span> {isWorking && (
+                                        isOnBreak ? (
+                                          <span className="text-[9px] uppercase tracking-wider bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 animate-pulse ml-1 text-amber-400 font-bold">On Break</span>
+                                        ) : (
+                                          <span className="text-[9px] uppercase tracking-wider bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20 animate-pulse ml-1 text-teal-400 font-bold">Live</span>
+                                        )
+                                      )}
+                                    </div>
+                                    <div className={stats.overtimeHours > 0 ? 'text-danger font-semibold flex items-center gap-1.5 flex-wrap' : ''}>
+                                      <span>Overtime: {otHrs}h {otMins}m <span className="text-[10px] opacity-75">({stats.overtimeHours.toFixed(2)} hrs)</span></span>
+                                      {stats.overtimeHours > 0 && (
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-danger/10 border border-danger/25 text-pink-400 font-bold">
+                                          ₹{Math.round(stats.overtimeHours * 100)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Pagination
+                      totalItems={attendances.length}
+                      itemsPerPage={ITEMS_PER_PAGE}
+                      currentPage={activeAttendancesPage}
+                      onPageChange={setAttendancesPage}
+                      label="attendance records"
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -698,104 +741,113 @@ export default function AdminDashboard() {
             {/* Team Management */}
             <div className="glass-card mt-8">
               <h2 className="subtitle !text-xl !text-white !mb-4">Manage Team</h2>
-              <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2">
-                {allUsers.filter(u => u.role !== 'pending').map(user => (
-                  <div key={user.uid} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl gap-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-indigo-500/20">
-                        {user.displayName?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      {editingUserId === user.uid ? (
-                        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                          <div className="flex-1">
-                            <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Name</label>
-                            <input
-                              className="input-field !p-1.5 !text-xs w-full"
-                              value={editNameValue}
-                              onChange={(e) => setEditNameValue(e.target.value)}
-                              placeholder="Name"
-                              autoFocus
-                              required
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Designation</label>
-                            <input
-                              className="input-field !p-1.5 !text-xs w-full"
-                              value={editDesignationValue}
-                              onChange={(e) => setEditDesignationValue(e.target.value)}
-                              placeholder="Designation (e.g. Designer)"
-                            />
-                          </div>
-                          <div className="w-28">
-                            <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Work Mode</label>
-                            <select
-                              className="input-field !p-1.5 !text-xs w-full"
-                              value={editWorkModeValue}
-                              onChange={(e) => setEditWorkModeValue(e.target.value as 'office' | 'remote')}
-                            >
-                              <option value="office">Office</option>
-                              <option value="remote">Remote</option>
-                            </select>
-                          </div>
+              <>
+                <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2 mb-2">
+                  {paginatedTeamUsers.map(user => (
+                    <div key={user.uid} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-indigo-500/20">
+                          {user.displayName?.charAt(0).toUpperCase() || 'U'}
                         </div>
-                      ) : (
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-sm truncate flex items-center gap-2 flex-wrap">
-                            <span>{user.displayName}</span>
-                            {user.designation ? (
-                              <span className="text-[10px] font-semibold text-teal-300 bg-teal-500/10 border border-teal-500/25 px-2 py-0.5 rounded-full capitalize">
-                                {user.designation}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-semibold text-secondary bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
-                                No Designation
-                              </span>
-                            )}
-                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${user.workMode === 'remote'
-                                ? 'text-pink-400 bg-pink-500/10 border-pink-500/25'
-                                : 'text-teal-400 bg-teal-500/10 border-teal-500/25'
-                              }`}>
-                              {user.workMode || 'office'}
-                            </span>
-                          </div>
-                          <div className="text-xs text-secondary truncate">{user.email}</div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-4 justify-between sm:justify-end flex-shrink-0">
-                      <span className={`badge ${user.role === 'admin' ? 'badge-admin' : 'badge-worker'}`}>
-                        {user.role}
-                      </span>
-
-                      <div>
                         {editingUserId === user.uid ? (
-                          <div className="flex gap-2">
-                            <button onClick={() => setEditingUserId(null)} className="team-btn-cancel">Cancel</button>
-                            <button onClick={() => handleUpdateProfile(user.uid)} className="team-btn-save">Save</button>
+                          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                            <div className="flex-1">
+                              <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Name</label>
+                              <input
+                                className="input-field !p-1.5 !text-xs w-full"
+                                value={editNameValue}
+                                onChange={(e) => setEditNameValue(e.target.value)}
+                                placeholder="Name"
+                                autoFocus
+                                required
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Designation</label>
+                              <input
+                                className="input-field !p-1.5 !text-xs w-full"
+                                value={editDesignationValue}
+                                onChange={(e) => setEditDesignationValue(e.target.value)}
+                                placeholder="Designation (e.g. Designer)"
+                              />
+                            </div>
+                            <div className="w-28">
+                              <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Work Mode</label>
+                              <select
+                                className="input-field !p-1.5 !text-xs w-full"
+                                value={editWorkModeValue}
+                                onChange={(e) => setEditWorkModeValue(e.target.value as 'office' | 'remote')}
+                              >
+                                <option value="office">Office</option>
+                                <option value="remote">Remote</option>
+                              </select>
+                            </div>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => {
-                              setEditingUserId(user.uid);
-                              setEditNameValue(user.displayName);
-                              setEditDesignationValue(user.designation || '');
-                              setEditWorkModeValue(user.workMode || 'office');
-                            }}
-                            className="team-edit-btn"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-                            Edit
-                          </button>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-sm truncate flex items-center gap-2 flex-wrap">
+                              <span>{user.displayName}</span>
+                              {user.designation ? (
+                                <span className="text-[10px] font-semibold text-teal-300 bg-teal-500/10 border border-teal-500/25 px-2 py-0.5 rounded-full capitalize">
+                                  {user.designation}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold text-secondary bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
+                                  No Designation
+                                </span>
+                              )}
+                              <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${user.workMode === 'remote'
+                                  ? 'text-pink-400 bg-pink-500/10 border-pink-500/25'
+                                  : 'text-teal-400 bg-teal-500/10 border-teal-500/25'
+                                }`}>
+                                {user.workMode || 'office'}
+                              </span>
+                            </div>
+                            <div className="text-xs text-secondary truncate">{user.email}</div>
+                          </div>
                         )}
                       </div>
+
+                      <div className="flex items-center gap-4 justify-between sm:justify-end flex-shrink-0">
+                        <span className={`badge ${user.role === 'admin' ? 'badge-admin' : 'badge-worker'}`}>
+                          {user.role}
+                        </span>
+
+                        <div>
+                          {editingUserId === user.uid ? (
+                            <div className="flex gap-2">
+                              <button onClick={() => setEditingUserId(null)} className="team-btn-cancel">Cancel</button>
+                              <button onClick={() => handleUpdateProfile(user.uid)} className="team-btn-save">Save</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setEditingUserId(user.uid);
+                                setEditNameValue(user.displayName);
+                                setEditDesignationValue(user.designation || '');
+                                setEditWorkModeValue(user.workMode || 'office');
+                              }}
+                              className="team-edit-btn"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                              </svg>
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                <Pagination
+                  totalItems={teamUsers.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  currentPage={activeTeamPage}
+                  onPageChange={setAllUsersPage}
+                  label="team members"
+                />
+              </>
             </div>
 
             {/* Office Location Settings */}

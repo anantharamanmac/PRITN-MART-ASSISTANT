@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
+import Pagination from '@/components/Pagination';
 
 interface Shift {
   id: string;
@@ -28,6 +29,7 @@ export default function OvertimeCalculator() {
     }
   ]);
   const [overtimeRate, setOvertimeRate] = useState<number>(100);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const unsubscribe = listenToAuthChanges((firebaseUser, appUser) => {
@@ -78,6 +80,8 @@ export default function OvertimeCalculator() {
     }));
   };
 
+  const ITEMS_PER_PAGE = 10;
+
   const addShift = () => {
     const lastShift = shifts[shifts.length - 1];
     let nextDate = new Date();
@@ -98,11 +102,22 @@ export default function OvertimeCalculator() {
         actualPunchOut: '18:00'
       }
     ]);
+
+    // Go to the last page where the new shift will be added
+    const newTotalPages = Math.ceil((shifts.length + 1) / ITEMS_PER_PAGE);
+    setCurrentPage(newTotalPages);
   };
 
   const removeShift = (id: string) => {
     if (shifts.length === 1) return;
-    setShifts(prev => prev.filter(s => s.id !== id));
+    setShifts(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      const newTotalPages = Math.ceil(updated.length / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages) {
+        setCurrentPage(Math.max(1, newTotalPages));
+      }
+      return updated;
+    });
   };
 
   // Calculate stats for a single shift in decimal hours
@@ -156,6 +171,12 @@ export default function OvertimeCalculator() {
   };
 
   const stats = aggregateStats();
+
+  // Active page bounding
+  const totalPages = Math.ceil(shifts.length / ITEMS_PER_PAGE);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const startIndex = (activePage - 1) * ITEMS_PER_PAGE;
+  const paginatedShifts = shifts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const formatHrsMins = (decimalHrs: number) => {
     const hrs = Math.floor(decimalHrs);
@@ -253,7 +274,7 @@ export default function OvertimeCalculator() {
                   </tr>
                 </thead>
                 <tbody>
-                  {shifts.map((shift, index) => {
+                  {paginatedShifts.map((shift, index) => {
                     const shiftStats = calculateShiftStats(shift);
                     return (
                       <tr key={shift.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.01] transition-colors">
@@ -326,6 +347,14 @@ export default function OvertimeCalculator() {
               </table>
             </div>
 
+            <Pagination
+              totalItems={shifts.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              currentPage={activePage}
+              onPageChange={setCurrentPage}
+              label="logged days"
+            />
+
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/5">
               <button onClick={addShift} className="btn btn-outline !text-xs !py-2 !px-4">
                 ➕ Add Day / Shift
@@ -352,13 +381,13 @@ export default function OvertimeCalculator() {
           {/* Mobile View */}
           <div className="calculator-mobile-view">
             <div className="flex flex-col gap-4">
-              {shifts.map((shift, index) => {
+              {paginatedShifts.map((shift, index) => {
                 const shiftStats = calculateShiftStats(shift);
                 return (
                   <div key={shift.id} className="mobile-shift-card">
                     {/* Header */}
                     <div className="mobile-shift-card-header">
-                      <span className="mobile-shift-card-title">Day / Shift #{index + 1}</span>
+                      <span className="mobile-shift-card-title">Day / Shift #{startIndex + index + 1}</span>
                       <button
                         onClick={() => removeShift(shift.id)}
                         disabled={shifts.length === 1}
@@ -426,6 +455,14 @@ export default function OvertimeCalculator() {
                 );
               })}
             </div>
+
+            <Pagination
+              totalItems={shifts.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              currentPage={activePage}
+              onPageChange={setCurrentPage}
+              label="logged days"
+            />
 
             {/* Mobile Actions */}
             <div className="mobile-action-buttons">

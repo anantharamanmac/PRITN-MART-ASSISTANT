@@ -6,6 +6,7 @@ import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getAllUsers, getAttendanceForMonth, AttendanceRecord, getBreakTimeMs } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
+import Pagination from '@/components/Pagination';
 
 export default function AdminHours() {
   const router = useRouter();
@@ -28,6 +29,14 @@ export default function AdminHours() {
     return `${d.getFullYear()}-${mm}`;
   };
   const [searchMonth, setSearchMonth] = useState(currentMonthStr());
+
+  // Pagination State
+  const [reportPage, setReportPage] = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setReportPage(1);
+  }, [searchName, searchMonth]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -140,6 +149,12 @@ export default function AdminHours() {
   const totalHoursLogged = userStatsList.reduce((sum, u) => sum + u.totalHours, 0);
   const totalOvertimeLogged = userStatsList.reduce((sum, u) => sum + u.overtimeHours, 0);
 
+  const ITEMS_PER_PAGE = 10;
+  const totalReportPages = Math.ceil(userStatsList.length / ITEMS_PER_PAGE);
+  const activeReportPage = Math.min(reportPage, Math.max(1, totalReportPages));
+  const startIndex = (activeReportPage - 1) * ITEMS_PER_PAGE;
+  const paginatedUserStatsList = userStatsList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <>
       <Navbar user={currentUser} />
@@ -248,65 +263,74 @@ export default function AdminHours() {
               {userStatsList.length === 0 ? (
                 <p className="text-secondary text-sm">No employees match your search criteria.</p>
               ) : (
-                <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2">
-                  {userStatsList.map(({ user, workingDays, presentDays, halfDays, leaveDays, totalHours, overtimeHours }) => (
-                    <div key={user.uid} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Worker Identity info */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-500/20">
-                          {user.displayName?.charAt(0).toUpperCase() || 'W'}
+                <>
+                  <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 mb-2">
+                    {paginatedUserStatsList.map(({ user, workingDays, presentDays, halfDays, leaveDays, totalHours, overtimeHours }) => (
+                      <div key={user.uid} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {/* Worker Identity info */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-500/20">
+                            {user.displayName?.charAt(0).toUpperCase() || 'W'}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                              <span>{user.displayName}</span>
+                              {user.designation && (
+                                <span className="text-[10px] font-semibold text-teal-300 bg-teal-500/10 border border-teal-500/25 px-2 py-0.5 rounded-full capitalize">
+                                  {user.designation}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-secondary">{user.email}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
-                            <span>{user.displayName}</span>
-                            {user.designation && (
-                              <span className="text-[10px] font-semibold text-teal-300 bg-teal-500/10 border border-teal-500/25 px-2 py-0.5 rounded-full capitalize">
-                                {user.designation}
-                              </span>
+
+                        {/* Stats grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1 md:flex-none justify-items-start md:justify-items-end text-sm">
+                          <div>
+                            <div className="text-[10px] text-secondary uppercase font-bold">Working Days</div>
+                            <div className="font-semibold text-white mt-0.5 flex items-baseline gap-1">
+                              <span>{workingDays}</span>
+                              <span className="text-[10px] text-secondary">days</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-secondary uppercase font-bold">Present / Half / Leave</div>
+                            <div className="font-semibold text-white mt-0.5 flex gap-1 text-xs">
+                              <span className="text-success">{presentDays}p</span>
+                              <span className="text-amber-500">{halfDays}h</span>
+                              <span className="text-danger">{leaveDays}l</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-secondary uppercase font-bold">Total Hours</div>
+                            <div className="font-semibold text-gradient mt-0.5">
+                              {formatHrsMins(totalHours)} <span className="text-[10px] text-secondary font-normal">({totalHours.toFixed(1)}h)</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-secondary uppercase font-bold">Overtime</div>
+                            <div className={`font-semibold mt-0.5 ${overtimeHours > 0 ? 'text-pink-500 font-extrabold' : 'text-secondary'}`}>
+                              {formatHrsMins(overtimeHours)} <span className="text-[10px] opacity-75 font-normal">({overtimeHours.toFixed(1)}h)</span>
+                            </div>
+                            {overtimeHours > 0 && (
+                              <div className="text-[10px] text-pink-400 font-semibold mt-0.5">
+                                Est. Pay: ₹{Math.round(overtimeHours * 100).toLocaleString('en-IN')}
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs text-secondary">{user.email}</div>
                         </div>
                       </div>
-
-                      {/* Stats grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1 md:flex-none justify-items-start md:justify-items-end text-sm">
-                        <div>
-                          <div className="text-[10px] text-secondary uppercase font-bold">Working Days</div>
-                          <div className="font-semibold text-white mt-0.5 flex items-baseline gap-1">
-                            <span>{workingDays}</span>
-                            <span className="text-[10px] text-secondary">days</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-secondary uppercase font-bold">Present / Half / Leave</div>
-                          <div className="font-semibold text-white mt-0.5 flex gap-1 text-xs">
-                            <span className="text-success">{presentDays}p</span>
-                            <span className="text-amber-500">{halfDays}h</span>
-                            <span className="text-danger">{leaveDays}l</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-secondary uppercase font-bold">Total Hours</div>
-                          <div className="font-semibold text-gradient mt-0.5">
-                            {formatHrsMins(totalHours)} <span className="text-[10px] text-secondary font-normal">({totalHours.toFixed(1)}h)</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-secondary uppercase font-bold">Overtime</div>
-                          <div className={`font-semibold mt-0.5 ${overtimeHours > 0 ? 'text-pink-500 font-extrabold' : 'text-secondary'}`}>
-                            {formatHrsMins(overtimeHours)} <span className="text-[10px] opacity-75 font-normal">({overtimeHours.toFixed(1)}h)</span>
-                          </div>
-                          {overtimeHours > 0 && (
-                            <div className="text-[10px] text-pink-400 font-semibold mt-0.5">
-                              Est. Pay: ₹{Math.round(overtimeHours * 100).toLocaleString('en-IN')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <Pagination
+                    totalItems={userStatsList.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    currentPage={activeReportPage}
+                    onPageChange={setReportPage}
+                    label="employees"
+                  />
+                </>
               )}
             </div>
           </div>
