@@ -17,6 +17,9 @@ export interface AppUser {
 
 export const signInWithGoogle = async () => {
   try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('last_welcome_popup_date');
+    }
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
 
@@ -47,6 +50,9 @@ export const signInWithGoogle = async () => {
 
 export const signOutUser = async () => {
   try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('last_welcome_popup_date');
+    }
     await firebaseSignOut(auth);
   } catch (error) {
     console.error("Error signing out:", error);

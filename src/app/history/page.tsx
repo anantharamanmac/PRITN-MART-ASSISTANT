@@ -18,7 +18,12 @@ export default function HistoryPage() {
   // Search and Filter States
   const [searchDate, setSearchDate] = useState('');
 
-  const [searchMonth, setSearchMonth] = useState('');
+  const [searchMonth, setSearchMonth] = useState(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
   const [filterStatus, setFilterStatus] = useState('all');
 
   // Pagination States
@@ -27,8 +32,10 @@ export default function HistoryPage() {
 
   // Reset pages when filters change
   useEffect(() => {
-    setAttendancePage(1);
-    setTaskPage(1);
+    setTimeout(() => {
+      setAttendancePage(1);
+      setTaskPage(1);
+    }, 0);
   }, [searchDate, searchMonth, filterStatus]);
 
   const formatHrsMins = (decimalHrs: number) => {

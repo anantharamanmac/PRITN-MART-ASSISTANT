@@ -621,8 +621,8 @@ export default function AdminDashboard() {
                               <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
                                 <span>{allUsers.find(u => u.uid === a.userId)?.displayName || 'Unknown Worker'}</span>
                                 <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded ${a.workMode === 'remote'
-                                    ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
-                                    : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
+                                  ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
+                                  : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
                                   }`}>
                                   {a.workMode || 'office'}
                                 </span>
@@ -682,10 +682,10 @@ export default function AdminDashboard() {
                                   totalHours: a.totalHours,
                                   overtimeHours: a.overtimeHours
                                 } : (() => {
-                                   if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
-                                   const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
-                                   const breakMs = getBreakTimeMs(a.breaks, now.getTime());
-                                   const diffHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
+                                  if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
+                                  const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
+                                  const breakMs = getBreakTimeMs(a.breaks, now.getTime());
+                                  const diffHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));
                                   return {
                                     totalHours: diffHrs,
                                     overtimeHours: diffHrs > 9 ? diffHrs - 9 : 0
@@ -797,8 +797,8 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                               <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${user.workMode === 'remote'
-                                  ? 'text-pink-400 bg-pink-500/10 border-pink-500/25'
-                                  : 'text-teal-400 bg-teal-500/10 border-teal-500/25'
+                                ? 'text-pink-400 bg-pink-500/10 border-pink-500/25'
+                                : 'text-teal-400 bg-teal-500/10 border-teal-500/25'
                                 }`}>
                                 {user.workMode || 'office'}
                               </span>

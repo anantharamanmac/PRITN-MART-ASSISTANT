@@ -1482,10 +1482,12 @@ select.input-field option {
     transform: scale(0.95);
     opacity: 0.8;
   }
+
   50% {
     transform: scale(1.05);
     opacity: 0.2;
   }
+
   100% {
     transform: scale(0.95);
     opacity: 0.8;
@@ -1496,9 +1498,11 @@ select.input-field option {
   0% {
     transform: rotate(0deg) scale(0.98);
   }
+
   50% {
     transform: rotate(180deg) scale(1.02);
   }
+
   100% {
     transform: rotate(360deg) scale(0.98);
   }
@@ -1540,11 +1544,11 @@ select.input-field option {
   border-radius: 16px;
   padding: 1.5px;
   background: linear-gradient(135deg, #6366f1, #d946ef, #14b8a6);
-  -webkit-mask: 
-     linear-gradient(#fff 0 0) content-box, 
-     linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  mask-composite: exclude;
   pointer-events: none;
   transition: opacity 0.4s ease;
   opacity: 0.6;
@@ -1613,23 +1617,32 @@ select.input-field option {
 
 /* Screen Shake Animation */
 .animate-shake {
-  animation: shake-screen 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake-screen 0.5s cubic-bezier(.36, .07, .19, .97) both;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   perspective: 1000px;
 }
 
 @keyframes shake-screen {
-  10%, 90% {
+
+  10%,
+  90% {
     transform: translate3d(-2px, 0, 0);
   }
-  20%, 80% {
+
+  20%,
+  80% {
     transform: translate3d(4px, 0, 0);
   }
-  30%, 50%, 70% {
+
+  30%,
+  50%,
+  70% {
     transform: translate3d(-8px, 0, 0);
   }
-  40%, 60% {
+
+  40%,
+  60% {
     transform: translate3d(8px, 0, 0);
   }
 }
@@ -1639,7 +1652,7 @@ select.input-field option {
   .calculator-desktop-view {
     display: none !important;
   }
-  
+
   .calculator-mobile-view {
     display: block !important;
   }
@@ -1679,6 +1692,7 @@ select.input-field option {
     .mobile-shift-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
     .mobile-shift-field-full {
       grid-column: span 2;
     }
@@ -1738,7 +1752,7 @@ select.input-field option {
   .calculator-desktop-view {
     display: block !important;
   }
-  
+
   .calculator-mobile-view {
     display: none !important;
   }
@@ -1821,5 +1835,480 @@ select.input-field option {
     align-items: center;
     text-align: center;
     gap: 0.75rem;
+  }
+}
+
+/* Premium Welcome Popup Styles */
+.welcome-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(4, 4, 6, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 10000;
+  animation: welcomeOverlayFadeIn 0.35s ease-out forwards;
+}
+
+.welcome-modal-card {
+  position: relative;
+  max-width: 440px;
+  width: 90%;
+  padding: 3rem 2.25rem 2.5rem 2.25rem;
+  border-radius: 32px;
+  background: linear-gradient(135deg, rgba(15, 15, 22, 0.75) 0%, rgba(22, 22, 34, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 30px 80px -15px rgba(0, 0, 0, 0.8),
+    0 0 60px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-align: center;
+  overflow: hidden;
+  animation: welcomeModalScaleUp 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Background Grids & Orbs */
+.welcome-modal-grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 0.7;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.welcome-modal-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.22;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.welcome-modal-orb-1 {
+  width: 160px;
+  height: 160px;
+  background: var(--primary);
+  top: -40px;
+  left: -40px;
+  animation: welcomeOrbMove1 10s ease-in-out infinite alternate;
+}
+
+.welcome-modal-orb-2 {
+  width: 180px;
+  height: 180px;
+  background: var(--secondary);
+  bottom: -40px;
+  right: -40px;
+  animation: welcomeOrbMove2 12s ease-in-out infinite alternate;
+}
+
+.welcome-modal-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  border-radius: 32px 32px 0 0;
+  z-index: 1;
+}
+
+.welcome-modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+.welcome-modal-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: rotate(90deg) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* System tag */
+.welcome-modal-system-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(20, 184, 166, 0.07);
+  border: 1px solid rgba(20, 184, 166, 0.18);
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 10px rgba(20, 184, 166, 0.25);
+  z-index: 1;
+}
+
+.welcome-modal-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: welcomePulseDot 1.6s infinite;
+}
+
+/* Avatar Wrapper & Spinner Tech Rings */
+.welcome-modal-avatar-wrapper {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 1.75rem auto;
+  z-index: 1;
+}
+
+.welcome-modal-tech-ring-outer {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px dashed rgba(99, 102, 241, 0.35);
+  animation: welcomeSpinClockwise 30s linear infinite;
+}
+
+.welcome-modal-tech-ring-inner {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 1.5px dotted rgba(236, 72, 153, 0.4);
+  animation: welcomeSpinCounterClockwise 18s linear infinite;
+}
+
+.welcome-modal-avatar-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #0f0f15;
+  overflow: hidden;
+  background: #111118;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-modal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.welcome-modal-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: #ffffff;
+}
+
+/* Heading & Typography */
+.welcome-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 1.25rem;
+  line-height: 1.35;
+  position: relative;
+  z-index: 1;
+}
+
+.welcome-modal-user-name {
+  display: inline-block;
+  font-size: 1.85rem;
+  margin-top: 0.25rem;
+  text-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.welcome-modal-wave {
+  display: inline-block;
+  margin-left: 8px;
+  animation: welcomeWave 2.2s ease-in-out infinite;
+  transform-origin: 70% 70%;
+}
+
+/* Quote container */
+.welcome-modal-quote-container {
+  position: relative;
+  padding: 0.75rem 1.75rem;
+  margin: 0 auto 1.75rem auto;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  max-width: 92%;
+  z-index: 1;
+}
+
+.welcome-modal-quote-mark {
+  font-size: 2.25rem;
+  font-family: Georgia, serif;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.12);
+  line-height: 0;
+  position: absolute;
+}
+
+.welcome-modal-quote-container .welcome-modal-quote-mark:first-of-type {
+  top: 10px;
+  left: 10px;
+}
+
+.welcome-modal-quote-container .welcome-modal-quote-mark:last-of-type {
+  bottom: 0px;
+  right: 10px;
+}
+
+.welcome-modal-subtitle {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Date Display Badge */
+.welcome-modal-date-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.15rem;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 2.25rem;
+  z-index: 1;
+}
+
+.welcome-modal-date-icon {
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  opacity: 0.9;
+}
+
+/* Futuristic enter workspace button */
+.welcome-modal-btn {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 4px 20px var(--primary-glow),
+    0 0 25px rgba(236, 72, 153, 0.15);
+  transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 1;
+}
+
+.welcome-modal-btn-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.25),
+      transparent);
+  transition: 0.5s ease-out;
+}
+
+.welcome-modal-btn:hover {
+  transform: translateY(-2.5px);
+  box-shadow:
+    0 8px 30px var(--primary-glow),
+    0 0 35px rgba(236, 72, 153, 0.3);
+  filter: brightness(1.1);
+}
+
+.welcome-modal-btn:hover .welcome-modal-btn-glow {
+  left: 100%;
+}
+
+.welcome-modal-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.welcome-modal-btn-arrow {
+  transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.welcome-modal-btn:hover .welcome-modal-btn-arrow {
+  transform: translateX(5px);
+}
+
+.welcome-modal-overlay.closing {
+  animation: welcomeOverlayFadeOut 0.3s ease-in forwards;
+}
+
+.welcome-modal-card.closing {
+  animation: welcomeModalScaleDown 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Animations */
+@keyframes welcomeOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes welcomeOverlayFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes welcomeModalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes welcomeModalScaleDown {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(15px);
+  }
+}
+
+@keyframes welcomeOrbMove1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(30px, 20px) scale(1.15);
+  }
+}
+
+@keyframes welcomeOrbMove2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(-30px, -20px) scale(1.15);
+  }
+}
+
+@keyframes welcomePulseDot {
+
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+    box-shadow: 0 0 8px var(--accent);
+  }
+}
+
+@keyframes welcomeSpinClockwise {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes welcomeSpinCounterClockwise {
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes welcomeWave {
+  0% {
+    transform: rotate(0.0deg)
+  }
+
+  10% {
+    transform: rotate(14.0deg)
+  }
+
+  20% {
+    transform: rotate(-8.0deg)
+  }
+
+  30% {
+    transform: rotate(14.0deg)
+  }
+
+  40% {
+    transform: rotate(-4.0deg)
+  }
+
+  50% {
+    transform: rotate(10.0deg)
+  }
+
+  60% {
+    transform: rotate(0.0deg)
+  }
+
+  100% {
+    transform: rotate(0.0deg)
   }
 }

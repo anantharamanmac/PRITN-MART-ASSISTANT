@@ -113,7 +113,7 @@ export default function Home() {
       <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 translate-y-1/2 w-80 h-80 bg-pink-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '6s' }} />
 
       <div className="glass-card max-w-md w-full animate-fade-in flex flex-col items-center text-center p-8 sm:p-10 relative overflow-hidden border-white/10 shadow-[0_15px_35px_rgba(0,0,0,0.4)]">
-        
+
         {/* Glow Accent Bar */}
         <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
 
@@ -139,8 +139,8 @@ export default function Home() {
 
         {/* Premium Google Sign-in Button */}
         <div className="w-full flex justify-center">
-          <button 
-            onClick={handleLogin} 
+          <button
+            onClick={handleLogin}
             className="stylish-google-btn"
           >
             {/* Left circular white background badge for Google Logo */}

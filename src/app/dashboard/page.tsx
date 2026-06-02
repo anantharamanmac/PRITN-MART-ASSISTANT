@@ -7,6 +7,7 @@ import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings, pauseWork, resumeWork, getBreakTimeMs } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
+import WelcomeModal from '@/components/WelcomeModal';
 
 interface Particle {
   id: number;
@@ -454,6 +455,7 @@ export default function WorkerDashboard() {
 
   return (
     <>
+      <WelcomeModal displayName={user.displayName} photoURL={user.photoURL} />
       <Navbar user={user} />
       <main className={`container animate-fade-in ${isShaking ? 'animate-shake' : ''}`}>
         <h1 className="title !text-4xl mb-8">Worker Dashboard</h1>
@@ -467,8 +469,8 @@ export default function WorkerDashboard() {
               <p className="text-sm text-secondary">{getTodayDateString()}</p>
               <span className="w-1 h-1 rounded-full bg-white/30" />
               <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${user.workMode === 'remote'
-                  ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
-                  : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
+                ? 'text-pink-400 bg-pink-500/10 border border-pink-500/20'
+                : 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
                 }`}>
                 {user.workMode === 'remote' ? 'Remote Shift' : 'Office Shift'}
               </span>
@@ -486,8 +488,8 @@ export default function WorkerDashboard() {
                 </div>
                 <div className="mt-2 flex gap-2 flex-wrap justify-center">
                   <span className={`badge ${attendance.status === 'present' ? 'badge-worker' :
-                      attendance.status === 'half-day' ? 'badge-half-day' :
-                        'badge-leave'
+                    attendance.status === 'half-day' ? 'badge-half-day' :
+                      'badge-leave'
                     }`}>
                     {attendance.status}
                   </span>
@@ -506,10 +508,10 @@ export default function WorkerDashboard() {
                     onClick={(e) => isPunchedIn ? handlePunchOut(e) : handlePunchIn(e)}
                     disabled={verifyingLocation}
                     className={`w-48 h-48 rounded-full flex flex-col items-center justify-center text-center overflow-hidden text-xl font-bold transition-all duration-300 ${verifyingLocation
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 opacity-80 cursor-not-allowed shadow-[0_0_30px_rgba(99,102,241,0.4)] border-4 border-purple-400'
-                        : isPunchedIn
-                          ? 'bg-gradient-to-br from-orange-500 to-red-600 shadow-[0_0_30px_rgba(239,68,68,0.4)] hover:shadow-[0_0_50px_rgba(239,68,68,0.6)] border-4 border-red-400'
-                          : 'bg-gradient-to-br from-teal-400 to-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] border-4 border-emerald-400'
+                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 opacity-80 cursor-not-allowed shadow-[0_0_30px_rgba(99,102,241,0.4)] border-4 border-purple-400'
+                      : isPunchedIn
+                        ? 'bg-gradient-to-br from-orange-500 to-red-600 shadow-[0_0_30px_rgba(239,68,68,0.4)] hover:shadow-[0_0_50px_rgba(239,68,68,0.6)] border-4 border-red-400'
+                        : 'bg-gradient-to-br from-teal-400 to-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] border-4 border-emerald-400'
                       }`}
                   >
                     <span className="text-white drop-shadow-md leading-tight px-4">
@@ -575,7 +577,7 @@ export default function WorkerDashboard() {
                     Apply for Leave
                   </button>
                 )}
-                
+
                 <a
                   href="/overtime-calculator"
                   target="_blank"
