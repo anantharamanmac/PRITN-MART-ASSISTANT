@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import gitHistory from '@/lib/git-history.json';
 
 const execAsync = promisify(exec);
 
 export async function GET() {
   try {
-    const changelogs = [];
+    const changelogs: any[] = [];
 
-    // 1. Check for Uncommitted Working Directory changes using `git status`
+    // 1. Check for Uncommitted Working Directory changes using `git status` (development only)
     try {
       const { stdout: statusOut } = await execAsync('git status --porcelain');
       const statusLines = statusOut.split('\n').map(l => l.trim()).filter(Boolean);
@@ -37,10 +38,12 @@ export async function GET() {
         });
       }
     } catch (statusError) {
-      console.warn("Git status check failed:", statusError);
+      // Quietly ignore in serverless or environments without git
+      console.log("Git status check skipped (non-dev or serverless environment).");
     }
 
-    // 2. Fetch recent commits history
+    // 2. Try to fetch live commit history dynamically
+    let commitsLoaded = false;
     try {
       const { stdout: logOut } = await execAsync('git log -n 12 --pretty=format:"%h|%s|%an|%ad" --date=short');
       const logLines = logOut.split('\n').filter(Boolean);
@@ -77,8 +80,23 @@ export async function GET() {
           createdAt: { toMillis: () => dateObj.getTime() }
         });
       }
+      commitsLoaded = true;
     } catch (logError) {
-      console.warn("Git log fetch failed:", logError);
+      console.log("Live git log unavailable, falling back to build-time history.");
+    }
+
+    // 3. Fallback: load build-time compiled git-history.json if live git failed
+    if (!commitsLoaded) {
+      if (gitHistory && gitHistory.length > 0) {
+        // Convert build-time format to match expected structures
+        const mappedHistory = gitHistory.map((item: any) => ({
+          ...item,
+          createdAt: { toMillis: () => item.createdAt?.seconds * 1000 || Date.now() }
+        }));
+        changelogs.push(...mappedHistory);
+      } else {
+        console.warn("No build-time git history cached.");
+      }
     }
 
     return NextResponse.json({ success: true, changelogs });
