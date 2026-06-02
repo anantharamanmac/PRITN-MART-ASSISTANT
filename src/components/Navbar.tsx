@@ -27,7 +27,7 @@ export default function Navbar({ user }: { user: AppUser }) {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const fb = change.doc.data();
-          
+
           // Avoid triggering self-notifications for reports filed by the admin
           if (fb.userId === user.uid) return;
 
@@ -35,8 +35,8 @@ export default function Navbar({ user }: { user: AppUser }) {
           if (fb.type !== 'bug') return;
 
           // Compute created timestamp, fallback to Date.now() for optimistic local updates
-          const createdAtMs = fb.createdAt?.toMillis 
-            ? fb.createdAt.toMillis() 
+          const createdAtMs = fb.createdAt?.toMillis
+            ? fb.createdAt.toMillis()
             : Date.now();
 
           // Only display notifications for reports filed during the active session
@@ -79,8 +79,8 @@ export default function Navbar({ user }: { user: AppUser }) {
       <div className="nav-links">
         <Link href="/dashboard" className={`nav-link ${pathname === '/dashboard' ? 'active' : ''}`}>Dashboard</Link>
         <Link href="/history" className={`nav-link ${pathname === '/history' ? 'active' : ''}`}>History</Link>
-        <Link 
-          href="/developer" 
+        <Link
+          href="/developer"
           className={`nav-link ${pathname === '/developer' ? 'active' : ''}`}
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
         >

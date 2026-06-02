@@ -2328,3 +2328,404 @@ select.input-field option {
   flex-shrink: 0;
   line-height: 1;
 }
+
+/* --- DEVELOPER LOGS & FEEDBACK BOARD STYLES --- */
+
+.dev-timeline {
+  position: relative;
+  padding: 1rem 0;
+}
+
+.dev-timeline-item {
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.dev-timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.dev-timeline-line {
+  position: absolute;
+  left: 7px;
+  top: 14px;
+  bottom: -40px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dev-timeline-item:last-child .dev-timeline-line {
+  display: none;
+}
+
+.dev-timeline-bullet {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-color);
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 10px currentColor;
+  z-index: 5;
+  transition: transform 0.3s ease;
+}
+
+.dev-timeline-item:hover .dev-timeline-bullet {
+  transform: scale(1.2);
+}
+
+.dev-timeline-card {
+  margin-bottom: 0;
+}
+
+.dev-timeline-list {
+  list-style: none;
+  padding: 0;
+}
+
+.dev-timeline-list li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.dev-timeline-list li:last-child {
+  margin-bottom: 0;
+}
+
+.sticky-top-form {
+  position: static;
+}
+
+.feedback-item-card {
+  margin-bottom: 0;
+}
+
+.feedback-item-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.4);
+}
+
+.animate-spin {
+  animation: dev-spin 1s linear infinite;
+}
+
+@keyframes dev-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: dev-spin 0.8s linear infinite;
+  margin-right: 0.5rem;
+}
+
+.dev-log-badge {
+  font-size: 10px !important;
+  padding: 0.15rem 0.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  align-self: flex-start !important;
+  white-space: nowrap !important;
+}
+
+.feedback-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50% !important;
+  background-color: #1e1e2d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.feedback-user-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+
+@media (max-width: 767px) {
+  .dev-log-badge {
+    font-size: 9px !important;
+    padding: 0.1rem 0.4rem !important;
+    width: fit-content !important;
+    align-self: flex-start !important;
+  }
+  
+  .feedback-user-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .glass-card {
+    padding: 1rem !important;
+  }
+  
+  /* Only target the board filter buttons to keep them small and inline on mobile */
+  .feedback-filter-btn {
+    width: auto !important;
+    padding: 0.35rem 0.6rem !important;
+    font-size: 10px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sticky-top-form {
+    position: sticky;
+    top: 100px;
+    z-index: 10;
+  }
+}
+
+/* --- CUSTOM 404 STYLING: PRINTING CLOTHES THEME --- */
+.notfound-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.notfound-card {
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  border-color: rgba(236, 72, 153, 0.15);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45);
+}
+
+.notfound-canvas {
+  position: relative;
+  width: 260px;
+  height: 220px;
+  margin: 0 auto 2rem auto;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Designer Grid Lines */
+.notfound-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: 1;
+}
+
+/* Laser Guide Line */
+.notfound-laser {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--secondary);
+  box-shadow: 0 0 12px var(--secondary);
+  z-index: 8;
+  animation: notfound-laser-move 3.5s infinite ease-in-out;
+}
+
+/* Glitch T-Shirt Design container */
+.notfound-tshirt-container {
+  position: relative;
+  z-index: 5;
+  width: 120px;
+  height: 120px;
+}
+
+.notfound-tshirt-svg {
+  filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.25));
+}
+
+.notfound-tshirt-outline {
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-dasharray: 4 4;
+}
+
+/* Screen registration offset prints for visual glitch look */
+.notfound-offset-cyan {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  opacity: 0.7;
+  transform: translate(-3px, -2px);
+  animation: notfound-wiggle-c 2s infinite alternate ease-in-out;
+}
+
+.notfound-offset-magenta {
+  fill: none;
+  stroke: var(--secondary);
+  stroke-width: 1.5;
+  opacity: 0.7;
+  transform: translate(3px, 2px);
+  animation: notfound-wiggle-m 2s infinite alternate ease-in-out;
+}
+
+.notfound-offset-primary {
+  fill: rgba(99, 102, 241, 0.06);
+  stroke: var(--primary);
+  stroke-width: 2;
+  transition: all 0.3s ease;
+}
+
+/* 404 Misaligned Ink Text on Shirt */
+.notfound-shirt-text {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -1px;
+}
+
+.notfound-text-cyan {
+  fill: var(--accent);
+  opacity: 0.75;
+  transform: translate(-2px, -1.5px);
+  animation: notfound-wiggle-c 2.5s infinite alternate ease-in-out;
+}
+
+.notfound-text-magenta {
+  fill: var(--secondary);
+  opacity: 0.75;
+  transform: translate(2px, 1.5px);
+  animation: notfound-wiggle-m 2.5s infinite alternate ease-in-out;
+}
+
+.notfound-text-white {
+  fill: #ffffff;
+}
+
+/* Rotating screen alignment marks */
+.notfound-registration-mark {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  z-index: 6;
+  opacity: 0.4;
+  color: var(--accent);
+  animation: notfound-spin 6s linear infinite;
+}
+
+.notfound-reg-tl { top: 12px; left: 12px; }
+.notfound-reg-tr { top: 12px; right: 12px; }
+.notfound-reg-bl { bottom: 12px; left: 12px; }
+.notfound-reg-br { bottom: 12px; right: 12px; }
+
+/* Dimensions/Warning tags in the canvas */
+.notfound-canvas-tag {
+  position: absolute;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  z-index: 2;
+}
+
+.notfound-tag-top { top: 8px; left: 50%; transform: translateX(-50%); }
+.notfound-tag-bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
+.notfound-tag-left { left: 8px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+.notfound-tag-right { right: 8px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+
+/* Playful details */
+.notfound-ink-alarm {
+  position: absolute;
+  top: 15px;
+  right: 50px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 6;
+}
+
+.notfound-alarm-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--danger);
+  border-radius: 50%;
+  animation: notfound-blink 1s infinite steps(2);
+}
+
+.notfound-alarm-text {
+  font-size: 8px;
+  color: #fca5a5;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Keyframes */
+@keyframes notfound-laser-move {
+  0%, 100% { top: 10%; }
+  50% { top: 90%; }
+}
+
+@keyframes notfound-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes notfound-blink {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+@keyframes notfound-wiggle-c {
+  0% { transform: translate(-3px, -2px); }
+  100% { transform: translate(-1.5px, -0.5px); }
+}
+
+@keyframes notfound-wiggle-m {
+  0% { transform: translate(3px, 2px); }
+  100% { transform: translate(1.5px, 0.5px); }
+}
+
+@media (max-width: 767px) {
+  .notfound-wrapper {
+    padding: 1.25rem;
+  }
+  
+  .notfound-canvas {
+    width: 220px;
+    height: 190px;
+  }
+  
+  .notfound-tshirt-container {
+    width: 100px;
+    height: 100px;
+  }
+}

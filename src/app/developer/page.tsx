@@ -577,25 +577,25 @@ export default function DeveloperPage() {
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => setFeedbackFilter('all')}
-                    className={`btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'all' ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn feedback-filter-btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'all' ? 'btn-primary' : 'btn-outline'}`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => setFeedbackFilter('suggestions')}
-                    className={`btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'suggestions' ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn feedback-filter-btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'suggestions' ? 'btn-primary' : 'btn-outline'}`}
                   >
                     Suggestions
                   </button>
                   <button
                     onClick={() => setFeedbackFilter('bugs')}
-                    className={`btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'bugs' ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn feedback-filter-btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'bugs' ? 'btn-primary' : 'btn-outline'}`}
                   >
                     Bugs
                   </button>
                   <button
                     onClick={() => setFeedbackFilter('my')}
-                    className={`btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'my' ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn feedback-filter-btn !py-1 !px-3 !text-xs !font-bold ${feedbackFilter === 'my' ? 'btn-primary' : 'btn-outline'}`}
                   >
                     My Submissions
                   </button>
