@@ -75,7 +75,7 @@ export const getBreakTimeMs = (breaks?: BreakInterval[], upToTime: number = Date
   for (const b of breaks) {
     if (!b.start) continue;
     const startMs = typeof b.start.toDate === 'function' ? b.start.toDate().getTime() : new Date(b.start as unknown as string).getTime();
-    const endMs = b.end 
+    const endMs = b.end
       ? (typeof b.end.toDate === 'function' ? b.end.toDate().getTime() : new Date(b.end as unknown as string).getTime())
       : upToTime;
     totalMs += Math.max(0, endMs - startMs);
@@ -95,7 +95,7 @@ export const pauseWork = async (userId: string) => {
   if (data.punchOut) throw new Error("Already punched out.");
 
   const breaks = data.breaks || [];
-  
+
   // Check if already paused
   const hasActiveBreak = breaks.some(b => b.end === null);
   if (hasActiveBreak) throw new Error("Already on break.");
@@ -120,7 +120,7 @@ export const resumeWork = async (userId: string) => {
   if (data.punchOut) throw new Error("Already punched out.");
 
   const breaks = data.breaks || [];
-  
+
   // Find the active break
   const activeBreakIndex = breaks.findIndex(b => b.end === null);
   if (activeBreakIndex === -1) throw new Error("Not currently on break.");
@@ -427,3 +427,274 @@ export const updateOfficeSettings = async (settings: OfficeSettings) => {
   const docRef = doc(db, 'settings', 'office');
   await setDoc(docRef, settings);
 };
+
+// --- USER SUGGESTIONS & BUG REPORTING SYSTEM ---
+
+export interface UserFeedback {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhoto?: string;
+  type: 'suggestion' | 'bug';
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed' | 'declined';
+  upvotes: string[];
+  createdAt: Timestamp;
+}
+
+export const submitFeedback = async (
+  userId: string,
+  userName: string,
+  userEmail: string,
+  userPhoto: string,
+  type: 'suggestion' | 'bug',
+  title: string,
+  description: string
+) => {
+  const colRef = collection(db, 'feedback');
+  await addDoc(colRef, {
+    userId,
+    userName,
+    userEmail,
+    userPhoto: userPhoto || '',
+    type,
+    title,
+    description,
+    status: 'pending',
+    upvotes: [],
+    createdAt: serverTimestamp()
+  });
+};
+
+export const getAllFeedback = async (): Promise<UserFeedback[]> => {
+  const snap = await getDocs(collection(db, 'feedback'));
+  const items = snap.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      userId: data.userId,
+      userName: data.userName,
+      userEmail: data.userEmail,
+      userPhoto: data.userPhoto,
+      type: data.type,
+      title: data.title,
+      description: data.description,
+      status: data.status || 'pending',
+      upvotes: data.upvotes || [],
+      createdAt: data.createdAt
+    } as UserFeedback;
+  });
+  // Sort in descending order by createdAt
+  return items.sort((a, b) => {
+    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return timeB - timeA;
+  });
+};
+
+export const toggleUpvoteFeedback = async (feedbackId: string, userId: string) => {
+  const docRef = doc(db, 'feedback', feedbackId);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) throw new Error("Feedback record not found.");
+  const data = snap.data();
+  const upvotes: string[] = data.upvotes || [];
+  const index = upvotes.indexOf(userId);
+  if (index === -1) {
+    upvotes.push(userId);
+  } else {
+    upvotes.splice(index, 1);
+  }
+  await updateDoc(docRef, { upvotes });
+};
+
+export const updateFeedbackStatus = async (
+  feedbackId: string,
+  status: 'pending' | 'in-progress' | 'completed' | 'declined'
+) => {
+  const docRef = doc(db, 'feedback', feedbackId);
+  await updateDoc(docRef, { status });
+};
+
+export const deleteFeedback = async (feedbackId: string) => {
+  const docRef = doc(db, 'feedback', feedbackId);
+  await deleteDoc(docRef);
+};
+
+// --- DYNAMIC SYSTEM CHANGELOG TIMELINE SYSTEM ---
+
+export interface ChangelogRecord {
+  id: string;
+  version: string;
+  date: string;
+  title: string;
+  badge: string;
+  badgeColor: string;
+  items: string[];
+  createdAt: Timestamp;
+}
+
+const DEFAULT_CHANGELOGS = [
+  {
+    version: "v1.6",
+    date: "June 2, 2026",
+    title: "Developer Updates & Feedback Board",
+    badge: "Current Update",
+    badgeColor: "var(--primary)",
+    items: [
+      "Added the Developer Page accessible via the navigation bar.",
+      "Integrated a static project evolution timeline from v1.0 onwards.",
+      "Built a suggestions board for feature proposals ('what to add next').",
+      "Created a bug reporting portal with interactive ticket creation.",
+      "Added real-time status management (Pending, In Progress, Completed, Declined) for administrators.",
+      "Implemented a user-driven upvote system for feedback prioritization."
+    ]
+  },
+  {
+    version: "v1.5",
+    date: "May 25, 2026",
+    title: "Overtime Calculator Tool",
+    badge: "Feature Release",
+    badgeColor: "var(--accent)",
+    items: [
+      "Created a dedicated client-side overtime calculation calculator tool.",
+      "Added manual sliders and fields to adjust hourly rates and verify projected income.",
+      "Designed a responsive matrix showing earnings based on standard and weekend multiplier variables."
+    ]
+  },
+  {
+    version: "v1.4",
+    date: "May 10, 2026",
+    title: "Holiday System & Auto-Leave Filler",
+    badge: "Automation",
+    badgeColor: "var(--success)",
+    items: [
+      "Integrated a public holiday management catalog inside the admin panel.",
+      "Designed an automatic leaves generator filling unlogged week days as 'leave' to keep accurate timesheets.",
+      "Added exceptions to avoid auto-filling leaves on Sundays and customized company holidays."
+    ]
+  },
+  {
+    version: "v1.3",
+    date: "April 28, 2026",
+    title: "Admin Panel & Security Upgrades",
+    badge: "Administration",
+    badgeColor: "var(--secondary)",
+    items: [
+      "Built a full administrative module to manage users and access levels.",
+      "Created a worker verification approval queue to audit new user logins.",
+      "Configured custom office geographic boundaries and coordinate radii for location-locked check-ins."
+    ]
+  },
+  {
+    version: "v1.2",
+    date: "April 15, 2026",
+    title: "Geolocation Geofencing Integration",
+    badge: "Security",
+    badgeColor: "var(--warning)",
+    items: [
+      "Implemented HTML5 Geolocation tracking on punch-in and punch-out events.",
+      "Added a check calculating distance to the physical Chennai/Bangalore printing facility.",
+      "Restricted office-mode check-ins to a 200-meter threshold with live distance indicators."
+    ]
+  },
+  {
+    version: "v1.1",
+    date: "March 30, 2026",
+    title: "Breaks & remote Work Logs",
+    badge: "Optimization",
+    badgeColor: "#8b5cf6",
+    items: [
+      "Designed pause and resume functionality to track break times.",
+      "Added work mode tags allowing selection of office or remote checks.",
+      "Updated shift calculators to automatically subtract aggregate break time from payroll hours."
+    ]
+  },
+  {
+    version: "v1.0",
+    date: "March 15, 2026",
+    title: "First Release",
+    badge: "Launch",
+    badgeColor: "#6b7280",
+    items: [
+      "Launched Google Workspace Auth integration restricting sign-in to verified members.",
+      "Configured standard 9-hour work day timers and overtime thresholds.",
+      "Created personal history tables listing punch cards and daily task submission summaries."
+    ]
+  }
+];
+
+const mapChangelogSnap = (snap: any): ChangelogRecord[] => {
+  const records = snap.docs.map((doc: any) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      version: data.version,
+      date: data.date,
+      title: data.title,
+      badge: data.badge,
+      badgeColor: data.badgeColor,
+      items: data.items || [],
+      createdAt: data.createdAt
+    } as ChangelogRecord;
+  });
+
+  // Sort in descending order by createdAt
+  return records.sort((a: ChangelogRecord, b: ChangelogRecord) => {
+    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return timeB - timeA;
+  });
+};
+
+export const getChangelogs = async (): Promise<ChangelogRecord[]> => {
+  const colRef = collection(db, 'changelogs');
+  const snap = await getDocs(colRef);
+
+  if (snap.empty) {
+    // Seed Firestore with default historical release logs
+    const seedPromises = DEFAULT_CHANGELOGS.map((item, index) => {
+      // Offset base time so sorting stays chronological v1.6 to v1.0
+      const baseTime = Date.now() - (index * 60 * 1000);
+      return addDoc(colRef, {
+        ...item,
+        createdAt: Timestamp.fromMillis(baseTime)
+      });
+    });
+    await Promise.all(seedPromises);
+
+    // Re-fetch seeded data
+    const newSnap = await getDocs(colRef);
+    return mapChangelogSnap(newSnap);
+  }
+
+  return mapChangelogSnap(snap);
+};
+
+export const createChangelog = async (
+  version: string,
+  date: string,
+  title: string,
+  badge: string,
+  badgeColor: string,
+  items: string[]
+) => {
+  const colRef = collection(db, 'changelogs');
+  await addDoc(colRef, {
+    version,
+    date,
+    title,
+    badge,
+    badgeColor,
+    items,
+    createdAt: serverTimestamp()
+  });
+};
+
+export const deleteChangelog = async (id: string) => {
+  const docRef = doc(db, 'changelogs', id);
+  await deleteDoc(docRef);
+};
+
+
