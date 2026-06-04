@@ -51,15 +51,6 @@ export async function GET() {
       for (const line of logLines) {
         const [hash, subject, author, date] = line.split('|');
 
-        // Fetch list of modified files in this commit
-        let files: string[] = [];
-        try {
-          const { stdout: filesOut } = await execAsync(`git show --name-only --pretty=format:"" ${hash}`);
-          files = filesOut.split('\n').map(f => f.trim()).filter(Boolean);
-        } catch (filesError) {
-          console.warn(`Failed to fetch files for commit ${hash}:`, filesError);
-        }
-
         // Format date string
         const dateObj = new Date(date);
         const formattedDate = isNaN(dateObj.getTime())
@@ -68,14 +59,13 @@ export async function GET() {
 
         changelogs.push({
           id: hash,
-          version: hash.toUpperCase(),
+          version: `v1.8 - ${hash.toUpperCase()}`,
           date: formattedDate,
           title: subject,
           badge: "Git Update",
           badgeColor: "var(--primary)",
           items: [
-            `Developer: ${author}`,
-            ...files.map(f => `File: ${f}`)
+            `Developer: ${author}`
           ],
           createdAt: { toMillis: () => dateObj.getTime() }
         });

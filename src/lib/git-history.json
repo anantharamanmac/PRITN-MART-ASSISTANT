@@ -1,17 +1,28 @@
 [
   {
+    "id": "1b6411a",
+    "version": "v1.8 - 1B6411A",
+    "date": "Jun 2, 2026",
+    "title": "zion: implement dynamic git history tracking with build-time generation and API support",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1780358400,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "d326f49",
-    "version": "D326F49",
+    "version": "v1.8 - D326F49",
     "date": "Jun 2, 2026",
     "title": "zion: add Developer Center page with changelog timeline and user feedback system",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/developer/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/not-found.tsx",
-      "File: src/components/Navbar.tsx"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1780358400,
@@ -20,18 +31,13 @@
   },
   {
     "id": "503af10",
-    "version": "503AF10",
+    "version": "v1.8 - 503AF10",
     "date": "Jun 2, 2026",
     "title": "feat: implement base UI styles, navigation component, database utility, and developer log tracking module",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/api/git-logs/route.ts",
-      "File: src/app/developer/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/components/Navbar.tsx",
-      "File: src/lib/db.ts"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1780358400,
@@ -40,21 +46,13 @@
   },
   {
     "id": "d7a03f4",
-    "version": "D7A03F4",
+    "version": "v1.8 - D7A03F4",
     "date": "Jun 2, 2026",
     "title": "feat: implement worker dashboard with attendance tracking, geolocation, and task management features",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/history/page.tsx",
-      "File: src/app/page.tsx",
-      "File: src/components/PrinterLoader.tsx",
-      "File: src/components/WelcomeModal.tsx",
-      "File: src/lib/auth.ts"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1780358400,
@@ -63,19 +61,13 @@
   },
   {
     "id": "1a3c362",
-    "version": "1A3C362",
+    "version": "v1.8 - 1A3C362",
     "date": "May 25, 2026",
     "title": "feat: implement admin dashboard with user management, attendance tracking, office location settings, and holiday calendar management",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/admin/hours/page.tsx",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/history/page.tsx",
-      "File: src/app/overtime-calculator/page.tsx",
-      "File: src/components/Pagination.tsx"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779667200,
@@ -84,15 +76,13 @@
   },
   {
     "id": "9dea257",
-    "version": "9DEA257",
+    "version": "v1.8 - 9DEA257",
     "date": "May 25, 2026",
     "title": "feat: add overtime calculator page and base global styles",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/globals.css",
-      "File: src/app/overtime-calculator/page.tsx"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779667200,
@@ -101,17 +91,13 @@
   },
   {
     "id": "5f06fea",
-    "version": "5F06FEA",
+    "version": "v1.8 - 5F06FEA",
     "date": "May 23, 2026",
     "title": "feat: implement overtime calculator, admin overview, and dashboard pages for employee shift tracking",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/admin/hours/page.tsx",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/overtime-calculator/page.tsx"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779494400,
@@ -120,18 +106,13 @@
   },
   {
     "id": "2c62674",
-    "version": "2C62674",
+    "version": "v1.8 - 2C62674",
     "date": "May 23, 2026",
     "title": "feat: implement admin dashboard with user management, holiday scheduling, and office location configuration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/admin/hours/page.tsx",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/lib/db.ts"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779494400,
@@ -140,23 +121,13 @@
   },
   {
     "id": "23ccdcd",
-    "version": "23CCDCD",
+    "version": "v1.8 - 23CCDCD",
     "date": "May 21, 2026",
     "title": "feat: implement admin dashboard with employee attendance tracking and reporting features",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: lint_results.txt",
-      "File: public/semakin.zip",
-      "File: src/app/admin/hours/page.tsx",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/history/page.tsx",
-      "File: src/app/page.tsx",
-      "File: src/lib/auth.ts",
-      "File: src/lib/db.ts"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779321600,
@@ -165,16 +136,13 @@
   },
   {
     "id": "db47c09",
-    "version": "DB47C09",
+    "version": "v1.8 - DB47C09",
     "date": "May 20, 2026",
     "title": "feat: initialize project with global glassmorphism styles and layout structure",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/page.tsx"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779235200,
@@ -183,18 +151,13 @@
   },
   {
     "id": "00b5339",
-    "version": "00B5339",
+    "version": "v1.8 - 00B5339",
     "date": "May 20, 2026",
     "title": "feat: initialize admin and history pages with global styles and database configuration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/admin/hours/page.tsx",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/history/page.tsx",
-      "File: src/lib/db.ts"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779235200,
@@ -203,55 +166,16 @@
   },
   {
     "id": "bea3ebf",
-    "version": "BEA3EBF",
+    "version": "v1.8 - BEA3EBF",
     "date": "May 20, 2026",
     "title": "feat: initialize app structure with favicon, manifest, and essential database and page routing files",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac",
-      "File: public/apple-icon.png",
-      "File: public/favicon-for-app.zip",
-      "File: public/favicon.ico",
-      "File: public/icon0.svg",
-      "File: public/icon1.png",
-      "File: public/logo.png",
-      "File: public/manifest.json",
-      "File: src/app/apple-icon.png",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/favicon.ico",
-      "File: src/app/history/page.tsx",
-      "File: src/app/layout.tsx",
-      "File: src/app/page.tsx",
-      "File: src/lib/db.ts"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1779235200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "f4a3d12",
-    "version": "F4A3D12",
-    "date": "May 19, 2026",
-    "title": "feat: implement full admin dashboard with user management, attendance tracking, and holiday scheduling functionality",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac",
-      "File: src/app/admin/hours/page.tsx",
-      "File: src/app/admin/page.tsx",
-      "File: src/app/dashboard/page.tsx",
-      "File: src/app/globals.css",
-      "File: src/app/history/page.tsx",
-      "File: src/app/layout.tsx",
-      "File: src/app/page.tsx",
-      "File: src/components/Navbar.tsx",
-      "File: src/components/PrinterLoader.tsx",
-      "File: src/lib/db.ts"
-    ],
-    "createdAt": {
-      "seconds": 1779148800,
       "nanoseconds": 0
     }
   }

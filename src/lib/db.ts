@@ -240,6 +240,12 @@ export const updateUserProfile = async (
   await updateDoc(userRef, data);
 };
 
+// Worker: Update own salary start day
+export const updateSalaryStartDay = async (userId: string, startDay: number) => {
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, { salaryStartDay: startDay });
+};
+
 // Admin: Approve User
 export const approveUser = async (userId: string) => {
   const userRef = doc(db, 'users', userId);
@@ -269,6 +275,73 @@ export const getAttendanceForMonth = async (monthStr: string): Promise<Attendanc
   const snap = await getDocs(q);
   return snap.docs.map(doc => doc.data() as AttendanceRecord);
 };
+
+// Get attendance records covering custom salary period boundaries (prev, curr, next months)
+export const getAttendanceForSalaryRange = async (monthStr: string): Promise<AttendanceRecord[]> => {
+  const [year, month] = monthStr.split('-').map(Number);
+  
+  const prevMonthYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevMonthStr = `${prevMonthYear}-${String(prevMonth).padStart(2, '0')}`;
+
+  const nextMonthYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextMonthStr = `${nextMonthYear}-${String(nextMonth).padStart(2, '0')}`;
+
+  const [prevDocs, currDocs, nextDocs] = await Promise.all([
+    getAttendanceForMonth(prevMonthStr),
+    getAttendanceForMonth(monthStr),
+    getAttendanceForMonth(nextMonthStr)
+  ]);
+
+  const map = new Map<string, AttendanceRecord>();
+  prevDocs.forEach(d => map.set(d.id || `${d.userId}_${d.date}`, d));
+  currDocs.forEach(d => map.set(d.id || `${d.userId}_${d.date}`, d));
+  nextDocs.forEach(d => map.set(d.id || `${d.userId}_${d.date}`, d));
+  return Array.from(map.values());
+};
+
+// Admin: Get attendance records in a date range (YYYY-MM-DD to YYYY-MM-DD)
+export const getAttendanceForDateRange = async (startDate: string, endDate: string): Promise<AttendanceRecord[]> => {
+  const q = query(
+    collection(db, 'attendance'),
+    where('date', '>=', startDate),
+    where('date', '<=', endDate)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => doc.data() as AttendanceRecord);
+};
+
+// Calculate starting and ending date of active salary cycle for a given start day
+export const getCurrentSalaryPeriod = (startDay: number, refDate: Date = new Date()) => {
+  const year = refDate.getFullYear();
+  const month = refDate.getMonth();
+  const day = refDate.getDate();
+
+  let startYear = year;
+  let startMonth = month;
+
+  if (day < startDay) {
+    startMonth = month === 0 ? 11 : month - 1;
+    startYear = month === 0 ? year - 1 : year;
+  }
+
+  const startDate = new Date(startYear, startMonth, startDay);
+  const endDate = new Date(startYear, startMonth + 1, startDay - 1);
+
+  const formatYYYYMMDD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dayStr}`;
+  };
+
+  return {
+    startDate: formatYYYYMMDD(startDate),
+    endDate: formatYYYYMMDD(endDate)
+  };
+};
+
 
 // Worker: Get own attendance history
 export const getUserAttendanceHistory = async (userId: string): Promise<AttendanceRecord[]> => {
@@ -537,11 +610,35 @@ export interface ChangelogRecord {
 
 const DEFAULT_CHANGELOGS = [
   {
+    version: "v1.8",
+    date: "June 2, 2026",
+    title: "Custom 404 Page & Pre-compiled Git Logs",
+    badge: "Current Update",
+    badgeColor: "var(--primary)",
+    items: [
+      "Designed a custom 404 Error page themed around screen-printing and apparel graphics.",
+      "Rendered an animated SVG shirt with multi-layer off-registration effects and alarm indicators.",
+      "Implemented a pre-build caching script compiling GitHub commit logs into the static bundle for production deployments."
+    ]
+  },
+  {
+    version: "v1.7",
+    date: "June 2, 2026",
+    title: "Responsive Alignment & Button Layouts",
+    badge: "Feature Release",
+    badgeColor: "var(--accent)",
+    items: [
+      "Corrected button sizes on mobile screens, restoring standard action buttons to normal size.",
+      "Introduced compact, inline filter buttons on mobile to fit the viewport width cleanly.",
+      "Adjusted form layouts to stack vertically and statically on mobile while remaining sticky on desktop."
+    ]
+  },
+  {
     version: "v1.6",
     date: "June 2, 2026",
     title: "Developer Updates & Feedback Board",
-    badge: "Current Update",
-    badgeColor: "var(--primary)",
+    badge: "Feature Release",
+    badgeColor: "var(--accent)",
     items: [
       "Added the Developer Page accessible via the navigation bar.",
       "Integrated a static project evolution timeline from v1.0 onwards.",
@@ -652,10 +749,15 @@ export const getChangelogs = async (): Promise<ChangelogRecord[]> => {
   const colRef = collection(db, 'changelogs');
   const snap = await getDocs(colRef);
 
-  if (snap.empty) {
-    // Seed Firestore with default historical release logs
-    const seedPromises = DEFAULT_CHANGELOGS.map((item, index) => {
-      // Offset base time so sorting stays chronological v1.6 to v1.0
+  const existingDocs = snap.docs.map(doc => doc.data() as ChangelogRecord);
+  const existingVersions = new Set(existingDocs.map(d => d.version));
+
+  const missingLogs = DEFAULT_CHANGELOGS.filter(item => !existingVersions.has(item.version));
+
+  if (missingLogs.length > 0) {
+    // Seed Firestore with missing default release logs
+    const seedPromises = missingLogs.map((item, index) => {
+      // Offset base time so sorting stays chronological
       const baseTime = Date.now() - (index * 60 * 1000);
       return addDoc(colRef, {
         ...item,
@@ -664,7 +766,7 @@ export const getChangelogs = async (): Promise<ChangelogRecord[]> => {
     });
     await Promise.all(seedPromises);
 
-    // Re-fetch seeded data
+    // Re-fetch updated data
     const newSnap = await getDocs(colRef);
     return mapChangelogSnap(newSnap);
   }

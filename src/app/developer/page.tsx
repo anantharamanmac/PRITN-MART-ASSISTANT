@@ -49,22 +49,25 @@ export default function DeveloperPage() {
   const [fbDescription, setFbDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Load Changelogs dynamically from Git API (local development) with Firestore fallback (production)
+  // Load Changelogs dynamically from Git API (local development / static cache in deployment)
+  // If the dynamic load fails or returns no logs, fallback to database logs.
   const loadChangelogs = async () => {
     setLoadingChangelogs(true);
     try {
-      // 1. Try loading automatic Git history and workspace status
       const res = await fetch('/api/git-logs');
-      const apiData = await res.json();
-      if (apiData.success && apiData.changelogs && apiData.changelogs.length > 0) {
-        setChangelogs(apiData.changelogs);
-        return;
+      if (res.ok) {
+        const apiData = await res.json();
+        if (apiData.success && apiData.changelogs && apiData.changelogs.length > 0) {
+          setChangelogs(apiData.changelogs);
+          setLoadingChangelogs(false);
+          return;
+        }
       }
     } catch (apiError) {
       console.warn("Git logs API unavailable, falling back to database:", apiError);
     }
 
-    // 2. Database Fallback (auto-seeds default versions if empty)
+    // Database Fallback
     try {
       const dbData = await getChangelogs();
       setChangelogs(dbData);
@@ -271,7 +274,7 @@ export default function DeveloperPage() {
         
         {/* Page Header */}
         <div className="flex flex-col items-center text-center mb-8">
-          <h1 className="title !text-4xl">Developer Center</h1>
+          <h1 className="title !text-4xl">Developer Center <span className="text-sm text-secondary font-sans align-middle ml-2" style={{ verticalAlign: 'middle', fontSize: '0.9rem', opacity: 0.7 }}>v1.8</span></h1>
           <p className="subtitle max-w-2xl">
             Track Print Mart Assistant portal updates, submit ideas to build next, or report operational bugs in the system.
           </p>

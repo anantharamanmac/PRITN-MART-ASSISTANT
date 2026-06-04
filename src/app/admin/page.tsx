@@ -682,7 +682,7 @@ export default function AdminDashboard() {
                                   totalHours: a.totalHours,
                                   overtimeHours: a.overtimeHours
                                 } : (() => {
-                                  if (!a.punchIn) return { totalHours: 0, overtimeHours: 0 };
+                                  if (!a.punchIn || a.date !== getTodayDateString()) return { totalHours: 0, overtimeHours: 0 };
                                   const inTime = typeof a.punchIn.toDate === 'function' ? a.punchIn.toDate().getTime() : new Date(a.punchIn as unknown as string).getTime();
                                   const breakMs = getBreakTimeMs(a.breaks, now.getTime());
                                   const diffHrs = Math.max(0, (now.getTime() - inTime - breakMs) / (1000 * 60 * 60));

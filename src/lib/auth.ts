@@ -13,6 +13,7 @@ export interface AppUser {
   designation?: string;
   workMode?: 'office' | 'remote';
   createdAt: Timestamp;
+  salaryStartDay?: number;
 }
 
 export const signInWithGoogle = async () => {
