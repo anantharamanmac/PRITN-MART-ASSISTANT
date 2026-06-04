@@ -1,5 +1,20 @@
 [
   {
+    "id": "1d32ce5",
+    "version": "v1.8 - 1D32CE5",
+    "date": "Jun 4, 2026",
+    "title": "zion: implement global CSS framework with glassmorphism design and initialize git history tracking file",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1780531200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "28bab54",
     "version": "v1.8 - 28BAB54",
     "date": "Jun 4, 2026",
@@ -161,21 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1779494400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "23ccdcd",
-    "version": "v1.8 - 23CCDCD",
-    "date": "May 21, 2026",
-    "title": "feat: implement admin dashboard with employee attendance tracking and reporting features",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779321600,
       "nanoseconds": 0
     }
   }

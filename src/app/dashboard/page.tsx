@@ -673,8 +673,8 @@ export default function WorkerDashboard() {
               </div>
               <div class="company-info">
                 <div class="company-title">Print Mart Apparel Private Ltd.</div>
-                <div>102 Industrial Tech Park, Guindy</div>
-                <div>Chennai, Tamil Nadu, 600032</div>
+                <div>Thattarkonam</div>
+                <div>Kollam, Kerala 691001</div>
                 <div>Email: payroll@printmart.com | Web: www.printmart.com</div>
                 <div class="company-reg">CIN: U18101TN2024PTC168420 | GSTIN: 33AADCP8420M1Z5</div>
               </div>
@@ -772,7 +772,7 @@ export default function WorkerDashboard() {
               <div class="stamp-box">
                 <div class="stamp-circle">
                   <span>PRINT MART</span>
-                  <span style="font-size: 6px; font-weight: normal; margin: 2px 0;">* CHENNAI *</span>
+                  <span style="font-size: 6px; font-weight: normal; margin: 2px 0;">* KOLLAM *</span>
                   <span>PAYROLL OFFICE</span>
                 </div>
               </div>
@@ -792,6 +792,8 @@ export default function WorkerDashboard() {
               <strong>Verification Statement:</strong> This is a computer-generated statement summarizing recorded biometric punch schedules and approved leaves. Signatures verify accuracy of hours logged.
               <br />
               Generated on PrintMart Core ERP System. Confidential.
+              <br />
+              <span style="display: block; margin-top: 6px; font-weight: 600; color: #6366f1;">Developed by Gforx Production | Contact: 8848347162 | Email: anantharamanmac@gmail.com | Discord: https://discord.gg/42RkQ545</span>
             </div>
           </div>
         </body>
