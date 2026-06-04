@@ -175,9 +175,8 @@ export default function WorkerDashboard() {
       const currentMonth = today.getMonth();
       const startDay = user.salaryStartDay || 1;
 
-      // Calculate start and end dates of the cycle that just completed
       const startDate = new Date(currentYear, currentMonth - 1, startDay);
-      const endDate = new Date(currentYear, currentMonth, startDay - 1);
+      const endDate = new Date(currentYear, currentMonth, startDay);
 
       const cycleRecords = history.filter(rec => {
         const recDate = new Date(rec.date);
@@ -1159,6 +1158,43 @@ export default function WorkerDashboard() {
   const todayDay = new Date().getDate();
   const isSalaryDate = todayDay === (user.salaryStartDay || 1);
 
+  // Helper to calculate days remaining until the next occurrence of salaryStartDay
+  const getDaysUntilSalaryDay = (today: Date, salaryStartDay: number): number => {
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const currentDate = today.getDate();
+
+    let targetDate: Date;
+    if (currentDate <= salaryStartDay) {
+      targetDate = new Date(currentYear, currentMonth, salaryStartDay);
+    } else {
+      targetDate = new Date(currentYear, currentMonth + 1, salaryStartDay);
+    }
+
+    const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const d2 = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+
+    const diffMs = d2.getTime() - d1.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+  };
+
+  const getSalaryEndDate = (today: Date, salaryStartDay: number): Date => {
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const currentDate = today.getDate();
+
+    if (currentDate <= salaryStartDay) {
+      return new Date(currentYear, currentMonth, salaryStartDay);
+    } else {
+      return new Date(currentYear, currentMonth + 1, salaryStartDay);
+    }
+  };
+
+  const daysUntilSalary = user.salaryStartDay !== undefined ? getDaysUntilSalaryDay(new Date(), user.salaryStartDay) : -1;
+  const showReminder = user.salaryStartDay !== undefined && daysUntilSalary > 0 && daysUntilSalary <= 2;
+  const salaryEndDate = user.salaryStartDay !== undefined ? getSalaryEndDate(new Date(), user.salaryStartDay) : null;
+  const formattedSalaryEndDate = salaryEndDate ? salaryEndDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+
   return (
     <>
       <WelcomeModal displayName={user.displayName} photoURL={user.photoURL} />
@@ -1166,6 +1202,40 @@ export default function WorkerDashboard() {
       <Navbar user={user} />
       <main className={`container animate-fade-in ${isShaking ? 'animate-shake' : ''}`}>
         <h1 className="title !text-4xl mb-8">Worker Dashboard</h1>
+
+        {/* Salary Cycle Ending Reminder Banner */}
+        {showReminder && (
+          <div className="glass-card mb-8 border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-yellow-500/10 shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 relative overflow-hidden group">
+            {/* Visual ambient light shapes */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <style dangerouslySetInnerHTML={{
+              __html: `
+              @keyframes float-slow-banner-key {
+                0%, 100% { transform: translateY(0px) scale(1); }
+                50% { transform: translateY(-6px) scale(1.05); }
+              }
+            ` }} />
+
+            <div className="flex gap-4 items-start text-left relative z-10">
+              <div
+                className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 text-3xl flex-shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                style={{ animation: 'float-slow-banner-key 3s ease-in-out infinite' }}
+              >
+                🔔
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 tracking-tight">
+                  Salary Cycle Ending Soon!
+                </h3>
+                <p className="text-sm text-secondary leading-relaxed max-w-xl">
+                  Your salary cycle ends {daysUntilSalary === 1 ? 'tomorrow' : `in ${daysUntilSalary} days`} on <strong className="text-amber-300 font-extrabold">{formattedSalaryEndDate}</strong>. Please ensure all your tasks are logged and attendance records are up to date.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Salary Date Export Summary Banner */}
         {isSalaryDate && (

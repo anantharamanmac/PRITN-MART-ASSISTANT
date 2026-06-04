@@ -67,8 +67,8 @@ export default function SalarySettings() {
     // Format start and end dates
     const startDate = new Date(currentYear, currentMonth, day);
     
-    // End date is one day before the start day in the next month
-    const endDate = new Date(currentYear, currentMonth + 1, day - 1);
+    // End date is the start day in the next month (inclusive)
+    const endDate = new Date(currentYear, currentMonth + 1, day);
 
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
     return {

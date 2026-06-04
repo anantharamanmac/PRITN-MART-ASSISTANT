@@ -1,5 +1,20 @@
 [
   {
+    "id": "ab6d543",
+    "version": "v1.8 - AB6D543",
+    "date": "Jun 4, 2026",
+    "title": "zion: implement global styles and create SalaryNotificationModal component with project tracking integration",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1780531200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "5949381",
     "version": "v1.8 - 5949381",
     "date": "Jun 4, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - DB47C09",
     "date": "May 20, 2026",
     "title": "feat: initialize project with global glassmorphism styles and layout structure",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779235200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "00b5339",
-    "version": "v1.8 - 00B5339",
-    "date": "May 20, 2026",
-    "title": "feat: initialize admin and history pages with global styles and database configuration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

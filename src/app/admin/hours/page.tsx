@@ -355,7 +355,7 @@ export default function AdminHours() {
                       const [y, mVal] = startDateFilter.split('-').map(Number);
                       const m = mVal - 1; // 0-indexed
                       const sDate = new Date(y, m, startDay);
-                      const eDate = new Date(y, m + 1, startDay - 1);
+                      const eDate = new Date(y, m + 1, startDay);
                       const formatOption: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
                       const periodRangeStr = `${sDate.toLocaleDateString('en-US', formatOption)} - ${eDate.toLocaleDateString('en-US', formatOption)}`;
 

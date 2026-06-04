@@ -327,7 +327,7 @@ export const getCurrentSalaryPeriod = (startDay: number, refDate: Date = new Dat
   }
 
   const startDate = new Date(startYear, startMonth, startDay);
-  const endDate = new Date(startYear, startMonth + 1, startDay - 1);
+  const endDate = new Date(startYear, startMonth + 1, startDay);
 
   const formatYYYYMMDD = (d: Date) => {
     const y = d.getFullYear();

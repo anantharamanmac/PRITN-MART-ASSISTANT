@@ -50,17 +50,32 @@ export default function HistoryPage() {
     return `${hrs}h ${mins}m`;
   };
 
-  const getSalaryMonthForDate = (dateStr: string, startDay: number) => {
+  const getSalaryMonthsForDate = (dateStr: string, startDay: number): string[] => {
     const [year, monthVal, day] = dateStr.split('-').map(Number);
     const month = monthVal - 1; // 0-indexed
     
-    if (day < startDay) {
-      const prevMonth = month === 0 ? 11 : month - 1;
-      const prevYear = month === 0 ? year - 1 : year;
-      return `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
-    } else {
-      return `${year}-${String(monthVal).padStart(2, '0')}`;
+    const months: string[] = [];
+    const d = new Date(year, month, day);
+    
+    // 1. Current month's cycle (e.g. starts 4th, ends next month 4th)
+    const currentMonthStart = new Date(year, month, startDay);
+    const currentMonthEnd = new Date(year, month + 1, startDay);
+    
+    if (d >= currentMonthStart && d <= currentMonthEnd) {
+      months.push(`${year}-${String(monthVal).padStart(2, '0')}`);
     }
+    
+    // 2. Previous month's cycle
+    const prevMonthYear = month === 0 ? year - 1 : year;
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevMonthStart = new Date(prevMonthYear, prevMonth, startDay);
+    const prevMonthEnd = new Date(year, month, startDay);
+    
+    if (d >= prevMonthStart && d <= prevMonthEnd) {
+      months.push(`${prevMonthYear}-${String(prevMonth + 1).padStart(2, '0')}`);
+    }
+    
+    return Array.from(new Set(months));
   };
 
   const loadHistory = async (uid: string) => {
@@ -129,41 +144,43 @@ export default function HistoryPage() {
 
   // We group by custom salary month
   filteredAttendances.forEach(a => {
-    const salMonth = getSalaryMonthForDate(a.date, user.salaryStartDay || 1);
+    const salMonths = getSalaryMonthsForDate(a.date, user.salaryStartDay || 1);
     
-    if (!monthlyGroupsMap.has(salMonth)) {
-      const startDay = user.salaryStartDay || 1;
-      const [y, mVal] = salMonth.split('-').map(Number);
-      const m = mVal - 1; // 0-indexed
-      
-      const sDate = new Date(y, m, startDay);
-      const eDate = new Date(y, m + 1, startDay - 1);
-      
-      const formatOption: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+    salMonths.forEach(salMonth => {
+      if (!monthlyGroupsMap.has(salMonth)) {
+        const startDay = user.salaryStartDay || 1;
+        const [y, mVal] = salMonth.split('-').map(Number);
+        const m = mVal - 1; // 0-indexed
+        
+        const sDate = new Date(y, m, startDay);
+        const eDate = new Date(y, m + 1, startDay);
+        
+        const formatOption: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
 
-      monthlyGroupsMap.set(salMonth, {
-        monthStr: salMonth,
-        startDateStr: sDate.toLocaleDateString('en-US', formatOption),
-        endDateStr: eDate.toLocaleDateString('en-US', formatOption),
-        attendanceRecords: [],
-        totalHours: 0,
-        overtimeHours: 0,
-        overtimePay: 0,
-        presentCount: 0,
-        halfDayCount: 0,
-        leaveCount: 0
-      });
-    }
+        monthlyGroupsMap.set(salMonth, {
+          monthStr: salMonth,
+          startDateStr: sDate.toLocaleDateString('en-US', formatOption),
+          endDateStr: eDate.toLocaleDateString('en-US', formatOption),
+          attendanceRecords: [],
+          totalHours: 0,
+          overtimeHours: 0,
+          overtimePay: 0,
+          presentCount: 0,
+          halfDayCount: 0,
+          leaveCount: 0
+        });
+      }
 
-    const group = monthlyGroupsMap.get(salMonth)!;
-    group.attendanceRecords.push(a);
-    group.totalHours += a.totalHours || 0;
-    group.overtimeHours += a.overtimeHours || 0;
-    group.overtimePay += (a.overtimeHours || 0) * 100;
-    
-    if (a.status === 'present') group.presentCount++;
-    else if (a.status === 'half-day') group.halfDayCount++;
-    else if (a.status === 'leave') group.leaveCount++;
+      const group = monthlyGroupsMap.get(salMonth)!;
+      group.attendanceRecords.push(a);
+      group.totalHours += a.totalHours || 0;
+      group.overtimeHours += a.overtimeHours || 0;
+      group.overtimePay += (a.overtimeHours || 0) * 100;
+      
+      if (a.status === 'present') group.presentCount++;
+      else if (a.status === 'half-day') group.halfDayCount++;
+      else if (a.status === 'leave') group.leaveCount++;
+    });
   });
 
   const sortedAttendances = [...filteredAttendances].sort((a, b) => {
