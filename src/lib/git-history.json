@@ -1,5 +1,20 @@
 [
   {
+    "id": "5949381",
+    "version": "v1.8 - 5949381",
+    "date": "Jun 4, 2026",
+    "title": "zion: implement salary cycle configuration page, user authentication utilities, and associated dashboard modules",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1780531200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "1b6411a",
     "version": "v1.8 - 1B6411A",
     "date": "Jun 2, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - 00B5339",
     "date": "May 20, 2026",
     "title": "feat: initialize admin and history pages with global styles and database configuration",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779235200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "bea3ebf",
-    "version": "v1.8 - BEA3EBF",
-    "date": "May 20, 2026",
-    "title": "feat: initialize app structure with favicon, manifest, and essential database and page routing files",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

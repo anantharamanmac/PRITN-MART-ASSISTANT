@@ -76,13 +76,18 @@ export default function SalaryNotificationModal({ salaryStartDay }: SalaryNotifi
           SYSTEM UPDATE // NEW_FEATURE_AVAILABLE
         </div>
 
-        {/* Icon */}
+        {/* Icon / Mascot */}
         <div className="welcome-modal-avatar-wrapper" style={{ margin: '1.5rem auto 1rem auto' }}>
           <div className="welcome-modal-tech-ring-outer" style={{ borderColor: 'rgba(167, 139, 250, 0.25)' }} />
           <div className="welcome-modal-tech-ring-inner" style={{ borderColor: 'rgba(244, 114, 182, 0.3)' }} />
           
-          <div className="welcome-modal-avatar-inner" style={{ background: 'rgba(129, 140, 248, 0.1)', color: '#a78bfa', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '2.5rem' }}>📅</span>
+          <div className="welcome-modal-avatar-inner" style={{ background: 'rgba(129, 140, 248, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img 
+              src="/waving_character.png" 
+              alt="Waving Mascot" 
+              className="welcome-modal-img" 
+              style={{ width: '85%', height: '85%', objectFit: 'contain', animation: 'welcomeFloat 4s ease-in-out infinite' }}
+            />
           </div>
         </div>
 

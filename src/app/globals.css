@@ -2839,3 +2839,12 @@ select.input-field option {
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
+
+@keyframes welcomeFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
