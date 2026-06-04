@@ -1,5 +1,20 @@
 [
   {
+    "id": "28bab54",
+    "version": "v1.8 - 28BAB54",
+    "date": "Jun 4, 2026",
+    "title": "ZION: implement admin attendance reporting, employee dashboard modules, and historical build tracking",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1780531200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "ab6d543",
     "version": "v1.8 - AB6D543",
     "date": "Jun 4, 2026",
@@ -161,21 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1779321600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "db47c09",
-    "version": "v1.8 - DB47C09",
-    "date": "May 20, 2026",
-    "title": "feat: initialize project with global glassmorphism styles and layout structure",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779235200,
       "nanoseconds": 0
     }
   }

@@ -2417,6 +2417,7 @@ select.input-field option {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -2471,7 +2472,7 @@ select.input-field option {
     width: fit-content !important;
     align-self: flex-start !important;
   }
-  
+
   .feedback-user-avatar {
     width: 24px;
     height: 24px;
@@ -2480,7 +2481,7 @@ select.input-field option {
   .glass-card {
     padding: 1rem !important;
   }
-  
+
   /* Only target the board filter buttons to keep them small and inline on mobile */
   .feedback-filter-btn {
     width: auto !important;
@@ -2536,7 +2537,7 @@ select.input-field option {
 .notfound-grid-bg {
   position: absolute;
   inset: 0;
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -2636,10 +2637,25 @@ select.input-field option {
   animation: notfound-spin 6s linear infinite;
 }
 
-.notfound-reg-tl { top: 12px; left: 12px; }
-.notfound-reg-tr { top: 12px; right: 12px; }
-.notfound-reg-bl { bottom: 12px; left: 12px; }
-.notfound-reg-br { bottom: 12px; right: 12px; }
+.notfound-reg-tl {
+  top: 12px;
+  left: 12px;
+}
+
+.notfound-reg-tr {
+  top: 12px;
+  right: 12px;
+}
+
+.notfound-reg-bl {
+  bottom: 12px;
+  left: 12px;
+}
+
+.notfound-reg-br {
+  bottom: 12px;
+  right: 12px;
+}
 
 /* Dimensions/Warning tags in the canvas */
 .notfound-canvas-tag {
@@ -2653,10 +2669,29 @@ select.input-field option {
   z-index: 2;
 }
 
-.notfound-tag-top { top: 8px; left: 50%; transform: translateX(-50%); }
-.notfound-tag-bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
-.notfound-tag-left { left: 8px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
-.notfound-tag-right { right: 8px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+.notfound-tag-top {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.notfound-tag-bottom {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.notfound-tag-left {
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+.notfound-tag-right {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+}
 
 /* Playful details */
 .notfound-ink-alarm {
@@ -2690,40 +2725,69 @@ select.input-field option {
 
 /* Keyframes */
 @keyframes notfound-laser-move {
-  0%, 100% { top: 10%; }
-  50% { top: 90%; }
+
+  0%,
+  100% {
+    top: 10%;
+  }
+
+  50% {
+    top: 90%;
+  }
 }
 
 @keyframes notfound-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes notfound-blink {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes notfound-wiggle-c {
-  0% { transform: translate(-3px, -2px); }
-  100% { transform: translate(-1.5px, -0.5px); }
+  0% {
+    transform: translate(-3px, -2px);
+  }
+
+  100% {
+    transform: translate(-1.5px, -0.5px);
+  }
 }
 
 @keyframes notfound-wiggle-m {
-  0% { transform: translate(3px, 2px); }
-  100% { transform: translate(1.5px, 0.5px); }
+  0% {
+    transform: translate(3px, 2px);
+  }
+
+  100% {
+    transform: translate(1.5px, 0.5px);
+  }
 }
 
 @media (max-width: 767px) {
   .notfound-wrapper {
     padding: 1.25rem;
   }
-  
+
   .notfound-canvas {
     width: 220px;
     height: 190px;
   }
-  
+
   .notfound-tshirt-container {
     width: 100px;
     height: 100px;
@@ -2841,9 +2905,12 @@ select.input-field option {
 }
 
 @keyframes welcomeFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-6px);
   }
