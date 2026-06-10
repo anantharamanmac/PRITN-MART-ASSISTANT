@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import WelcomeModal from '@/components/WelcomeModal';
 import SalaryNotificationModal from '@/components/SalaryNotificationModal';
+import AIChatbot from '@/components/AIChatbot';
 
 interface Particle {
   id: number;
@@ -130,6 +131,7 @@ export default function WorkerDashboard() {
   const [attendance, setAttendance] = useState<AttendanceRecord | null>(null);
   const [taskText, setTaskText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isPolishing, setIsPolishing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [particles, setParticles] = useState<Particle[]>([]);
   const [verifyingLocation, setVerifyingLocation] = useState(false);
@@ -1137,6 +1139,31 @@ export default function WorkerDashboard() {
     }
   };
 
+  const handlePolishTask = async () => {
+    if (!taskText.trim()) return;
+    setIsPolishing(true);
+    const toastId = toast.loading("AI is refining your task log...");
+    try {
+      const response = await fetch('/api/ai/polish-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskText: taskText.trim() }),
+      });
+      const data = await response.json();
+      if (data.polishedText) {
+        setTaskText(data.polishedText);
+        toast.success("Task descriptions refined by AI!", { id: toastId });
+      } else {
+        toast.error(data.error || "Failed to refine task log.", { id: toastId });
+      }
+    } catch (error) {
+      console.error("AI polish failed:", error);
+      toast.error("Error connecting to AI service.", { id: toastId });
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+
   const handleTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !taskText.trim()) return;
@@ -1480,7 +1507,29 @@ export default function WorkerDashboard() {
             <h2 className="subtitle !text-xl !text-white !mb-6">Log Work Task</h2>
             <form onSubmit={handleTaskSubmit} className="flex flex-col h-full">
               <div className="input-group flex-grow">
-                <label className="input-label">What did you work on today?</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="input-label mb-0">What did you work on today?</label>
+                  {taskText.trim() && (
+                    <button
+                      type="button"
+                      onClick={handlePolishTask}
+                      disabled={isPolishing}
+                      className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/25"
+                    >
+                      {isPolishing ? (
+                        <>
+                          <svg className="animate-spin h-3 w-3 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Polishing...
+                        </>
+                      ) : (
+                        <>✨ AI Refine</>
+                      )}
+                    </button>
+                  )}
+                </div>
                 <textarea
                   className="input-field min-h-[150px] resize-none"
                   placeholder="E.g. Completed the UI design for the dashboard, fixed 3 bugs in the admin panel..."
@@ -1497,6 +1546,8 @@ export default function WorkerDashboard() {
 
         </div>
       </main>
+      {/* Floating AI Assistant Chatbot */}
+      <AIChatbot user={user} />
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 99999, overflow: 'hidden' }}>
         {particles.map(p => (
           <div

@@ -279,7 +279,7 @@ export const getAttendanceForMonth = async (monthStr: string): Promise<Attendanc
 // Get attendance records covering custom salary period boundaries (prev, curr, next months)
 export const getAttendanceForSalaryRange = async (monthStr: string): Promise<AttendanceRecord[]> => {
   const [year, month] = monthStr.split('-').map(Number);
-  
+
   const prevMonthYear = month === 1 ? year - 1 : year;
   const prevMonth = month === 1 ? 12 : month - 1;
   const prevMonthStr = `${prevMonthYear}-${String(prevMonth).padStart(2, '0')}`;

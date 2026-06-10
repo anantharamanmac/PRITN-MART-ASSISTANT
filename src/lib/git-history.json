@@ -1,5 +1,20 @@
 [
   {
+    "id": "98c5b7d",
+    "version": "v1.8 - 98C5B7D",
+    "date": "Jun 4, 2026",
+    "title": "zion: implement worker dashboard with attendance tracking, salary statement PDF generation, and location verification",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1780531200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "1d32ce5",
     "version": "v1.8 - 1D32CE5",
     "date": "Jun 4, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - 5F06FEA",
     "date": "May 23, 2026",
     "title": "feat: implement overtime calculator, admin overview, and dashboard pages for employee shift tracking",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779494400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "2c62674",
-    "version": "v1.8 - 2C62674",
-    "date": "May 23, 2026",
-    "title": "feat: implement admin dashboard with user management, holiday scheduling, and office location configuration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

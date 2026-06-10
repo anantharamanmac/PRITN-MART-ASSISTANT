@@ -18,6 +18,7 @@ import {
 } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
+import AIFeedbackSummary from '@/components/AIFeedbackSummary';
 
 export default function DeveloperPage() {
   const router = useRouter();
@@ -575,6 +576,9 @@ export default function DeveloperPage() {
             {/* Right: Feedback List & Filter */}
             <div className="lg:col-span-2">
               
+              {/* AI Feedback Summary Analysis */}
+              <AIFeedbackSummary feedbacks={feedbacks} />
+
               {/* Filter Controls */}
               <div className="glass-card mb-6 !py-3 !px-4 flex justify-between items-center gap-4 flex-wrap">
                 <div className="flex gap-2 flex-wrap">
