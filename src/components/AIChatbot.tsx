@@ -177,25 +177,32 @@ What would you like me to check?`
           font-family: 'Inter', system-ui, sans-serif;
         }
 
+        @media (max-width: 767px) {
+          .chatbot-root {
+            bottom: calc(72px + env(safe-area-inset-bottom));
+            right: 16px;
+          }
+        }
+
         /* 1. Chat Toggle Button */
         .chatbot-toggle {
           width: 52px;
           height: 52px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+          background: linear-gradient(135deg, #C9A227 0%, #A8840E 100%);
           display: flex;
           align-items: center;
           justify-content: center;
           border: none;
           outline: none;
           cursor: pointer;
-          color: white;
-          box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+          color: #0d1220;
+          box-shadow: 0 4px 16px rgba(201, 162, 39, 0.4);
           transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .chatbot-toggle:hover {
           transform: scale(1.06);
-          box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+          box-shadow: 0 6px 22px rgba(201, 162, 39, 0.55);
         }
         .chatbot-toggle:active {
           transform: scale(0.95);
@@ -212,7 +219,7 @@ What would you like me to check?`
           width: 12px;
           height: 12px;
           background: #ef4444;
-          border: 2.5px solid #0f0f18;
+          border: 2.5px solid #07090f;
           border-radius: 50%;
           z-index: 10001;
           animation: badge-pulse 2.2s infinite;
@@ -235,9 +242,9 @@ What would you like me to check?`
           bottom: 0px;
           right: 64px;
           width: 230px;
-          background: linear-gradient(135deg, #1e1b4b 0%, #110e28 100%);
-          border: 1px solid rgba(168, 85, 247, 0.4);
-          box-shadow: 0 8px 30px rgba(168, 85, 247, 0.15);
+          background: linear-gradient(135deg, #0d1220 0%, #111827 100%);
+          border: 1px solid rgba(201, 162, 39, 0.25);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
           border-radius: 14px;
           padding: 12px 14px;
           color: white;
@@ -260,7 +267,7 @@ What would you like me to check?`
         }
         .chatbot-tooltip-title {
           font-weight: 800;
-          color: #c084fc;
+          color: #C9A227;
           display: flex;
           align-items: center;
           gap: 6px;
@@ -300,10 +307,10 @@ What would you like me to check?`
           right: 0;
           width: 310px;
           height: 420px;
-          background: #0f0f18;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #0a0e1a;
+          border: 1px solid rgba(201, 162, 39, 0.12);
           border-radius: 16px;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -324,7 +331,7 @@ What would you like me to check?`
 
         /* 3. Header */
         .chatbot-header {
-          background: #151522;
+          background: #0d1220;
           padding: 10px 14px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
           display: flex;
@@ -340,8 +347,8 @@ What would you like me to check?`
           width: 30px;
           height: 30px;
           border-radius: 50%;
-          background: rgba(99, 102, 241, 0.12);
-          border: 1px solid rgba(99, 102, 241, 0.3);
+          background: rgba(201, 162, 39, 0.1);
+          border: 1px solid rgba(201, 162, 39, 0.25);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -360,7 +367,7 @@ What would you like me to check?`
         }
         .chatbot-header-status {
           font-size: 9px;
-          color: #10b981;
+          color: #34C77A;
           display: flex;
           align-items: center;
           gap: 3px;
@@ -373,7 +380,7 @@ What would you like me to check?`
           width: 5px;
           height: 5px;
           border-radius: 50%;
-          background-color: #10b981;
+          background-color: #34C77A;
           display: inline-block;
           animation: chatbot-blink 1.5s infinite;
         }
@@ -406,7 +413,7 @@ What would you like me to check?`
           display: flex;
           flex-direction: column;
           gap: 10px;
-          background: #0b0b13;
+          background: #070b14;
         }
         .chatbot-msg-row {
           display: flex;
@@ -438,16 +445,17 @@ What would you like me to check?`
           white-space: pre-wrap;
         }
         .chatbot-bubble.bot-bubble {
-          background-color: #181825;
-          color: #e4e4e7;
+          background-color: #0d1627;
+          color: #EDF2F7;
           border-bottom-left-radius: 3px;
-          border: 1px solid rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .chatbot-bubble.user-bubble {
-          background-color: #6366f1;
-          color: #ffffff;
+          background: linear-gradient(135deg, #1B2A4A 0%, #243558 100%);
+          color: #EDF2F7;
           border-bottom-right-radius: 3px;
-          box-shadow: 0 3px 8px rgba(99, 102, 241, 0.15);
+          border: 1px solid rgba(201, 162, 39, 0.15);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
         }
 
         /* 5. Typing indicator animation */
@@ -475,7 +483,7 @@ What would you like me to check?`
         .chatbot-suggestions {
           padding: 10px 14px;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
-          background: #0f0f18;
+          background: #0a0e1a;
           display: flex;
           flex-direction: column;
           gap: 6px;
@@ -499,22 +507,22 @@ What would you like me to check?`
           padding: 5px 8px;
           font-size: 10.5px;
           font-weight: 500;
-          color: #a5b4fc;
+          color: #8896AB;
           cursor: pointer;
           transition: all 0.2s ease;
           text-align: left;
         }
         .chatbot-chip:hover {
-          background: rgba(99, 102, 241, 0.08);
-          border-color: #6366f1;
-          color: #ffffff;
+          background: rgba(201, 162, 39, 0.08);
+          border-color: rgba(201, 162, 39, 0.4);
+          color: #E4BE5B;
         }
 
         /* 7. Footer Input Form */
         .chatbot-footer {
           padding: 10px 14px;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
-          background: #0a0a0f;
+          background: #070b14;
         }
         .chatbot-form {
           display: flex;
@@ -523,25 +531,26 @@ What would you like me to check?`
         }
         .chatbot-input {
           flex-grow: 1;
-          background: #13131f;
+          background: #0d1220;
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 8px;
           padding: 8px 12px;
-          color: #ffffff;
+          color: #EDF2F7;
           font-size: 12px;
           outline: none;
           transition: border-color 0.2s;
         }
         .chatbot-input:focus {
-          border-color: #6366f1;
+          border-color: rgba(201, 162, 39, 0.5);
+          box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.1);
         }
         .chatbot-send {
           width: 32px;
           height: 32px;
           border-radius: 8px;
-          background: #6366f1;
+          background: linear-gradient(135deg, #C9A227, #A8840E);
           border: none;
-          color: #ffffff;
+          color: #0d1220;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -550,7 +559,7 @@ What would you like me to check?`
           flex-shrink: 0;
         }
         .chatbot-send:hover {
-          background-color: #4f46e5;
+          filter: brightness(1.1);
         }
         .chatbot-send:disabled {
           background-color: rgba(255, 255, 255, 0.03);

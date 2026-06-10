@@ -19,7 +19,6 @@ export default function Home() {
         else router.push('/pending');
       } else {
         setLoading(false);
-        // Only trigger popup if user is logged out on the landing page
         const isDismissed = sessionStorage.getItem('dev_modal_dismissed');
         if (!isDismissed) {
           setShowDevModal(true);
@@ -32,7 +31,6 @@ export default function Home() {
   const handleLogin = async () => {
     try {
       await signInWithGoogle();
-      // Auth listener will handle redirect
     } catch (error) {
       console.error("Login failed", error);
       toast.error("Failed to login. Please try again.");
@@ -50,55 +48,108 @@ export default function Home() {
 
   if (showDevModal) {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-[#0a0a0f] p-4 text-center">
-        <div className="glass-card max-w-md w-full border-warning-glow shadow-warning-glow p-6 relative overflow-hidden animate-scale-up">
-          {/* Accent Line */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[var(--warning)] via-yellow-400 to-[var(--warning)]" />
+      <main style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg-color)',
+        padding: '1.5rem',
+      }}>
+        <div className="glass-card animate-scale-up" style={{
+          maxWidth: '400px',
+          width: '100%',
+          textAlign: 'center',
+          border: '1px solid rgba(201, 162, 39, 0.2)',
+          boxShadow: '0 0 40px rgba(201, 162, 39, 0.08)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* Gold accent top bar */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent)',
+          }} />
 
-          {/* Close Mark (X) */}
+          {/* Close Button */}
           <button
             onClick={dismissModal}
-            className="absolute top-3 right-3 text-secondary hover:text-white transition-colors duration-200 p-1"
             aria-label="Close"
+            style={{
+              position: 'absolute', top: '1rem', right: '1rem',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '50%',
+              color: 'var(--text-secondary)',
+              width: '30px', height: '30px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'all 0.2s ease',
+            }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
 
-          {/* Screen Printing T-shirt Animation */}
+          {/* T-shirt animation */}
           <div className="tshirt-print-container">
             <div className="tshirt-wrapper">
-              {/* Silhouette T-shirt outline */}
               <svg className="tshirt-silhouette" viewBox="0 0 100 100" width="80" height="80">
-                <path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z" fill="rgba(255, 255, 255, 0.03)" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="2" />
+                <path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z"
+                  fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
               </svg>
-
-              {/* Reveal T-shirt with Print Mart logo */}
               <div className="tshirt-ink-reveal">
                 <svg viewBox="0 0 100 100" width="80" height="80">
-                  <path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z" fill="rgba(99, 102, 241, 0.1)" stroke="var(--primary)" strokeWidth="2" />
-                  {/* Glowing Printed Circle + PM Logo Text */}
-                  <circle cx="50" cy="48" r="9" fill="none" stroke="var(--secondary)" strokeWidth="2" />
-                  <text x="50" y="51" fill="var(--secondary)" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">PM</text>
+                  <path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z"
+                    fill="rgba(79,134,232,0.06)" stroke="var(--sapphire)" strokeWidth="2" />
+                  <circle cx="50" cy="48" r="9" fill="none" stroke="var(--sapphire-light)" strokeWidth="1.5" />
+                  <text x="50" y="51" fill="var(--sapphire-light)" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">PM</text>
                 </svg>
               </div>
-
-              {/* Screen Squeegee Bar */}
-              <div className="tshirt-squeegee"></div>
+              <div className="tshirt-squeegee" />
             </div>
           </div>
 
-          <h3 className="text-xl font-bold text-white mb-2 tracking-wide font-display">System Under Development</h3>
-          <p className="text-xs text-secondary mb-6 leading-relaxed">
-            Print Mart Assistant is currently in active development. Calibration of shifts, live reporting panels, and automated databases is ongoing.
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: 'rgba(79, 134, 232, 0.08)',
+            border: '1px solid rgba(79, 134, 232, 0.2)',
+            borderRadius: '999px',
+            padding: '4px 12px',
+            fontSize: '10px', fontWeight: 600,
+            color: 'var(--sapphire-light)',
+            letterSpacing: '0.04em',
+            marginBottom: '1rem',
+          }}>
+            <span style={{
+              width: '5px', height: '5px', borderRadius: '50%',
+              background: 'var(--sapphire-light)',
+              display: 'inline-block',
+              animation: 'welcomePulseDot 1.6s infinite',
+            }} />
+            ACTIVE DEVELOPMENT
+          </div>
+
+          <h3 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.2rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: '0.6rem',
+          }}>System Under Development</h3>
+
+          <p style={{
+            fontSize: '0.82rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6,
+            marginBottom: '1.5rem',
+          }}>
+            Print Mart Assistant is in active development. Shift calibration, live reporting panels, and automated databases are being finalized.
           </p>
 
-          <button
-            onClick={dismissModal}
-            className="btn w-full bg-gradient-to-r from-[var(--warning)] to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-none text-black font-bold tracking-wide shadow-[0_4px_15px_rgba(245,158,11,0.25)] transition-all duration-300"
-          >
+          <button onClick={dismissModal} className="btn btn-primary w-full" style={{ color: '#0d1220' }}>
             Continue to Site
           </button>
         </div>
@@ -107,43 +158,128 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Ambient Glows */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 translate-y-1/2 w-80 h-80 bg-pink-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '6s' }} />
+    <main style={{
+      display: 'flex',
+      minHeight: '100vh',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '1.5rem',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Background ambient lights */}
+      <div style={{
+        position: 'absolute', top: '20%', left: '50%',
+        transform: 'translate(-60%, -50%)',
+        width: '600px', height: '600px',
+        background: 'radial-gradient(circle, rgba(27, 42, 74, 0.5) 0%, transparent 60%)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '15%', right: '10%',
+        width: '400px', height: '400px',
+        background: 'radial-gradient(circle, rgba(79, 134, 232, 0.07) 0%, transparent 60%)',
+        filter: 'blur(80px)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
 
-      <div className="glass-card max-w-md w-full animate-fade-in flex flex-col items-center text-center p-8 sm:p-10 relative overflow-hidden border-white/10 shadow-[0_15px_35px_rgba(0,0,0,0.4)]">
+      <div
+        className="glass-card animate-fade-in"
+        style={{
+          maxWidth: '420px',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          padding: '2.5rem 2rem',
+          border: '1px solid rgba(79, 134, 232, 0.12)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(79,134,232,0.05)',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        {/* Sapphire accent top bar */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0,
+          height: '2.5px',
+          background: 'linear-gradient(90deg, transparent, var(--sapphire), var(--sapphire-light), var(--sapphire), transparent)',
+          borderRadius: '28px 28px 0 0',
+        }} />
 
-        {/* Glow Accent Bar */}
-        <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
-
-        {/* Brand Icon Badge */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-6">
-          <span className="font-extrabold text-white text-xl tracking-tighter">PM</span>
+        {/* Brand badge */}
+        <div style={{
+          width: '56px', height: '56px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%)',
+          border: '1px solid rgba(79, 134, 232, 0.25)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          marginBottom: '1.5rem',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.3), 0 0 15px rgba(79,134,232,0.1)',
+          flexShrink: 0,
+        }}>
+          <span style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 800, color: 'var(--sapphire-light)',
+            fontSize: '1.1rem', letterSpacing: '-0.02em',
+          }}>PM</span>
         </div>
 
-        {/* Brand Name */}
-        <h1 className="title !text-3xl mb-1 font-display tracking-tight">
-          <span className="text-gradient">Print Mart</span> Portal
+        {/* Brand name */}
+        <h1 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '1.75rem',
+          fontWeight: 800,
+          letterSpacing: '-0.03em',
+          marginBottom: '0.4rem',
+          lineHeight: 1.15,
+        }}>
+          <span className="text-gradient">Print Mart</span>{' '}
+          <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Portal</span>
         </h1>
 
-        {/* Active Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-[10px] font-bold tracking-wider uppercase mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        {/* Status pill */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px',
+          padding: '4px 14px',
+          background: 'rgba(79, 134, 232, 0.08)',
+          border: '1px solid rgba(79, 134, 232, 0.2)',
+          borderRadius: '999px',
+          fontSize: '10px', fontWeight: 700,
+          color: 'var(--sapphire-light)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase' as const,
+          marginBottom: '1.75rem',
+          marginTop: '0.5rem',
+        }}>
+          <span style={{
+            width: '5px', height: '5px',
+            borderRadius: '50%',
+            background: 'var(--success)',
+            boxShadow: '0 0 6px var(--success)',
+            display: 'inline-block',
+            animation: 'welcomePulseDot 1.8s infinite',
+            flexShrink: 0,
+          }} />
           Shift Check-in Portal
         </div>
 
-        <p className="text-sm text-secondary leading-relaxed mb-8 max-w-xs">
-          Sign in with your verified Print Mart Google Workspace account to clock shift hours and log work logs.
+        <p style={{
+          fontSize: '0.85rem',
+          color: 'var(--text-secondary)',
+          lineHeight: 1.65,
+          marginBottom: '2rem',
+          maxWidth: '300px',
+        }}>
+          Sign in with your verified Print Mart Google Workspace account to clock shift hours and log work tasks.
         </p>
 
-        {/* Premium Google Sign-in Button */}
-        <div className="w-full flex justify-center">
-          <button
-            onClick={handleLogin}
-            className="stylish-google-btn"
-          >
-            {/* Left circular white background badge for Google Logo */}
+        {/* Google Sign-in Button */}
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <button onClick={handleLogin} className="stylish-google-btn">
             <div className="stylish-google-btn-logo-container">
               <svg width="20" height="20" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -152,25 +288,42 @@ export default function Home() {
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
             </div>
-            {/* Label aligned on the right */}
-            <span className="stylish-google-btn-text">
-              Sign in with Google
-            </span>
-            {/* Arrow indicator on the far right */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="stylish-google-btn-chevron">
+            <span className="stylish-google-btn-text">Sign in with Google</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="stylish-google-btn-chevron">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
         </div>
 
-        {/* Footer verification note */}
-        <div className="mt-8 border-t border-white/5 pt-6 w-full text-center flex flex-col gap-2">
-          <span className="text-[10px] text-secondary/70 uppercase tracking-wider font-semibold">Authorized Personnel Only</span>
-          <p className="text-[10px] text-secondary/50 leading-relaxed max-w-xs mx-auto">
-            Accounts await administrative verification upon first login. For assistance, contact your manager.
+        {/* Footer note */}
+        <div style={{
+          marginTop: '2rem',
+          paddingTop: '1.25rem',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.4rem',
+          alignItems: 'center',
+        }}>
+          <span style={{
+            fontSize: '10px',
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.1em',
+            fontWeight: 600,
+          }}>
+            Authorized Personnel Only
+          </span>
+          <p style={{
+            fontSize: '10px',
+            color: 'rgba(85, 96, 112, 0.7)',
+            lineHeight: 1.6,
+            maxWidth: '260px',
+          }}>
+            Accounts require administrative verification upon first login. Contact your manager for assistance.
           </p>
         </div>
-
       </div>
     </main>
   );

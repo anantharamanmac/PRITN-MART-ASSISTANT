@@ -8,6 +8,45 @@ import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
+// Tab bar icon components
+const DashboardIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
+
+const HistoryIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="12 8 12 12 14 14" />
+    <path d="M3.05 11a9 9 0 1 0 .5-4.5" />
+    <polyline points="3 3 3 8 8 8" />
+  </svg>
+);
+
+const DevIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="16 18 22 12 16 6" />
+    <polyline points="8 6 2 12 8 18" />
+  </svg>
+);
+
+const AdminIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const SignOutIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
 export default function Navbar({ user }: { user: AppUser }) {
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState(0);
@@ -15,9 +54,7 @@ export default function Navbar({ user }: { user: AppUser }) {
   useEffect(() => {
     if (user.role !== 'admin') return;
 
-    // Capture the time when the administrator logged in/loaded the navbar
     const sessionStartTime = Date.now();
-
     const colRef = collection(db, 'feedback');
     const q = query(colRef, where('status', '==', 'pending'));
 
@@ -27,19 +64,13 @@ export default function Navbar({ user }: { user: AppUser }) {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const fb = change.doc.data();
-
-          // Avoid triggering self-notifications for reports filed by the admin
           if (fb.userId === user.uid) return;
-
-          // Only alert on bugs (suggestions don't get toaster alerts)
           if (fb.type !== 'bug') return;
 
-          // Compute created timestamp, fallback to Date.now() for optimistic local updates
           const createdAtMs = fb.createdAt?.toMillis
             ? fb.createdAt.toMillis()
             : Date.now();
 
-          // Only display notifications for reports filed during the active session
           if (createdAtMs > sessionStartTime) {
             toast((t) => (
               <div className="flex flex-col gap-1 text-left">
@@ -53,12 +84,6 @@ export default function Navbar({ user }: { user: AppUser }) {
             ), {
               duration: 6000,
               icon: '🐛',
-              style: {
-                background: '#1e1e2d',
-                color: '#fff',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
-                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25)',
-              }
             });
           }
         }
@@ -70,38 +95,121 @@ export default function Navbar({ user }: { user: AppUser }) {
 
   const handleSignOut = async () => {
     await signOutUser();
-    // Redirect handled by auth listener in pages
   };
 
+  const initials = user.displayName
+    ? user.displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'PM';
+
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
+    { href: '/history', label: 'History', icon: HistoryIcon },
+    {
+      href: '/developer',
+      label: 'Dev Logs',
+      icon: DevIcon,
+      badge: user.role === 'admin' && pendingCount > 0 ? pendingCount : 0,
+    },
+    ...(user.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: AdminIcon }] : []),
+  ];
+
   return (
-    <nav className="navbar">
-      <div className="nav-brand">Print Mart</div>
-      <div className="nav-links">
-        <Link href="/dashboard" className={`nav-link ${pathname === '/dashboard' ? 'active' : ''}`}>Dashboard</Link>
-        <Link href="/history" className={`nav-link ${pathname === '/history' ? 'active' : ''}`}>History</Link>
-        <Link
-          href="/developer"
-          className={`nav-link ${pathname === '/developer' ? 'active' : ''}`}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-        >
-          Dev Logs
-          {user.role === 'admin' && pendingCount > 0 && (
-            <span className="nav-badge-count">{pendingCount}</span>
-          )}
+    <>
+      {/* ── DESKTOP TOP NAVBAR ── */}
+      <nav className="navbar">
+        {/* Brand */}
+        <Link href="/dashboard" className="nav-brand">
+          <span className="nav-brand-dot" />
+          Print Mart
         </Link>
-        {user.role === 'admin' && (
-          <Link href="/admin" className={`nav-link ${pathname === '/admin' ? 'active' : ''}`}>Admin</Link>
-        )}
-        <div className="flex items-center gap-4 ml-4">
-          <div className="text-sm">
-            <div className="font-semibold">{user.displayName}</div>
-            <div className="text-xs text-secondary capitalize">{user.role}</div>
+
+        {/* Desktop Nav Links */}
+        <div className="nav-links">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-link ${pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)) ? 'active' : ''}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+            >
+              {item.label}
+              {item.badge != null && item.badge > 0 && (
+                <span className="nav-badge-count">{item.badge}</span>
+              )}
+            </Link>
+          ))}
+        </div>
+
+        {/* User + Sign Out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="nav-user-chip">
+            <div className="nav-user-avatar">
+              {user.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoURL} alt={user.displayName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              ) : (
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sapphire-light)' }}>{initials}</span>
+              )}
+            </div>
+            <div>
+              <div className="nav-user-name">{user.displayName}</div>
+              <div className="nav-user-role">{user.role}</div>
+            </div>
           </div>
-          <button onClick={handleSignOut} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}>
-            Sign Out
+
+          <button onClick={handleSignOut} className="nav-signout-btn">
+            <SignOutIcon />
+            <span>Sign Out</span>
           </button>
         </div>
+      </nav>
+
+      {/* ── MOBILE BOTTOM TAB BAR ── */}
+      <div className="mobile-tab-bar">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`mobile-tab-item ${isActive ? 'active' : ''}`}
+            >
+              <div className="mobile-tab-icon-wrap" style={{ position: 'relative' }}>
+                <Icon size={20} />
+                {item.badge != null && item.badge > 0 && (
+                  <span
+                    className="nav-badge-count"
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      fontSize: '0.55rem',
+                      width: '14px',
+                      height: '14px',
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+              <span className="mobile-tab-label">{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Sign out tab */}
+        <button
+          onClick={handleSignOut}
+          className="mobile-tab-item"
+          style={{ border: 'none', cursor: 'pointer' }}
+        >
+          <div className="mobile-tab-icon-wrap">
+            <SignOutIcon size={20} />
+          </div>
+          <span className="mobile-tab-label">Sign Out</span>
+        </button>
       </div>
-    </nav>
+    </>
   );
 }

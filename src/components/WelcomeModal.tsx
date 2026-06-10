@@ -106,10 +106,10 @@ export default function WelcomeModal({ displayName, photoURL }: WelcomeModalProp
           </svg>
         </button>
 
-        {/* Tech Active Session Badge */}
+        {/* Session badge — clean and premium */}
         <div className="welcome-modal-system-tag">
           <span className="welcome-modal-pulse-dot" />
-          PORTAL ONLINE // ACTIVE_SESSION
+          Workspace Active
         </div>
 
         {/* Avatar Section with Dual Outer Rings and Tech Aesthetics */}
