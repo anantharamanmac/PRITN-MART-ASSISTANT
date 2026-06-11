@@ -18,24 +18,38 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme') || 'dark';
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
         <Toaster
           position="bottom-center"
           toastOptions={{
             style: {
-              background: '#0d1220',
-              color: '#EDF2F7',
-              border: '1px solid rgba(201, 162, 39, 0.2)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--glass-shadow)',
               borderRadius: '12px',
               fontFamily: "'Inter', sans-serif",
               fontSize: '0.875rem',
             },
             success: {
-              iconTheme: { primary: '#34C77A', secondary: '#0d1220' },
+              iconTheme: { primary: 'var(--success)', secondary: 'var(--bg-surface)' },
             },
             error: {
-              iconTheme: { primary: '#E05252', secondary: '#0d1220' },
+              iconTheme: { primary: 'var(--danger)', secondary: 'var(--bg-surface)' },
             },
           }}
         />
