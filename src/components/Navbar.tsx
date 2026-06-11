@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOutUser, AppUser } from '@/lib/auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -47,9 +47,53 @@ const SignOutIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const SunIcon = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+  </svg>
+);
+
+const MoonIcon = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+  </svg>
+);
+
 export default function Navbar({ user }: { user: AppUser }) {
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Theme initialization
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      setTheme(isLight ? 'light' : 'dark');
+    }
+  }, []);
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (user.role !== 'admin') return;
@@ -142,19 +186,50 @@ export default function Navbar({ user }: { user: AppUser }) {
 
         {/* User + Sign Out */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="nav-user-chip">
-            <div className="nav-user-avatar">
-              {user.photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.photoURL} alt={user.displayName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              ) : (
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sapphire-light)' }}>{initials}</span>
-              )}
+          <div className="nav-user-container" ref={dropdownRef}>
+            <div 
+              className={`nav-user-chip ${showDropdown ? 'active' : ''}`}
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
+              <div className="nav-user-avatar">
+                {user.photoURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.photoURL} alt={user.displayName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : (
+                  <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sapphire-light)' }}>{initials}</span>
+                )}
+              </div>
+              <div>
+                <div className="nav-user-name">{user.displayName}</div>
+                <div className="nav-user-role">{user.role}</div>
+              </div>
             </div>
-            <div>
-              <div className="nav-user-name">{user.displayName}</div>
-              <div className="nav-user-role">{user.role}</div>
-            </div>
+
+            {showDropdown && (
+              <div className="nav-dropdown-menu">
+                <div className="nav-dropdown-header">Settings</div>
+                <div className="nav-dropdown-divider" />
+                <div className="nav-dropdown-theme-section">
+                  <div className="nav-dropdown-theme-title">Theme</div>
+                  <div className="theme-toggle-group">
+                    <button 
+                      className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                      onClick={() => handleThemeChange('light')}
+                    >
+                      <SunIcon />
+                      <span>Light</span>
+                    </button>
+                    <button 
+                      className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                      onClick={() => handleThemeChange('dark')}
+                    >
+                      <MoonIcon />
+                      <span>Dark</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <button onClick={handleSignOut} className="nav-signout-btn">

@@ -27,10 +27,17 @@ export interface AttendanceRecord {
   breaks?: BreakInterval[];
 }
 
+// Helper to format Date object into YYYY-MM-DD in local timezone
+export const formatLocalDate = (d: Date): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Get current date string in YYYY-MM-DD format
 export const getTodayDateString = () => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
+  return formatLocalDate(new Date());
 };
 
 // Check if user has punched in today
@@ -445,7 +452,7 @@ export const fillMissingLeaves = async (userId: string) => {
   const batchPromises = [];
 
   while (currentDate < limitDate) {
-    const dateStr = currentDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(currentDate);
     const isSunday = currentDate.getDay() === 0;
 
     // If not a Sunday, not a Holiday, and no attendance record exists, mark as Leave
