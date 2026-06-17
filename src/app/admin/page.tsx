@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -60,14 +60,22 @@ export default function AdminDashboard() {
   const [attendancesPage, setAttendancesPage] = useState(1);
   const [allUsersPage, setAllUsersPage] = useState(1);
 
+  // File sharing & upload states
+  const [files, setFiles] = useState<AdminFileRecord[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState<AdminFileRecord | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   const loadData = async () => {
     try {
       const today = getTodayDateString();
-      const [usersList, atts, holidays, officeData] = await Promise.all([
+      const [usersList, atts, holidays, officeData, filesList] = await Promise.all([
         getAllUsers(),
         getAllAttendance(today),
         getHolidayRecords(),
-        getOfficeSettings()
+        getOfficeSettings(),
+        getAdminFiles()
       ]);
 
       setAllUsers(usersList);
@@ -78,6 +86,7 @@ export default function AdminDashboard() {
       setOfficeLat(officeData.latitude.toString());
       setOfficeLng(officeData.longitude.toString());
       setOfficeRadius(officeData.radius.toString());
+      setFiles(filesList);
     } catch (error) {
       console.error("Error loading admin data", error);
     } finally {
@@ -516,6 +525,238 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleFileUpload = async (file: File) => {
+    if (!currentUser) return;
+
+    // Validate size (60 MB)
+    const MAX_SIZE_BYTES = 60 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error(`File is too large. Max size is 60 MB. (Selected: ${(file.size / (1024 * 1024)).toFixed(1)} MB)`);
+      return;
+    }
+
+    // Validate type (PDF, CDR, Image formats)
+    const allowedExts = ['pdf', 'cdr', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
+    const allowedMimes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+
+    const isValidType = allowedMimes.includes(file.type) || allowedExts.includes(fileExt);
+
+    if (!isValidType) {
+      toast.error("Unsupported file format. Please upload PDF, CDR, or an image file.");
+      return;
+    }
+
+    // Slice file into 900KB chunks
+    const CHUNK_SIZE = 900 * 1024; // 900 KB
+    const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
+    
+    setUploadingFileName(file.name);
+    setUploadProgress(0);
+
+    try {
+      // 1. Create parent record in Firestore
+      const fileId = await createAdminFileRecord(
+        file.name,
+        file.size,
+        file.type || fileExt,
+        currentUser.displayName || currentUser.email || 'Admin',
+        chunkCount
+      );
+
+      // Helper function to read a file slice as ArrayBuffer
+      const readChunk = (start: number, end: number): Promise<ArrayBuffer> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result instanceof ArrayBuffer) {
+              resolve(e.target.result);
+            } else {
+              reject(new Error("Failed to read chunk buffer."));
+            }
+          };
+          reader.onerror = (err) => reject(err);
+          reader.readAsArrayBuffer(file.slice(start, end));
+        });
+      };
+
+      // 2. Upload chunks sequentially to track progress accurately
+      for (let i = 0; i < chunkCount; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        
+        const arrayBuffer = await readChunk(start, end);
+        const chunkData = new Uint8Array(arrayBuffer);
+        
+        await saveAdminFileChunk(fileId, i, chunkData);
+
+        // Update progress
+        const progress = Math.round(((i + 1) / chunkCount) * 100);
+        setUploadProgress(progress);
+      }
+
+      toast.success("File uploaded successfully!");
+      setUploadProgress(null);
+      setUploadingFileName(null);
+      
+      // Refresh list
+      const updatedFiles = await getAdminFiles();
+      setFiles(updatedFiles);
+    } catch (error: any) {
+      console.error("Error during chunk upload:", error);
+      toast.error(`Upload failed: ${error.message}`);
+      setUploadProgress(null);
+      setUploadingFileName(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  };
+
+  const handleDownloadClick = async (fileRecord: AdminFileRecord) => {
+    const toastId = toast.loading("Downloading and preparing file...");
+    try {
+      // 1. Fetch combined file bytes
+      const fileBytes = await getAdminFileChunks(fileRecord.id);
+      
+      // 2. Create Blob and trigger download
+      const fileBlob = new Blob([fileBytes.buffer as ArrayBuffer], { type: fileRecord.fileType });
+      const downloadUrl = URL.createObjectURL(fileBlob);
+      
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = fileRecord.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      toast.success("Download completed!", { id: toastId });
+
+      // 3. Open the deletion dialog
+      setConfirmDeleteFile(fileRecord);
+    } catch (error: any) {
+      console.error("Download error:", error);
+      toast.error(`Download failed: ${error.message}`, { id: toastId });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteFile) return;
+    const toastId = toast.loading("Deleting file...");
+    try {
+      await deleteAdminFile(confirmDeleteFile.id);
+      toast.success("File deleted successfully!", { id: toastId });
+      setConfirmDeleteFile(null);
+      
+      // Refresh list
+      const updatedFiles = await getAdminFiles();
+      setFiles(updatedFiles);
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      toast.error("Failed to delete file.", { id: toastId });
+    }
+  };
+
+  const handleDirectDelete = async (fileRecord: AdminFileRecord) => {
+    if (!confirm(`Are you sure you want to permanently delete "${fileRecord.fileName}"?`)) return;
+    const toastId = toast.loading("Deleting file...");
+    try {
+      await deleteAdminFile(fileRecord.id);
+      toast.success("File deleted successfully!", { id: toastId });
+      
+      // Refresh list
+      const updatedFiles = await getAdminFiles();
+      setFiles(updatedFiles);
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      toast.error("Failed to delete file.", { id: toastId });
+    }
+  };
+
+  const renderConfirmDeleteModal = () => {
+    if (!confirmDeleteFile) return null;
+    return (
+      <div className="modal-backdrop" onClick={() => setConfirmDeleteFile(null)}>
+        <div className="glass-card modal-content-wrapper text-center max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-accent-bar !bg-danger" />
+          
+          <button className="close-modal-btn" onClick={() => setConfirmDeleteFile(null)} title="Close Modal">
+            ✕
+          </button>
+
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+            ⚠️ Confirm File Deletion
+          </h3>
+          
+          <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-left mb-6">
+            <div className="text-[10px] text-secondary uppercase font-bold mb-1">Downloaded File</div>
+            <div className="text-sm font-semibold text-gradient truncate mb-1" title={confirmDeleteFile.fileName}>
+              {confirmDeleteFile.fileName}
+            </div>
+            <div className="text-xs text-secondary">
+              Size: {confirmDeleteFile.fileSize >= 1024 * 1024 
+                ? `${(confirmDeleteFile.fileSize / (1024 * 1024)).toFixed(1)} MB` 
+                : `${(confirmDeleteFile.fileSize / 1024).toFixed(1)} KB`}
+            </div>
+          </div>
+          
+          <p className="text-sm text-secondary mb-6 leading-relaxed">
+            Your download has been triggered in a new window/tab.
+            <br />
+            <span className="text-white font-medium">Have you successfully downloaded this file?</span>
+            <br />
+            Confirming deletion will permanently erase this file from storage.
+          </p>
+          
+          <div className="flex flex-col gap-2.5">
+            <button
+              onClick={handleConfirmDelete}
+              className="confirm-delete-modal-btn"
+            >
+              Yes, Delete Permanently
+            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDeleteFile(null)}
+                className="btn btn-outline flex-grow"
+              >
+                No, Keep on Server
+              </button>
+              <button
+                onClick={() => setConfirmDeleteFile(null)}
+                className="btn btn-outline flex-grow"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!currentUser || loading) return <PrinterLoader text="Loading Admin Panel..." fullscreen type="tshirt" />;
 
   const ITEMS_PER_PAGE = 10;
@@ -913,6 +1154,189 @@ export default function AdminDashboard() {
               </p>
             </div>
 
+            {/* File Sharing & Storage */}
+            <div className="glass-card mt-8">
+              <h2 className="subtitle !text-xl !text-white !mb-6 flex items-center gap-2">
+                📁 File Storage & Shared Designs
+              </h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Upload Zone (1 Col) */}
+                <div className="lg:col-span-1 flex flex-col gap-4">
+                  <h3 className="text-xs font-bold text-secondary uppercase tracking-wider">Upload Design File</h3>
+                  <input
+                    id="admin-file-input"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                    accept=".pdf,.cdr,image/*"
+                  />
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`file-upload-dropzone ${isDragging ? 'dragging' : ''}`}
+                    onClick={() => document.getElementById('admin-file-input')?.click()}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-3 border border-indigo-500/20">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-white">Drag & drop file here</p>
+                    <p className="text-xs text-secondary mt-1">or click to browse device</p>
+                    <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                      <span className="file-upload-badge">PDF</span>
+                      <span className="file-upload-badge">CDR</span>
+                      <span className="file-upload-badge">Images</span>
+                    </div>
+                    <p className="text-[10px] text-secondary mt-2">Max file size: 60 MB</p>
+                  </div>
+
+                  {uploadProgress !== null && uploadingFileName && (
+                    <div className="file-progress-container flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-white font-medium truncate max-w-[180px]" title={uploadingFileName}>
+                          Uploading: {uploadingFileName}
+                        </span>
+                        <span className="text-xs font-bold text-gradient">{uploadProgress}%</span>
+                      </div>
+                      <div className="file-progress-bar-bg">
+                        <div
+                          className="file-progress-bar-fill"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* File List (2 Cols) */}
+                <div className="lg:col-span-2 flex flex-col min-w-0">
+                  <h3 className="text-xs font-bold text-secondary uppercase tracking-wider mb-4">Uploaded Files ({files.length})</h3>
+                  
+                  {files.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl text-center min-h-[200px]">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-secondary mb-2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="9" y1="15" x2="15" y2="15" />
+                        <line x1="9" y1="11" x2="15" y2="11" />
+                      </svg>
+                      <p className="text-sm text-secondary font-medium">No files uploaded yet.</p>
+                      <p className="text-xs text-secondary mt-0.5">Use the upload zone on the left to add items.</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[300px] overflow-y-auto pr-1 flex flex-col gap-2.5">
+                      {files.map((file) => {
+                        const fileExt = file.fileName.split('.').pop()?.toLowerCase();
+                        const isPDF = fileExt === 'pdf' || file.fileType.includes('pdf');
+                        const isCDR = fileExt === 'cdr' || file.fileType.includes('cdr');
+                        const isImage = file.fileType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(fileExt || '');
+
+                        const formatSize = (bytes: number) => {
+                          if (bytes < 1024) return `${bytes} B`;
+                          if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+                        };
+
+                        let typeClass = 'file-type-generic';
+                        let iconSvg = (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                        );
+
+                        if (isPDF) {
+                          typeClass = 'file-type-pdf';
+                          iconSvg = (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="9" y1="15" x2="15" y2="15" />
+                            </svg>
+                          );
+                        } else if (isCDR) {
+                          typeClass = 'file-type-cdr';
+                          iconSvg = (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
+                              <line x1="12" y1="22" x2="12" y2="12" />
+                              <line x1="12" y1="12" x2="22" y2="8.5" />
+                              <line x1="12" y1="12" x2="2" y2="8.5" />
+                            </svg>
+                          );
+                        } else if (isImage) {
+                          typeClass = 'file-type-image';
+                          iconSvg = (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                          );
+                        }
+
+                        const uploadDateStr = file.uploadedAt?.toDate
+                          ? new Date(file.uploadedAt.toDate()).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          : '';
+
+                        return (
+                          <div key={file.id} className="file-item-row">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`file-type-icon ${typeClass}`}>
+                                {iconSvg}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-semibold text-sm text-white truncate max-w-full" title={file.fileName}>
+                                  {file.fileName}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-secondary flex-wrap">
+                                  <span>{formatSize(file.fileSize)}</span>
+                                  <span className="opacity-40">•</span>
+                                  <span className="truncate max-w-[120px]" title={file.uploadedBy}>{file.uploadedBy.split('@')[0]}</span>
+                                  <span className="opacity-40">•</span>
+                                  <span>{uploadDateStr}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 justify-end flex-shrink-0">
+                              <button
+                                onClick={() => handleDownloadClick(file)}
+                                className="file-btn-download"
+                                title="Download and Manage File"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Download
+                              </button>
+                              <button
+                                onClick={() => handleDirectDelete(file)}
+                                className="file-btn-delete"
+                                title="Delete File Directly"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Holiday Management */}
             <div className="glass-card mt-8 max-w-2xl">
               <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
@@ -960,6 +1384,7 @@ export default function AdminDashboard() {
         </div>
       </main>
       {showHolidayModal && renderHolidayCalendarModal()}
+      {confirmDeleteFile && renderConfirmDeleteModal()}
     </>
   );
 }

@@ -2,7 +2,7 @@ import { db } from './firebase';
 import {
   collection, doc, getDoc, getDocs, setDoc, updateDoc,
   query, where, serverTimestamp, addDoc, Timestamp,
-  deleteDoc
+  deleteDoc, Bytes
 } from 'firebase/firestore';
 import { AppUser } from './auth';
 
@@ -804,6 +804,118 @@ export const createChangelog = async (
 export const deleteChangelog = async (id: string) => {
   const docRef = doc(db, 'changelogs', id);
   await deleteDoc(docRef);
+};
+
+// --- FILE STORAGE & SHARING SYSTEM (FIRESTORE CHUNKS) ---
+
+export interface AdminFileRecord {
+  id: string;
+  fileName: string;
+  fileSize: number; // bytes
+  fileType: string; // MIME type or extension
+  uploadedBy: string; // Admin display name or email
+  uploadedAt: Timestamp;
+  chunkCount: number;
+}
+
+// Get all uploaded admin files sorted by uploadedAt descending
+export const getAdminFiles = async (): Promise<AdminFileRecord[]> => {
+  const colRef = collection(db, 'admin_files');
+  const snap = await getDocs(colRef);
+  const files = snap.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      fileName: data.fileName,
+      fileSize: data.fileSize,
+      fileType: data.fileType,
+      uploadedBy: data.uploadedBy,
+      uploadedAt: data.uploadedAt,
+      chunkCount: data.chunkCount || 0
+    } as AdminFileRecord;
+  });
+  
+  return files.sort((a, b) => {
+    const timeA = a.uploadedAt?.toMillis ? a.uploadedAt.toMillis() : 0;
+    const timeB = b.uploadedAt?.toMillis ? b.uploadedAt.toMillis() : 0;
+    return timeB - timeA;
+  });
+};
+
+// Create parent file document in Firestore and return its ID
+export const createAdminFileRecord = async (
+  fileName: string,
+  fileSize: number,
+  fileType: string,
+  uploadedBy: string,
+  chunkCount: number
+): Promise<string> => {
+  const colRef = collection(db, 'admin_files');
+  const docRef = await addDoc(colRef, {
+    fileName,
+    fileSize,
+    fileType,
+    uploadedBy,
+    chunkCount,
+    uploadedAt: serverTimestamp()
+  });
+  return docRef.id;
+};
+
+// Save an individual chunk to a sub-collection of the file record
+export const saveAdminFileChunk = async (
+  fileId: string,
+  chunkIndex: number,
+  chunkData: Uint8Array
+) => {
+  const chunkDocRef = doc(db, 'admin_files', fileId, 'chunks', String(chunkIndex));
+  await setDoc(chunkDocRef, {
+    data: Bytes.fromUint8Array(chunkData)
+  });
+};
+
+// Retrieve all chunks for a file and combine them into a Uint8Array
+export const getAdminFileChunks = async (fileId: string): Promise<Uint8Array> => {
+  const chunksColRef = collection(db, 'admin_files', fileId, 'chunks');
+  const snap = await getDocs(chunksColRef);
+  
+  const chunkDocs = snap.docs.map(doc => ({
+    index: parseInt(doc.id),
+    data: doc.data().data as Bytes
+  }));
+
+  // Sort chunks by index to reassemble in order
+  chunkDocs.sort((a, b) => a.index - b.index);
+
+  // Calculate total size
+  let totalLength = 0;
+  for (const chunk of chunkDocs) {
+    totalLength += chunk.data.toUint8Array().length;
+  }
+
+  // Combine into a single Uint8Array
+  const combined = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunkDocs) {
+    const arr = chunk.data.toUint8Array();
+    combined.set(arr, offset);
+    offset += arr.length;
+  }
+
+  return combined;
+};
+
+// Delete a file and all its chunks from Firestore
+export const deleteAdminFile = async (fileId: string) => {
+  // 1. Delete all chunks in sub-collection
+  const chunksColRef = collection(db, 'admin_files', fileId, 'chunks');
+  const snap = await getDocs(chunksColRef);
+  const deletePromises = snap.docs.map(doc => deleteDoc(doc.ref));
+  await Promise.all(deletePromises);
+
+  // 2. Delete parent document
+  const fileRef = doc(db, 'admin_files', fileId);
+  await deleteDoc(fileRef);
 };
 
 
