@@ -15,6 +15,7 @@ import {
   updateOrderStatus,
   deleteOrder,
   getNextInfoNumber,
+  findOrderByInfoNumber,
   formatLocalDate
 } from '@/lib/db';
 import { parseExcelText, parseExcelFile, calculateSizeBreakdown } from '@/lib/excelParser';
@@ -73,6 +74,7 @@ export default function OrdersPage() {
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [statusModalOrder, setStatusModalOrder] = useState<OrderRecord | null>(null);
   const [infoSheetOrder, setInfoSheetOrder] = useState<OrderRecord | null>(null);
+  const [searchInfoInput, setSearchInfoInput] = useState('');
 
   // Form Fields State
   const [infoNumber, setInfoNumber] = useState<number>(2412);
@@ -130,6 +132,71 @@ export default function OrdersPage() {
       toast.dismiss('excel-upload');
       console.error('Error reading Excel file:', err);
       toast.error('Failed to read Excel file. Please ensure it is a valid .xlsx, .xls, or .csv file.');
+    }
+  };
+
+  // Auto-Fetch & Pre-fill from Existing INFO NO.
+  const handleFetchExistingInfo = async (searchInfoNum: number | string) => {
+    if (!searchInfoNum) {
+      toast.error('Please enter an INFO NO. to fetch data');
+      return;
+    }
+
+    const num = Number(searchInfoNum);
+    if (isNaN(num)) {
+      toast.error('Invalid INFO NO.');
+      return;
+    }
+
+    try {
+      toast.loading(`Fetching data for INFO #${num}...`, { id: 'fetch-info' });
+      const found = await findOrderByInfoNumber(num);
+      toast.dismiss('fetch-info');
+
+      if (!found) {
+        toast.error(`No existing order found for INFO #${num}`);
+        return;
+      }
+
+      // Pre-fill all fields from found order
+      setCustomerName(found.customerName || '');
+      setCustomerPhone(found.customerPhone || '');
+      setOrderTitle(found.orderTitle || '');
+      setItemType(found.itemType || 'JERSEY');
+      setClothImage(found.clothImage || '');
+      setBackImage(found.backImage || '');
+      setPieces(found.pieces || 1);
+
+      if (NECK_TYPES.includes(found.neckType)) {
+        setNeckType(found.neckType);
+        setCustomNeckType('');
+      } else {
+        setNeckType('Custom / Other');
+        setCustomNeckType(found.neckType);
+      }
+
+      if (CLOTH_TYPES.includes(found.clothType)) {
+        setClothType(found.clothType);
+        setCustomClothType('');
+      } else {
+        setClothType('Custom / Other');
+        setCustomClothType(found.clothType);
+      }
+
+      if (found.deliveryDate) setDeliveryDate(found.deliveryDate);
+      setPrintMethod(found.printMethod || 'sublimation');
+      setPrintArea(found.printArea || 'full');
+      setSleeveType(found.sleeveType || 'full');
+      setNotes(found.notes || '');
+      if (found.players && found.players.length > 0) {
+        setPlayers([...found.players]);
+      }
+
+      toast.success(`✓ Pre-filled all details from INFO #${num} (${found.customerName})!`);
+    } catch (err) {
+      toast.dismiss('fetch-info');
+      console.error('Error fetching order info:', err);
+      toast.error('Failed to fetch order details');
     }
   };
 
@@ -930,6 +997,27 @@ export default function OrdersPage() {
                 <span>✨</span> {editingOrderId ? `Edit Order INFO #${infoNumber}` : 'Add New Order'}
               </h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {/* Auto-Fetch Existing INFO NO. Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.08)', padding: '0.55rem 0.75rem', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.3)', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--sapphire-light)', whiteSpace: 'nowrap' }}>
+                ⚡ Auto-Fetch Existing INFO:
+              </span>
+              <input
+                type="number"
+                placeholder="Enter INFO NO. (e.g. 2412)..."
+                value={searchInfoInput}
+                onChange={(e) => setSearchInfoInput(e.target.value)}
+                style={{ flex: 1, padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => handleFetchExistingInfo(searchInfoInput)}
+                style={{ padding: '0.35rem 0.85rem', borderRadius: '6px', border: 'none', background: 'var(--sapphire-primary)', color: '#fff', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                🔍 Fetch Data
+              </button>
             </div>
 
             {/* 2 Section Workflow Navigation Tabs */}

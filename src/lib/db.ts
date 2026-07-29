@@ -1043,6 +1043,18 @@ export const deleteOrder = async (orderId: string) => {
   await deleteDoc(docRef);
 };
 
+// Find an existing order by INFO NO.
+export const findOrderByInfoNumber = async (infoNum: number): Promise<OrderRecord | null> => {
+  const colRef = collection(db, 'orders');
+  const q = query(colRef, where('infoNumber', '==', Number(infoNum)));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const docSnap = snap.docs[0];
+    return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
+  }
+  return null;
+};
+
 
 
 
