@@ -187,52 +187,101 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
 };
 
 /**
+ * Fallback raw text extractor from PDF ArrayBuffer
+ */
+const extractRawPdfText = (arrayBuffer: ArrayBuffer): string => {
+  try {
+    const decoder = new TextDecoder('utf-8');
+    const bytes = new Uint8Array(arrayBuffer);
+    const rawStr = decoder.decode(bytes);
+
+    const textLines: string[] = [];
+
+    // Match text objects inside BT ... ET blocks
+    const btBlocks = rawStr.match(/BT[\s\S]*?ET/g) || [];
+    for (const block of btBlocks) {
+      // Extract Tj and TJ strings e.g. (NAME) Tj or [(PLAYER) 10 (SIZE)] TJ
+      const strMatches = block.match(/\(([^)]+)\)\s*Tj|\[([^\]]+)\]\s*TJ/g) || [];
+      let blockText = '';
+      for (const m of strMatches) {
+        const cleaned = m.replace(/^\(/, '').replace(/\)\s*Tj$/, '').replace(/^\[/, '').replace(/\]\s*TJ$/, '').replace(/\\/g, '');
+        const strParts = cleaned.match(/\(([^)]+)\)/g);
+        if (strParts) {
+          blockText += strParts.map(s => s.slice(1, -1)).join(' ');
+        } else {
+          blockText += ' ' + cleaned;
+        }
+      }
+      if (blockText.trim()) textLines.push(blockText.trim());
+    }
+
+    // If no BT/ET blocks matched, find printable text strings in parenthesized blocks
+    if (textLines.length === 0) {
+      const lines = rawStr.split(/\r?\n/);
+      for (const line of lines) {
+        const match = line.match(/\(([^)]{2,})\)/g);
+        if (match) {
+          const lineText = match.map(m => m.slice(1, -1)).join(' ').trim();
+          if (lineText.length > 2) textLines.push(lineText);
+        }
+      }
+    }
+
+    return textLines.join('\n');
+  } catch (e) {
+    console.error('Error in raw PDF text extraction:', e);
+    return '';
+  }
+};
+
+/**
  * Directly parses an uploaded PDF file (.pdf)
  * extracting all player roster rows (NAME, NUMBER, SIZE) and text info!
  */
 export const parsePdfFile = async (file: File): Promise<PlayerDetail[]> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Dynamic import pdfjs-dist for client browser execution
-      // @ts-ignore
-      const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-      if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.0.379'}/pdf.worker.min.mjs`;
-      }
+  const arrayBuffer = await file.arrayBuffer();
 
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullTextLines: string[] = [];
-
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        // Group text items by Y coordinate (rows)
-        const rowMap: Record<number, string[]> = {};
-        for (const item of textContent.items as any[]) {
-          if (!item.str) continue;
-          const y = Math.round(item.transform[5]); // Y coordinate
-          if (!rowMap[y]) rowMap[y] = [];
-          rowMap[y].push(item.str);
-        }
-
-        // Sort rows top-to-bottom (Y descending in PDF coordinate space)
-        const sortedY = Object.keys(rowMap).map(Number).sort((a, b) => b - a);
-        for (const y of sortedY) {
-          const lineStr = rowMap[y].join('\t').trim();
-          if (lineStr) fullTextLines.push(lineStr);
-        }
-      }
-
-      // Pass extracted text lines into our robust parseExcelText parser
-      const extractedPlayers = parseExcelText(fullTextLines.join('\n'));
-      resolve(extractedPlayers);
-    } catch (err) {
-      console.error('Error parsing PDF file:', err);
-      reject(err);
+  // Try Layer 1: pdfjs-dist
+  try {
+    // @ts-ignore
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
     }
-  });
+
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useSystemFonts: true }).promise;
+    let fullTextLines: string[] = [];
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+
+      // Group text items by Y coordinate (rows)
+      const rowMap: Record<number, string[]> = {};
+      for (const item of textContent.items as any[]) {
+        if (!item.str) continue;
+        const y = Math.round(item.transform[5]); // Y coordinate
+        if (!rowMap[y]) rowMap[y] = [];
+        rowMap[y].push(item.str);
+      }
+
+      // Sort rows top-to-bottom
+      const sortedY = Object.keys(rowMap).map(Number).sort((a, b) => b - a);
+      for (const y of sortedY) {
+        const lineStr = rowMap[y].join('\t').trim();
+        if (lineStr) fullTextLines.push(lineStr);
+      }
+    }
+
+    const extracted = parseExcelText(fullTextLines.join('\n'));
+    if (extracted.length > 0) return extracted;
+  } catch (pdfErr) {
+    console.warn('pdfjs-dist warning, attempting raw stream parser fallback:', pdfErr);
+  }
+
+  // Layer 2 Fallback: Raw Stream & Text Decoder
+  const rawText = extractRawPdfText(arrayBuffer);
+  return parseExcelText(rawText);
 };
 
 /**
