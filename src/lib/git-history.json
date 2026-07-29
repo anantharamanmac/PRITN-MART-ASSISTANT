@@ -1,13 +1,58 @@
 [
   {
-    "id": "1e76d12",
-    "version": "v1.8 - 1E76D12",
+    "id": "5fbfb9e",
+    "version": "v1.8 - 5FBFB9E",
+    "date": "Jul 29, 2026",
+    "title": "chore: remove unused legacy integration files",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "5b9fba2",
+    "version": "v1.8 - 5B9FBA2",
+    "date": "Jul 29, 2026",
+    "title": "feat: implement orders management page with Excel import, order creation, and status tracking features",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "232bcfc",
+    "version": "v1.8 - 232BCFC",
+    "date": "Jul 29, 2026",
+    "title": "feat: add 1-click Copy Summary button to order cards",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "a5a2dcc",
+    "version": "v1.8 - A5A2DCC",
     "date": "Jul 29, 2026",
     "title": "feat: implement order management system with CRUD operations, Excel roster parsing, and AI-assisted workflow modules",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1785283200,
@@ -15,14 +60,14 @@
     }
   },
   {
-    "id": "0318e8a",
-    "version": "v1.8 - 0318E8A",
+    "id": "d61e796",
+    "version": "v1.8 - D61E796",
     "date": "Jul 29, 2026",
     "title": "Update fabric and neck type dropdown choices",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1785283200,
@@ -30,14 +75,14 @@
     }
   },
   {
-    "id": "5f73838",
-    "version": "v1.8 - 5F73838",
+    "id": "87e00d4",
+    "version": "v1.8 - 87E00D4",
     "date": "Jul 29, 2026",
     "title": "Add 2-section order management workflow, A4 adaptive printable slip, and Excel upload parser",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1785283200,
@@ -45,14 +90,14 @@
     }
   },
   {
-    "id": "dd90b65",
-    "version": "v1.8 - DD90B65",
+    "id": "83f72f0",
+    "version": "v1.8 - 83F72F0",
     "date": "Jun 17, 2026",
     "title": "feat: implement global styles and initial database and firebase configuration files",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1781654400,
@@ -60,14 +105,14 @@
     }
   },
   {
-    "id": "ddc5309",
-    "version": "v1.8 - DDC5309",
+    "id": "8770c1a",
+    "version": "v1.8 - 8770C1A",
     "date": "Jun 11, 2026",
     "title": "Merge branch 'main' of https://github.com/anantharamanmac/PRITN-MART-ASSISTANT",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1781136000,
@@ -75,14 +120,14 @@
     }
   },
   {
-    "id": "847be2d",
-    "version": "v1.8 - 847BE2D",
+    "id": "81fd031",
+    "version": "v1.8 - 81FD031",
     "date": "Jun 11, 2026",
     "title": "zion: implement Firestore attendance and user management utility functions",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1781136000,
@@ -90,14 +135,14 @@
     }
   },
   {
-    "id": "41afe82",
-    "version": "v1.8 - 41AFE82",
+    "id": "5c11ad4",
+    "version": "v1.8 - 5C11AD4",
     "date": "Jun 11, 2026",
     "title": "zion: implement admin salary statement generation with PDF export functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1781136000,
@@ -105,14 +150,14 @@
     }
   },
   {
-    "id": "2f0545b",
-    "version": "v1.8 - 2F0545B",
+    "id": "23c0952",
+    "version": "v1.8 - 23C0952",
     "date": "Jun 10, 2026",
     "title": "zion: initialize project structure with core layout, authentication, and UI components",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1781049600,
@@ -120,62 +165,17 @@
     }
   },
   {
-    "id": "fc5805d",
-    "version": "v1.8 - FC5805D",
+    "id": "a830b71",
+    "version": "v1.8 - A830B71",
     "date": "Jun 10, 2026",
     "title": "zion : implement developer portal with changelog management, feedback system, and AI-powered chat and analysis tools",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: lonewiper"
+      "Developer: anantharamanmac"
     ],
     "createdAt": {
       "seconds": 1781049600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5442bb8",
-    "version": "v1.8 - 5442BB8",
-    "date": "Jun 4, 2026",
-    "title": "zion: implement worker dashboard with attendance tracking, salary statement PDF generation, and location verification",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: lonewiper"
-    ],
-    "createdAt": {
-      "seconds": 1780531200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "daf3441",
-    "version": "v1.8 - DAF3441",
-    "date": "Jun 4, 2026",
-    "title": "zion: implement global CSS framework with glassmorphism design and initialize git history tracking file",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: lonewiper"
-    ],
-    "createdAt": {
-      "seconds": 1780531200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "3763110",
-    "version": "v1.8 - 3763110",
-    "date": "Jun 4, 2026",
-    "title": "ZION: implement admin attendance reporting, employee dashboard modules, and historical build tracking",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: lonewiper"
-    ],
-    "createdAt": {
-      "seconds": 1780531200,
       "nanoseconds": 0
     }
   }
