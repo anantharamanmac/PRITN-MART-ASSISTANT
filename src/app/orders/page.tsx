@@ -743,7 +743,7 @@ export default function OrdersPage() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '0.85rem' }}>
             {filteredOrders.map((ord) => {
               const isOverdue = ord.deliveryDate < todayStr && ord.status !== 'delivered' && ord.status !== 'cancelled';
               const isDueToday = ord.deliveryDate === todayStr && ord.status !== 'delivered' && ord.status !== 'cancelled';
@@ -756,8 +756,8 @@ export default function OrdersPage() {
                   key={ord.id}
                   className="card-glass"
                   style={{
-                    borderRadius: '16px',
-                    padding: '1.1rem',
+                    borderRadius: '12px',
+                    padding: '0.75rem',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -766,26 +766,26 @@ export default function OrdersPage() {
                       : isDueToday
                       ? '1px solid rgba(234, 179, 8, 0.6)'
                       : '1px solid var(--border)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                    boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
                     position: 'relative'
                   }}
                 >
                   <div>
                     {/* Header: INFO NO & Customer / Order Name */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.4rem', marginBottom: '0.4rem' }}>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ffffff', background: '#d92525', padding: '0.2rem 0.55rem', borderRadius: '6px', letterSpacing: '0.05em' }}>
-                            INFO NO: {ord.infoNumber || 2412}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ffffff', background: '#d92525', padding: '0.15rem 0.45rem', borderRadius: '5px', letterSpacing: '0.04em' }}>
+                            INFO #{ord.infoNumber || 2412}
                           </span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{ord.orderNumber}</span>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>{ord.orderNumber}</span>
                         </div>
 
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '0.35rem', margin: 0 }}>
-                          {ord.customerName} {ord.orderTitle && <span style={{ color: 'var(--sapphire-light)', fontSize: '0.85rem' }}>({ord.orderTitle})</span>}
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '0.25rem', margin: 0, lineHeight: 1.25 }}>
+                          {ord.customerName} {ord.orderTitle && <span style={{ color: 'var(--sapphire-light)', fontSize: '0.78rem' }}>({ord.orderTitle})</span>}
                         </h4>
                         {ord.customerPhone && (
-                          <div style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700, marginTop: '0.15rem' }}>
+                          <div style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem' }}>
                             📞 {ord.customerPhone}
                           </div>
                         )}
@@ -796,10 +796,10 @@ export default function OrdersPage() {
                         value={ord.status}
                         onChange={(e) => handleStatusChange(ord.id!, e.target.value as OrderStatus)}
                         style={{
-                          fontSize: '0.75rem',
+                          fontSize: '0.7rem',
                           fontWeight: 700,
-                          padding: '0.35rem 0.55rem',
-                          borderRadius: '8px',
+                          padding: '0.25rem 0.45rem',
+                          borderRadius: '6px',
                           border: `1.5px solid ${statusInfo.border}`,
                           cursor: 'pointer',
                           background: statusInfo.bg,
@@ -817,27 +817,27 @@ export default function OrdersPage() {
                     </div>
 
                     {/* Section Status Badge Indicator */}
-                    <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ marginBottom: '0.5rem' }}>
                       {hasDesignerSpecs ? (
-                        <span style={{ fontSize: '0.725rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                          ✓ Designer Production Specs Complete ({ord.players?.length || 0} Players)
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                          ✓ Specs Complete ({ord.players?.length || 0} Players)
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.725rem', fontWeight: 700, color: '#eab308', background: 'rgba(234, 179, 8, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-                          ⏳ Receptionist Intake Saved (Awaiting Designer Roster)
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#eab308', background: 'rgba(234, 179, 8, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                          ⏳ Intake Saved (Awaiting Designer Roster)
                         </span>
                       )}
                     </div>
 
                     {/* Proof Image & Receptionist Basic Specs */}
-                    <div style={{ display: 'flex', gap: '0.85rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '0.5rem' }}>
                       {/* Proof Thumbnail */}
                       <div
                         onClick={() => ord.clothImage && setEnlargedImage(ord.clothImage)}
                         style={{
-                          width: '78px',
-                          height: '78px',
-                          borderRadius: '12px',
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '8px',
                           background: 'var(--bg-main)',
                           border: '1px solid var(--border)',
                           display: 'flex',
@@ -854,35 +854,35 @@ export default function OrdersPage() {
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={ord.clothImage} alt="Proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')} onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}>
-                              <span style={{ fontSize: '0.65rem', color: '#fff', fontWeight: 700 }}>🔍 View</span>
+                              <span style={{ fontSize: '0.6rem', color: '#fff', fontWeight: 700 }}>🔍 View</span>
                             </div>
                           </>
                         ) : (
-                          <span style={{ fontSize: '1.8rem', opacity: 0.5 }}>👕</span>
+                          <span style={{ fontSize: '1.4rem', opacity: 0.5 }}>👕</span>
                         )}
                       </div>
 
                       {/* Specs */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.18rem', fontSize: '0.75rem', color: 'var(--text-secondary)', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Pieces:</span>
-                          <span style={{ background: 'rgba(255,255,255,0.08)', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: 800, color: 'var(--sapphire-light)' }}>
+                          <span style={{ background: 'rgba(255,255,255,0.08)', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, color: 'var(--sapphire-light)', fontSize: '0.72rem' }}>
                             {ord.players && ord.players.length > 0 ? ord.players.length : ord.pieces} Pcs
                           </span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Fabric:</span>
-                          <span style={{ color: '#ef4444', fontWeight: 800 }}>{ord.clothType}</span>
+                          <span style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.72rem' }}>{ord.clothType}</span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Neck:</span>
-                          <span style={{ color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'underline' }}>{ord.neckType}</span>
+                          <span style={{ color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'underline', fontSize: '0.72rem' }}>{ord.neckType}</span>
                         </div>
 
                         {ordBreakdown.summaryString && (
-                          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.1rem' }}>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             Sizes: {ordBreakdown.summaryString}
                           </div>
                         )}
@@ -891,13 +891,13 @@ export default function OrdersPage() {
                   </div>
 
                   {/* 2-Section Action Buttons */}
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.65rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isOverdue ? '#ef4444' : isDueToday ? '#eab308' : 'var(--text-primary)' }}>
-                        🚚 Delivery: {ord.deliveryDate} {isOverdue && '⚠️ OVERDUE'} {isDueToday && '🚨 TODAY'}
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem', marginTop: '0.3rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: isOverdue ? '#ef4444' : isDueToday ? '#eab308' : 'var(--text-primary)' }}>
+                        🚚 {ord.deliveryDate} {isOverdue && '⚠️ OVERDUE'} {isDueToday && '🚨 TODAY'}
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <button
                           type="button"
                           onClick={() => {
@@ -906,18 +906,18 @@ export default function OrdersPage() {
                             toast.success(`Copied summary for INFO #${ord.infoNumber || 2412}!`);
                           }}
                           title="Copy order summary to clipboard"
-                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.45rem', cursor: 'pointer' }}
+                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: '5px', fontSize: '0.68rem', fontWeight: 600, padding: '0.18rem 0.4rem', cursor: 'pointer' }}
                         >
-                          📋 Copy Summary
+                          📋 Copy
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleDelete(ord.id!, ord.infoNumber)}
                           title="Delete order"
-                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem', opacity: 0.7 }}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.15rem', opacity: 0.7 }}
                         >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                           </svg>
