@@ -2,7 +2,7 @@ import { db } from './firebase';
 import {
   collection, doc, getDoc, getDocs, setDoc, updateDoc,
   query, where, serverTimestamp, addDoc, Timestamp,
-  deleteDoc, Bytes
+  deleteDoc, Bytes, onSnapshot
 } from 'firebase/firestore';
 import { AppUser } from './auth';
 
@@ -917,5 +917,132 @@ export const deleteAdminFile = async (fileId: string) => {
   const fileRef = doc(db, 'admin_files', fileId);
   await deleteDoc(fileRef);
 };
+
+// ── ORDER MANAGEMENT DATA TYPES & FUNCTIONS ──
+
+export type OrderStatus = 'pending' | 'in_production' | 'ready' | 'delivered' | 'cancelled';
+
+export interface PlayerItem {
+  name: string;
+  size: string;
+  number: string;
+}
+
+export interface OrderRecord {
+  id?: string;
+  infoNumber: number; // Auto-incrementing INFO NO (e.g. 2412)
+  orderNumber: string; // e.g. ORD-2412
+  customerName: string; // e.g. LUCKY
+  customerPhone?: string; // e.g. +918848048733
+  orderTitle?: string; // e.g. SPORTIVATE
+  itemType?: string; // e.g. JERSEY, SHIRT, HOODIE
+  clothImage: string; // Front design proof Base64
+  backImage?: string; // Back design proof Base64
+  pieces: number;
+  neckType: string; // e.g. ROUND NECK
+  clothType: string; // e.g. SALEENA
+  deliveryDate: string; // YYYY-MM-DD
+  printMethod?: 'sublimation' | 'dft' | 'normal';
+  printArea?: 'front_only' | 'front_back' | 'full';
+  sleeveType?: 'sleeveless' | 'half' | 'full';
+  players?: PlayerItem[];
+  status: OrderStatus;
+  notes?: string;
+  createdByUid: string;
+  createdByName: string;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+// Get Next Sequential Info Number
+export const getNextInfoNumber = async (): Promise<number> => {
+  try {
+    const colRef = collection(db, 'orders');
+    const snap = await getDocs(colRef);
+    let maxInfo = 2411; // Default base starting info number
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data() as OrderRecord;
+      if (data.infoNumber && typeof data.infoNumber === 'number') {
+        if (data.infoNumber > maxInfo) {
+          maxInfo = data.infoNumber;
+        }
+      }
+    });
+
+    return maxInfo + 1;
+  } catch (e) {
+    console.error("Error calculating next info number:", e);
+    return 2412;
+  }
+};
+
+// Create a new order
+export const createOrder = async (orderData: Omit<OrderRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const colRef = collection(db, 'orders');
+  const newDocRef = doc(colRef);
+  
+  const record: OrderRecord = {
+    ...orderData,
+    id: newDocRef.id,
+    createdAt: serverTimestamp() as unknown as Timestamp,
+    updatedAt: serverTimestamp() as unknown as Timestamp,
+  };
+
+  await setDoc(newDocRef, record);
+  return newDocRef.id;
+};
+
+// Update Full Order Details
+export const updateOrder = async (orderId: string, orderData: Partial<OrderRecord>) => {
+  const docRef = doc(db, 'orders', orderId);
+  await updateDoc(docRef, {
+    ...orderData,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Subscribe to real-time orders list
+export const listenToOrders = (callback: (orders: OrderRecord[]) => void) => {
+  const colRef = collection(db, 'orders');
+  
+  return onSnapshot(colRef, (snapshot) => {
+    const list: OrderRecord[] = [];
+    snapshot.forEach((docSnap) => {
+      list.push({ id: docSnap.id, ...docSnap.data() } as OrderRecord);
+    });
+
+    // Sort by infoNumber descending or createdAt descending
+    list.sort((a, b) => {
+      const aInfo = a.infoNumber || 0;
+      const bInfo = b.infoNumber || 0;
+      if (aInfo !== bInfo) return bInfo - aInfo;
+      const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+
+    callback(list);
+  }, (error) => {
+    console.error("Error listening to orders:", error);
+  });
+};
+
+// Update Order Status
+export const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+  const docRef = doc(db, 'orders', orderId);
+  await updateDoc(docRef, {
+    status,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Delete Order
+export const deleteOrder = async (orderId: string) => {
+  const docRef = doc(db, 'orders', orderId);
+  await deleteDoc(docRef);
+};
+
+
 
 

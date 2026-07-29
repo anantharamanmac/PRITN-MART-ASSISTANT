@@ -1,5 +1,95 @@
 [
   {
+    "id": "314a75c",
+    "version": "v1.8 - 314A75C",
+    "date": "Jun 17, 2026",
+    "title": "feat: implement global styles and initial database and firebase configuration files",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1781654400,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "85c93e3",
+    "version": "v1.8 - 85C93E3",
+    "date": "Jun 11, 2026",
+    "title": "Merge branch 'main' of https://github.com/anantharamanmac/PRITN-MART-ASSISTANT",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1781136000,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "f53e822",
+    "version": "v1.8 - F53E822",
+    "date": "Jun 11, 2026",
+    "title": "zion: implement Firestore attendance and user management utility functions",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1781136000,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "8690b14",
+    "version": "v1.8 - 8690B14",
+    "date": "Jun 11, 2026",
+    "title": "zion: implement admin salary statement generation with PDF export functionality",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1781136000,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "3eb6bbe",
+    "version": "v1.8 - 3EB6BBE",
+    "date": "Jun 10, 2026",
+    "title": "zion: initialize project structure with core layout, authentication, and UI components",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1781049600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "15d4ad0",
+    "version": "v1.8 - 15D4AD0",
+    "date": "Jun 10, 2026",
+    "title": "zion : implement developer portal with changelog management, feedback system, and AI-powered chat and analysis tools",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1781049600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "98c5b7d",
     "version": "v1.8 - 98C5B7D",
     "date": "Jun 4, 2026",
@@ -86,96 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1780358400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "d326f49",
-    "version": "v1.8 - D326F49",
-    "date": "Jun 2, 2026",
-    "title": "zion: add Developer Center page with changelog timeline and user feedback system",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1780358400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "503af10",
-    "version": "v1.8 - 503AF10",
-    "date": "Jun 2, 2026",
-    "title": "feat: implement base UI styles, navigation component, database utility, and developer log tracking module",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1780358400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "d7a03f4",
-    "version": "v1.8 - D7A03F4",
-    "date": "Jun 2, 2026",
-    "title": "feat: implement worker dashboard with attendance tracking, geolocation, and task management features",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1780358400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "1a3c362",
-    "version": "v1.8 - 1A3C362",
-    "date": "May 25, 2026",
-    "title": "feat: implement admin dashboard with user management, attendance tracking, office location settings, and holiday calendar management",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779667200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "9dea257",
-    "version": "v1.8 - 9DEA257",
-    "date": "May 25, 2026",
-    "title": "feat: add overtime calculator page and base global styles",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779667200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5f06fea",
-    "version": "v1.8 - 5F06FEA",
-    "date": "May 23, 2026",
-    "title": "feat: implement overtime calculator, admin overview, and dashboard pages for employee shift tracking",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1779494400,
       "nanoseconds": 0
     }
   }
