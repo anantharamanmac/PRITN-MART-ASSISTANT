@@ -1,5 +1,20 @@
 [
   {
+    "id": "065b6ed",
+    "version": "v1.8 - 065B6ED",
+    "date": "Jul 29, 2026",
+    "title": "Add 2-section order management workflow, A4 adaptive printable slip, and Excel upload parser",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: Print Mart"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "314a75c",
     "version": "v1.8 - 314A75C",
     "date": "Jun 17, 2026",
@@ -161,21 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1780531200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "1b6411a",
-    "version": "v1.8 - 1B6411A",
-    "date": "Jun 2, 2026",
-    "title": "zion: implement dynamic git history tracking with build-time generation and API support",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1780358400,
       "nanoseconds": 0
     }
   }
