@@ -18,7 +18,7 @@ import {
   findOrderByInfoNumber,
   formatLocalDate
 } from '@/lib/db';
-import { parseExcelText, parseExcelFile, calculateSizeBreakdown } from '@/lib/excelParser';
+import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown } from '@/lib/excelParser';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import InfoSheetSlip from '@/components/InfoSheetSlip';
@@ -109,15 +109,22 @@ export default function OrdersPage() {
   const backInputRef = useRef<HTMLInputElement>(null);
   const excelFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Direct Excel File Upload Handler (.xlsx, .xls, .csv)
+  // Direct File Upload Handler (.xlsx, .xls, .csv, .pdf)
   const handleExcelFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      toast.loading(`Parsing ${file.name}...`, { id: 'excel-upload' });
-      const parsed = await parseExcelFile(file);
-      toast.dismiss('excel-upload');
+      toast.loading(`Parsing ${file.name}...`, { id: 'file-upload' });
+      let parsed: PlayerItem[] = [];
+
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        parsed = await parsePdfFile(file);
+      } else {
+        parsed = await parseExcelFile(file);
+      }
+
+      toast.dismiss('file-upload');
 
       if (parsed.length === 0) {
         toast.error(`Could not find any player rows in ${file.name}`);
@@ -129,9 +136,9 @@ export default function OrdersPage() {
       setPieces(updated.length);
       toast.success(`Imported ${parsed.length} players directly from ${file.name}! Total: ${updated.length}`);
     } catch (err) {
-      toast.dismiss('excel-upload');
-      console.error('Error reading Excel file:', err);
-      toast.error('Failed to read Excel file. Please ensure it is a valid .xlsx, .xls, or .csv file.');
+      toast.dismiss('file-upload');
+      console.error('Error reading file:', err);
+      toast.error('Failed to read file. Please ensure it is a valid .pdf, .xlsx, .xls, or .csv file.');
     }
   };
 
@@ -1300,12 +1307,12 @@ export default function OrdersPage() {
                           onClick={() => excelFileInputRef.current?.click()}
                           style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #10b981', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                         >
-                          <span>📁</span> Upload Excel / CSV File
+                          <span>📁</span> Upload Excel / CSV / PDF File
                         </button>
                         <input
                           type="file"
                           ref={excelFileInputRef}
-                          accept=".xlsx, .xls, .csv"
+                          accept=".xlsx, .xls, .csv, .pdf"
                           onChange={handleExcelFileUpload}
                           style={{ display: 'none' }}
                         />

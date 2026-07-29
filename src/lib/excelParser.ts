@@ -187,6 +187,55 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
 };
 
 /**
+ * Directly parses an uploaded PDF file (.pdf)
+ * extracting all player roster rows (NAME, NUMBER, SIZE) and text info!
+ */
+export const parsePdfFile = async (file: File): Promise<PlayerDetail[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Dynamic import pdfjs-dist for client browser execution
+      // @ts-ignore
+      const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.0.379'}/pdf.worker.min.mjs`;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullTextLines: string[] = [];
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        // Group text items by Y coordinate (rows)
+        const rowMap: Record<number, string[]> = {};
+        for (const item of textContent.items as any[]) {
+          if (!item.str) continue;
+          const y = Math.round(item.transform[5]); // Y coordinate
+          if (!rowMap[y]) rowMap[y] = [];
+          rowMap[y].push(item.str);
+        }
+
+        // Sort rows top-to-bottom (Y descending in PDF coordinate space)
+        const sortedY = Object.keys(rowMap).map(Number).sort((a, b) => b - a);
+        for (const y of sortedY) {
+          const lineStr = rowMap[y].join('\t').trim();
+          if (lineStr) fullTextLines.push(lineStr);
+        }
+      }
+
+      // Pass extracted text lines into our robust parseExcelText parser
+      const extractedPlayers = parseExcelText(fullTextLines.join('\n'));
+      resolve(extractedPlayers);
+    } catch (err) {
+      console.error('Error parsing PDF file:', err);
+      reject(err);
+    }
+  });
+};
+
+/**
  * Auto-calculates size summary counts e.g. "42X5  40X3  38X4"
  * and total piece counts from a player roster.
  */
@@ -206,3 +255,4 @@ export const calculateSizeBreakdown = (players: PlayerDetail[]) => {
 
   return { summaryString, summaryArray, totalPieces, countsBySize };
 };
+
