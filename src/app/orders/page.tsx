@@ -22,24 +22,27 @@ import PrinterLoader from '@/components/PrinterLoader';
 import InfoSheetSlip from '@/components/InfoSheetSlip';
 
 const NECK_TYPES = [
-  'Round Neck',
-  'V-Neck',
-  'Polo / Collar',
-  'Hooded (Hoodie)',
-  'Henley',
-  'Sweatshirt / Crewneck',
-  'Scoop Neck',
+  'ROUND NECK',
+  'READYMADE COLLAR WITH ZIP',
+  'READYMADE COLLAR WITH BUTTON',
+  'V NECK',
+  'CHINESE NECK',
+  'CHINESE ZIP',
+  'POLO BUTTON',
+  'POLO V',
   'Custom / Other'
 ];
 
 const CLOTH_TYPES = [
-  '100% Pure Cotton',
   'SALEENA',
-  'Dry-Fit / Polyester',
-  'Cotton Blend (Poly-Cotton)',
-  'Fleece / Heavyweight',
-  'Linen / Rayon',
-  'Denim',
+  'NJS',
+  'PP',
+  'DOTKNIT 140',
+  'DOTKNIT 180',
+  'JAGUARD',
+  'HONEYCOMB',
+  'MARS',
+  '100% Pure Cotton',
   'Custom / Other'
 ];
 
