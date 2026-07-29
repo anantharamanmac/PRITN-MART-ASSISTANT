@@ -260,7 +260,7 @@ const extractRawPdfText = (arrayBuffer: ArrayBuffer): string => {
 export const parsePdfFile = async (file: File): Promise<PlayerDetail[]> => {
   const arrayBuffer = await file.arrayBuffer();
 
-  // Try Layer 1: pdfjs-dist
+  // Layer 1: pdfjs-dist structured text items
   try {
     // @ts-ignore
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -295,10 +295,25 @@ export const parsePdfFile = async (file: File): Promise<PlayerDetail[]> => {
     const extracted = parseExcelText(fullTextLines.join('\n'));
     if (extracted.length > 0) return extracted;
   } catch (pdfErr) {
-    console.warn('pdfjs-dist warning, attempting raw stream parser fallback:', pdfErr);
+    console.warn('pdfjs-dist warning, attempting OCR and stream parser fallback:', pdfErr);
   }
 
-  // Layer 2 Fallback: Raw Stream & Text Decoder
+  // Layer 2: Optical Character Recognition (OCR) via Tesseract for Scanned Image PDFs
+  try {
+    const { createWorker } = await import('tesseract.js');
+    const worker = await createWorker('eng');
+
+    const ret = await worker.recognize(file);
+    await worker.terminate();
+
+    const ocrText = ret.data.text || '';
+    const ocrExtracted = parseExcelText(ocrText);
+    if (ocrExtracted.length > 0) return ocrExtracted;
+  } catch (ocrErr) {
+    console.warn('Tesseract OCR fallback warning:', ocrErr);
+  }
+
+  // Layer 3 Fallback: Raw Stream & Text Decoder
   const rawText = extractRawPdfText(arrayBuffer);
   return parseExcelText(rawText);
 };
