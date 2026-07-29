@@ -1,13 +1,13 @@
 [
   {
-    "id": "065b6ed",
-    "version": "v1.8 - 065B6ED",
+    "id": "1e76d12",
+    "version": "v1.8 - 1E76D12",
     "date": "Jul 29, 2026",
-    "title": "Add 2-section order management workflow, A4 adaptive printable slip, and Excel upload parser",
+    "title": "feat: implement order management system with CRUD operations, Excel roster parsing, and AI-assisted workflow modules",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: Print Mart"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1785283200,
@@ -15,14 +15,44 @@
     }
   },
   {
-    "id": "314a75c",
-    "version": "v1.8 - 314A75C",
+    "id": "0318e8a",
+    "version": "v1.8 - 0318E8A",
+    "date": "Jul 29, 2026",
+    "title": "Update fabric and neck type dropdown choices",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: lonewiper"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "5f73838",
+    "version": "v1.8 - 5F73838",
+    "date": "Jul 29, 2026",
+    "title": "Add 2-section order management workflow, A4 adaptive printable slip, and Excel upload parser",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: lonewiper"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "dd90b65",
+    "version": "v1.8 - DD90B65",
     "date": "Jun 17, 2026",
     "title": "feat: implement global styles and initial database and firebase configuration files",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1781654400,
@@ -30,14 +60,14 @@
     }
   },
   {
-    "id": "85c93e3",
-    "version": "v1.8 - 85C93E3",
+    "id": "ddc5309",
+    "version": "v1.8 - DDC5309",
     "date": "Jun 11, 2026",
     "title": "Merge branch 'main' of https://github.com/anantharamanmac/PRITN-MART-ASSISTANT",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1781136000,
@@ -45,14 +75,14 @@
     }
   },
   {
-    "id": "f53e822",
-    "version": "v1.8 - F53E822",
+    "id": "847be2d",
+    "version": "v1.8 - 847BE2D",
     "date": "Jun 11, 2026",
     "title": "zion: implement Firestore attendance and user management utility functions",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1781136000,
@@ -60,14 +90,14 @@
     }
   },
   {
-    "id": "8690b14",
-    "version": "v1.8 - 8690B14",
+    "id": "41afe82",
+    "version": "v1.8 - 41AFE82",
     "date": "Jun 11, 2026",
     "title": "zion: implement admin salary statement generation with PDF export functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1781136000,
@@ -75,14 +105,14 @@
     }
   },
   {
-    "id": "3eb6bbe",
-    "version": "v1.8 - 3EB6BBE",
+    "id": "2f0545b",
+    "version": "v1.8 - 2F0545B",
     "date": "Jun 10, 2026",
     "title": "zion: initialize project structure with core layout, authentication, and UI components",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1781049600,
@@ -90,14 +120,14 @@
     }
   },
   {
-    "id": "15d4ad0",
-    "version": "v1.8 - 15D4AD0",
+    "id": "fc5805d",
+    "version": "v1.8 - FC5805D",
     "date": "Jun 10, 2026",
     "title": "zion : implement developer portal with changelog management, feedback system, and AI-powered chat and analysis tools",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1781049600,
@@ -105,14 +135,14 @@
     }
   },
   {
-    "id": "98c5b7d",
-    "version": "v1.8 - 98C5B7D",
+    "id": "5442bb8",
+    "version": "v1.8 - 5442BB8",
     "date": "Jun 4, 2026",
     "title": "zion: implement worker dashboard with attendance tracking, salary statement PDF generation, and location verification",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1780531200,
@@ -120,14 +150,14 @@
     }
   },
   {
-    "id": "1d32ce5",
-    "version": "v1.8 - 1D32CE5",
+    "id": "daf3441",
+    "version": "v1.8 - DAF3441",
     "date": "Jun 4, 2026",
     "title": "zion: implement global CSS framework with glassmorphism design and initialize git history tracking file",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1780531200,
@@ -135,44 +165,14 @@
     }
   },
   {
-    "id": "28bab54",
-    "version": "v1.8 - 28BAB54",
+    "id": "3763110",
+    "version": "v1.8 - 3763110",
     "date": "Jun 4, 2026",
     "title": "ZION: implement admin attendance reporting, employee dashboard modules, and historical build tracking",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1780531200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "ab6d543",
-    "version": "v1.8 - AB6D543",
-    "date": "Jun 4, 2026",
-    "title": "zion: implement global styles and create SalaryNotificationModal component with project tracking integration",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1780531200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5949381",
-    "version": "v1.8 - 5949381",
-    "date": "Jun 4, 2026",
-    "title": "zion: implement salary cycle configuration page, user authentication utilities, and associated dashboard modules",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
+      "Developer: lonewiper"
     ],
     "createdAt": {
       "seconds": 1780531200,

@@ -822,17 +822,32 @@ export default function OrdersPage() {
                         🚚 Delivery: {ord.deliveryDate} {isOverdue && '⚠️ OVERDUE'} {isDueToday && '🚨 TODAY'}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(ord.id!, ord.infoNumber)}
-                        title="Delete order"
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem', opacity: 0.7 }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const summaryText = `📦 ORDER INFO #${ord.infoNumber || 2412}\nCustomer: ${ord.customerName}\nPhone: ${ord.customerPhone || 'N/A'}\nOrder: ${ord.orderTitle || 'N/A'}\nPieces: ${ord.players?.length || ord.pieces}\nFabric: ${ord.clothType}\nNeck: ${ord.neckType}\nDelivery: ${ord.deliveryDate}`;
+                            navigator.clipboard.writeText(summaryText);
+                            toast.success(`Copied summary for INFO #${ord.infoNumber || 2412}!`);
+                          }}
+                          title="Copy order summary to clipboard"
+                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.45rem', cursor: 'pointer' }}
+                        >
+                          📋 Copy Summary
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(ord.id!, ord.infoNumber)}
+                          title="Delete order"
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem', opacity: 0.7 }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Section 1 & Section 2 Edit Buttons */}
