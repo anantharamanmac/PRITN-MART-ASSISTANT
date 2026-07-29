@@ -1,5 +1,125 @@
 [
   {
+    "id": "f4ff240",
+    "version": "v1.8 - F4FF240",
+    "date": "Jul 29, 2026",
+    "title": "style: reduce order card size and grid layout for a compact sleek UI",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "e29322a",
+    "version": "v1.8 - E29322A",
+    "date": "Jul 29, 2026",
+    "title": "feat: add Tesseract OCR fallback for scanned PDF and photo PDF roster import",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "ac5a471",
+    "version": "v1.8 - AC5A471",
+    "date": "Jul 29, 2026",
+    "title": "fix: sanitize PDF binary stream noise and filter out gibberish symbols",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "c2468cd",
+    "version": "v1.8 - C2468CD",
+    "date": "Jul 29, 2026",
+    "title": "fix: add dual-layer robust PDF parser with raw text decoder fallback",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "99f819b",
+    "version": "v1.8 - 99F819B",
+    "date": "Jul 29, 2026",
+    "title": "feat: add PDF document parser for player roster import",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "40e9718",
+    "version": "v1.8 - 40E9718",
+    "date": "Jul 29, 2026",
+    "title": "feat: add Auto-Fetch & Pre-fill order data by existing INFO NO.",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "11dd30a",
+    "version": "v1.8 - 11DD30A",
+    "date": "Jul 29, 2026",
+    "title": "feat: implement Firestore attendance and user management utility functions",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "2ced738",
+    "version": "v1.8 - 2CED738",
+    "date": "Jul 29, 2026",
+    "title": "feat: update order management v1.2",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "5fbfb9e",
     "version": "v1.8 - 5FBFB9E",
     "date": "Jul 29, 2026",
@@ -56,126 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "d61e796",
-    "version": "v1.8 - D61E796",
-    "date": "Jul 29, 2026",
-    "title": "Update fabric and neck type dropdown choices",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "87e00d4",
-    "version": "v1.8 - 87E00D4",
-    "date": "Jul 29, 2026",
-    "title": "Add 2-section order management workflow, A4 adaptive printable slip, and Excel upload parser",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "83f72f0",
-    "version": "v1.8 - 83F72F0",
-    "date": "Jun 17, 2026",
-    "title": "feat: implement global styles and initial database and firebase configuration files",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1781654400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "8770c1a",
-    "version": "v1.8 - 8770C1A",
-    "date": "Jun 11, 2026",
-    "title": "Merge branch 'main' of https://github.com/anantharamanmac/PRITN-MART-ASSISTANT",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1781136000,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "81fd031",
-    "version": "v1.8 - 81FD031",
-    "date": "Jun 11, 2026",
-    "title": "zion: implement Firestore attendance and user management utility functions",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1781136000,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5c11ad4",
-    "version": "v1.8 - 5C11AD4",
-    "date": "Jun 11, 2026",
-    "title": "zion: implement admin salary statement generation with PDF export functionality",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1781136000,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "23c0952",
-    "version": "v1.8 - 23C0952",
-    "date": "Jun 10, 2026",
-    "title": "zion: initialize project structure with core layout, authentication, and UI components",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1781049600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "a830b71",
-    "version": "v1.8 - A830B71",
-    "date": "Jun 10, 2026",
-    "title": "zion : implement developer portal with changelog management, feedback system, and AI-powered chat and analysis tools",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1781049600,
       "nanoseconds": 0
     }
   }
