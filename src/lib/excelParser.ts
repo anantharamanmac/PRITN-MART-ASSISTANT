@@ -110,6 +110,26 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
 };
 
 /**
+ * Strips non-printable characters, binary noise, and replacement characters.
+ */
+export const cleanText = (str: string): string => {
+  if (!str) return '';
+  return str.replace(/[\uFFFD\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '').trim();
+};
+
+/**
+ * Checks if a string contains binary gibberish noise.
+ */
+export const isGibberish = (str: string): boolean => {
+  if (!str) return true;
+  const clean = cleanText(str);
+  if (clean.length < 2) return true;
+  // If string contains non-latin/non-printable symbols over 30%, it's binary gibberish
+  const weirdSymbols = (clean.match(/[^a-zA-Z0-9\s\-_\.'#]/g) || []).length;
+  return (weirdSymbols / clean.length) > 0.3;
+};
+
+/**
  * Parses raw text copied from Excel tables matching company layout:
  * 1st: NAME, 2nd: NUMBER, 3rd: IGNORED, 4th: SIZE
  */
@@ -119,48 +139,47 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
   const lines = text.split(/\r?\n/);
   const players: PlayerDetail[] = [];
 
+  const addPlayerIfValid = (rawName: string, rawSize: string, rawNumber: string) => {
+    const cName = cleanText(rawName);
+    const cSize = cleanText(rawSize);
+    const cNum = cleanText(rawNumber);
+
+    if (!cName || isGibberish(cName)) return;
+    if (/^(name|player|sl\s*no|sr\s*no|size|no|number|customer|order|info)$/i.test(cName)) return;
+
+    players.push({
+      name: cName,
+      size: cSize,
+      number: cNum,
+    });
+  };
+
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+    const trimmed = cleanText(line);
+    if (!trimmed || isGibberish(trimmed)) continue;
 
     if (/^(name|player|sl\s*no|sr\s*no)\b/i.test(trimmed)) continue;
 
-    const parts = trimmed.split(/[\t,]+/).map((p) => p.trim());
+    const parts = trimmed.split(/[\t,]+/).map((p) => cleanText(p));
 
     if (parts.length >= 4) {
       // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size
-      players.push({
-        name: parts[0],
-        number: parts[1],
-        size: parts[3],
-      });
+      addPlayerIfValid(parts[0], parts[3], parts[1]);
     } else if (parts.length === 3) {
       // Check if 3rd column is Size
       if (isSizeValue(parts[2])) {
-        players.push({
-          name: parts[0],
-          number: parts[1],
-          size: parts[2],
-        });
+        addPlayerIfValid(parts[0], parts[2], parts[1]);
       } else if (isSizeValue(parts[1])) {
         // Name, Size, Number
-        players.push({
-          name: parts[0],
-          size: parts[1],
-          number: parts[2],
-        });
+        addPlayerIfValid(parts[0], parts[1], parts[2]);
       } else {
-        players.push({
-          name: parts[0],
-          number: parts[1],
-          size: parts[2],
-        });
+        addPlayerIfValid(parts[0], parts[2], parts[1]);
       }
     } else if (parts.length === 2) {
       if (isSizeValue(parts[1])) {
-        players.push({ name: parts[0], size: parts[1], number: '' });
+        addPlayerIfValid(parts[0], parts[1], '');
       } else {
-        players.push({ name: parts[0], number: parts[1], size: '' });
+        addPlayerIfValid(parts[0], '', parts[1]);
       }
     } else {
       const spaceParts = trimmed.split(/\s+/);
@@ -169,15 +188,15 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
         spaceParts.pop(); // Ignore 3rd
         const number = spaceParts.pop() || '';
         const name = spaceParts.join(' ');
-        players.push({ name, size, number });
+        addPlayerIfValid(name, size, number);
       } else if (spaceParts.length === 3) {
         const last = spaceParts.pop() || '';
         const mid = spaceParts.pop() || '';
         const name = spaceParts.join(' ');
         if (isSizeValue(last)) {
-          players.push({ name, number: mid, size: last });
+          addPlayerIfValid(name, last, mid);
         } else {
-          players.push({ name, size: mid, number: last });
+          addPlayerIfValid(name, mid, last);
         }
       }
     }
