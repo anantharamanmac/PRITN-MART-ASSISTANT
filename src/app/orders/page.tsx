@@ -863,26 +863,26 @@ export default function OrdersPage() {
                       </div>
 
                       {/* Specs */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.18rem', fontSize: '0.75rem', color: 'var(--text-secondary)', flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Pieces:</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.18rem', fontSize: '0.75rem', color: 'var(--text-secondary)', flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>Pieces:</span>
                           <span style={{ background: 'rgba(255,255,255,0.08)', padding: '0.05rem 0.35rem', borderRadius: '4px', fontWeight: 800, color: 'var(--sapphire-light)', fontSize: '0.72rem' }}>
                             {ord.players && ord.players.length > 0 ? ord.players.length : ord.pieces} Pcs
                           </span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Fabric:</span>
-                          <span style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.72rem' }}>{ord.clothType}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>Fabric:</span>
+                          <span style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ord.clothType}</span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Neck:</span>
-                          <span style={{ color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'underline', fontSize: '0.72rem' }}>{ord.neckType}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>Neck:</span>
+                          <span style={{ color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'underline', fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ord.neckType}</span>
                         </div>
 
                         {ordBreakdown.summaryString && (
-                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.05rem', wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
                             Sizes: {ordBreakdown.summaryString}
                           </div>
                         )}
