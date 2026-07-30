@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { OrderRecord } from '@/lib/db';
-import { calculateSizeBreakdown } from '@/lib/excelParser';
+import { calculateSizeBreakdown, calculateShortsBreakdown } from '@/lib/excelParser';
 
 interface InfoSheetSlipProps {
   order: OrderRecord;
@@ -16,6 +16,8 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
 
   const players = order.players || [];
   const { summaryArray, totalPieces } = calculateSizeBreakdown(players);
+  const { summaryArray: shortsSummaryArray } = calculateShortsBreakdown(players);
+  const hasShorts = Boolean(order.hasShorts || players.some(p => p.shortsSize && p.shortsSize !== '' && p.shortsSize !== '-'));
   const displayPieces = players.length > 0 ? totalPieces : order.pieces;
 
   // Format delivery date as DD / MM / YY
@@ -76,6 +78,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
 
   // Adaptive Multi-Column Sub-Table Splitting for Bottom Players Roster
   // For 50+ players, splits across full page width into 3 or 4 columns vertically!
+  const isSmallData = players.length <= 10;
   const numColumns = players.length > 40 ? 4 : players.length > 24 ? 3 : players.length > 12 ? 2 : 1;
   const rowsPerCol = Math.max(1, Math.ceil(players.length / numColumns));
 
@@ -84,8 +87,8 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   );
 
   // Dynamic Font Size & Padding for Table Cells
-  const tableFontSize = numColumns >= 4 ? '8.5px' : numColumns === 3 ? '9.5px' : '11px';
-  const tablePadding = numColumns >= 3 ? '2px 4px' : '3px 6px';
+  const tableFontSize = isSmallData ? '13px' : numColumns >= 4 ? '8px' : numColumns === 3 ? '9px' : '10.5px';
+  const tablePadding = isSmallData ? '6px 10px' : numColumns >= 3 ? '2px 3px' : '3px 5px';
 
   return (
     <div className="info-sheet-modal-wrapper" style={{ padding: '1rem', color: '#000000' }}>
@@ -215,12 +218,12 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
           {/* BOX 1: SINGLE COMBINED MOCKUP IMAGE (FRONT & BACK TOGETHER) */}
           <div style={{ borderRight: '1px solid #aaa', paddingRight: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 900, color: '#002b66', marginBottom: '4px', textTransform: 'uppercase', textDecoration: 'underline' }}>
+              <div style={{ fontSize: isSmallData ? '14px' : '13px', fontWeight: 900, color: '#002b66', marginBottom: '4px', textTransform: 'uppercase', textDecoration: 'underline' }}>
                 ITEM: {order.itemType || 'JERSEY'}
               </div>
 
-              {/* Single Combined Mockup Frame */}
-              <div style={{ height: '175px', background: '#fff', border: '1.5px solid #000', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '3px' }}>
+              {/* Single Combined Mockup Frame (Expanded height for <=10 players!) */}
+              <div style={{ height: isSmallData ? '265px' : '175px', background: '#fff', border: '1.5px solid #000', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '3px' }}>
                 {order.clothImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={order.clothImage} alt="Combined Design Mockup" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -239,14 +242,14 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
           <div style={{ borderRight: '1px solid #aaa', paddingRight: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               {/* Delivery Date */}
-              <div style={{ fontSize: '13px', fontWeight: 900, marginBottom: '6px' }}>
+              <div style={{ fontSize: isSmallData ? '14px' : '13px', fontWeight: 900, marginBottom: isSmallData ? '8px' : '6px' }}>
                 Delivery Date : <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px' }}>{formatDelivery(order.deliveryDate)}</span>
               </div>
 
               {/* PRINT Section */}
-              <div style={{ marginBottom: '5px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 900, marginBottom: '2px' }}>PRINT</div>
-                <div style={{ display: 'flex', gap: '6px', fontSize: '9px', fontWeight: 800 }}>
+              <div style={{ marginBottom: isSmallData ? '7px' : '5px' }}>
+                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, marginBottom: '2px' }}>PRINT</div>
+                <div style={{ display: 'flex', gap: '6px', fontSize: isSmallData ? '10.5px' : '9px', fontWeight: 800 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                     SUBLIMATION <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printMethod === 'sublimation' || !order.printMethod ? '#d92525' : '#fff' }}></span>
                   </div>
@@ -260,9 +263,9 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
               </div>
 
               {/* PRINTING Section */}
-              <div style={{ marginBottom: '5px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 900, marginBottom: '2px' }}>PRINTING</div>
-                <div style={{ display: 'flex', gap: '4px', fontSize: '9px', fontWeight: 800 }}>
+              <div style={{ marginBottom: isSmallData ? '7px' : '5px' }}>
+                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, marginBottom: '2px' }}>PRINTING</div>
+                <div style={{ display: 'flex', gap: '4px', fontSize: isSmallData ? '10.5px' : '9px', fontWeight: 800 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                     FRONT ONLY <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printArea === 'front_only' ? '#d92525' : '#fff' }}></span>
                   </div>
@@ -276,9 +279,9 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
               </div>
 
               {/* SLEEVE Section */}
-              <div style={{ marginBottom: '5px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 900, marginBottom: '2px' }}>SLEEVE</div>
-                <div style={{ display: 'flex', gap: '6px', fontSize: '9px', fontWeight: 800 }}>
+              <div style={{ marginBottom: isSmallData ? '7px' : '5px' }}>
+                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, marginBottom: '2px' }}>SLEEVE</div>
+                <div style={{ display: 'flex', gap: '6px', fontSize: isSmallData ? '10.5px' : '9px', fontWeight: 800 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                     SLEEVELES <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.sleeveType === 'sleeveless' ? '#d92525' : '#fff' }}></span>
                   </div>
@@ -291,31 +294,34 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                 </div>
               </div>
 
-              {/* CLOTH & NECK Specifications */}
+              {/* CLOTH & NECK & SHORTS Specifications */}
               <div style={{ marginTop: '4px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 900, color: '#000' }}>
+                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, color: '#000' }}>
                   CLOTH : <span style={{ color: '#d92525', textTransform: 'uppercase' }}>{order.clothType || 'SALEENA'}</span>
                 </div>
-                <div style={{ fontSize: '12px', fontWeight: 900, color: '#000', marginTop: '2px' }}>
-                  NECK <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: '11px', textTransform: 'uppercase' }}>{order.neckType || 'ROUND NECK'}</span>
+                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, color: '#000', marginTop: '2px' }}>
+                  NECK <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: isSmallData ? '12px' : '11px', textTransform: 'uppercase' }}>{order.neckType || 'ROUND NECK'}</span>
+                </div>
+                <div style={{ fontSize: isSmallData ? '12px' : '11px', fontWeight: 900, color: '#000', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  SHORTS <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
                 </div>
               </div>
             </div>
 
             {/* Extra Specs Bottom Table */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: '9px', background: '#fff', marginTop: '4px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: isSmallData ? '10px' : '9px', background: '#fff', marginTop: '4px' }}>
               <tbody>
                 <tr style={{ borderBottom: '1px solid #000' }}>
-                  <td style={{ padding: '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000', width: '60%' }}>FULL SLEEVE</td>
-                  <td style={{ padding: '2px 4px' }}></td>
+                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000', width: '60%' }}>FULL SLEEVE</td>
+                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px' }}></td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #000' }}>
-                  <td style={{ padding: '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000' }}>KIDS</td>
-                  <td style={{ padding: '2px 4px' }}></td>
+                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000' }}>KIDS</td>
+                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px' }}></td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000' }}>OVER SIZE</td>
-                  <td style={{ padding: '2px 4px' }}></td>
+                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000' }}>OVER SIZE</td>
+                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px' }}></td>
                 </tr>
               </tbody>
             </table>
@@ -324,7 +330,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
           {/* BOX 3: SIZE SUMMARY BREAKDOWN & TOTAL PIECES BOX */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 900, color: '#004080', textDecoration: 'underline', marginBottom: '6px' }}>
+              <div style={{ fontSize: isSmallData ? '14px' : '13px', fontWeight: 900, color: '#004080', textDecoration: 'underline', marginBottom: '6px' }}>
                 TOTAL : {order.itemType || 'JERSEY'}
               </div>
 
@@ -332,8 +338,8 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: summaryArray.length > 5 ? '1fr 1fr' : '1fr',
-                gap: '3px 8px',
-                fontSize: summaryArray.length > 8 ? '13px' : '15px',
+                gap: isSmallData ? '5px 8px' : '3px 8px',
+                fontSize: isSmallData ? '18px' : (summaryArray.length > 8 ? '13px' : '15px'),
                 fontWeight: 900,
                 color: '#005b96',
                 letterSpacing: '0.06em'
@@ -346,10 +352,35 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   <div>ALL SIZES : {order.pieces}</div>
                 )}
               </div>
+
+              {/* Shorts Summary Breakdown (if enabled) */}
+              {hasShorts && (
+                <div style={{ marginTop: '8px', borderTop: '1px dashed #888', paddingTop: '4px' }}>
+                  <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, color: '#d92525', textDecoration: 'underline', marginBottom: '3px' }}>
+                    SHORTS SUMMARY
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: shortsSummaryArray.length > 5 ? '1fr 1fr' : '1fr',
+                    gap: '2px 6px',
+                    fontSize: isSmallData ? '14px' : '12px',
+                    fontWeight: 900,
+                    color: '#b91c1c'
+                  }}>
+                    {shortsSummaryArray.length > 0 ? (
+                      shortsSummaryArray.map((sumStr, idx) => (
+                        <div key={idx}>{sumStr}</div>
+                      ))
+                    ) : (
+                      <div>ALL SHORTS : {displayPieces}</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Total Pieces Box */}
-            <div style={{ border: '2px solid #000', padding: '4px 10px', background: '#ffffff', fontWeight: 900, fontSize: '15px', textAlign: 'center', marginTop: '8px' }}>
+            <div style={{ border: '2px solid #000', padding: isSmallData ? '6px 12px' : '4px 10px', background: '#ffffff', fontWeight: 900, fontSize: isSmallData ? '17px' : '15px', textAlign: 'center', marginTop: '8px' }}>
               TOTAL - {displayPieces}
             </div>
           </div>
@@ -358,7 +389,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         {/* ── BOTTOM SECTION: PLAYERS DETAILS TABLE BELOW ACROSS FULL PAGE WIDTH ── */}
         <div style={{ border: '1px solid #000', background: '#ffffff' }}>
           {/* Category Bar Header */}
-          <div style={{ background: '#d92525', color: '#ffffff', fontWeight: 900, fontSize: '13px', textAlign: 'center', letterSpacing: '0.15em', padding: '3px 0' }}>
+          <div style={{ background: '#d92525', color: '#ffffff', fontWeight: 900, fontSize: isSmallData ? '14px' : '13px', textAlign: 'center', letterSpacing: '0.15em', padding: isSmallData ? '5px 0' : '3px 0' }}>
             PLAYERS DETAILS ({players.length} TOTAL)
           </div>
 
@@ -368,26 +399,39 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
               {playerColumns.map((colPlayers, colIdx) => (
                 <table key={colIdx} style={{ width: '100%', borderCollapse: 'collapse', fontSize: tableFontSize, background: '#ffffff', tableLayout: 'fixed' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1.5px solid #000', background: '#cccccc', fontWeight: 900, fontSize: '10px' }}>
+                    <tr style={{ borderBottom: '1.5px solid #000', background: '#cccccc', fontWeight: 900, fontSize: isSmallData ? '11.5px' : '10px' }}>
                       <th style={{ textAlign: 'left', padding: tablePadding, borderRight: '1px solid #000' }}>NAME</th>
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: '34px', borderRight: '1px solid #000' }}>SIZE</th>
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: '30px' }}>NO.</th>
+                      <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '44px' : (hasShorts ? '26px' : '30px'), borderRight: '1px solid #000' }}>SIZE</th>
+                      <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '38px' : '24px', borderRight: '1px solid #000', color: '#004c80' }}>SLV</th>
+                      {hasShorts && (
+                        <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '38px' : '26px', borderRight: '1px solid #000', color: '#b91c1c' }}>SH</th>
+                      )}
+                      <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '42px' : '24px' }}>NO.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {colPlayers.length > 0 ? (
-                      colPlayers.map((p, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #ddd', fontWeight: 700 }}>
-                          <td style={{ padding: tablePadding, borderRight: '1px solid #ddd', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</td>
-                          <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap' }}>{p.size}</td>
-                          <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap' }}>{p.number}</td>
-                        </tr>
-                      ))
+                      colPlayers.map((p, idx) => {
+                        const sleeveCode = (p.sleeve || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
+                        return (
+                          <tr key={idx} style={{ borderBottom: '1px solid #ddd', fontWeight: 800, height: isSmallData ? '28px' : 'auto' }}>
+                            <td style={{ padding: tablePadding, borderRight: '1px solid #ddd', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</td>
+                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap' }}>{p.size}</td>
+                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap', color: '#004c80', fontWeight: 900 }}>{sleeveCode}</td>
+                            {hasShorts && (
+                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap', color: '#b91c1c', fontWeight: 900 }}>{p.shortsSize || '-'}</td>
+                            )}
+                            <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap' }}>{p.number}</td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       Array.from({ length: 6 }).map((_, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #ddd', height: '18px' }}>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
+                          <td style={{ borderRight: '1px solid #ddd' }}></td>
+                          {hasShorts && <td style={{ borderRight: '1px solid #ddd' }}></td>}
                           <td></td>
                         </tr>
                       ))
@@ -400,8 +444,17 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         </div>
       </div>
 
-      {/* Embedded Print CSS (Clean Fit in Any Orientation) */}
+      {/* Embedded Print & Responsive CSS */}
       <style jsx global>{`
+        @media screen and (max-width: 640px) {
+          .printable-info-sheet {
+            padding: 4px !important;
+            font-size: 11px !important;
+          }
+          .printable-info-sheet > div:nth-child(2) {
+            grid-template-columns: 1fr !important;
+          }
+        }
         @page {
           size: auto;
           margin: 5mm;

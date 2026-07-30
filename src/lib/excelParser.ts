@@ -4,6 +4,8 @@ export interface PlayerDetail {
   name: string;
   size: string;
   number: string;
+  shortsSize?: string;
+  sleeve?: string;
 }
 
 /**
@@ -338,4 +340,27 @@ export const calculateSizeBreakdown = (players: PlayerDetail[]) => {
 
   return { summaryString, summaryArray, totalPieces, countsBySize };
 };
+
+/**
+ * Auto-calculates shorts size summary counts e.g. "32X5  34X8  36X4"
+ * and total shorts piece counts from a player roster.
+ */
+export const calculateShortsBreakdown = (players: PlayerDetail[]) => {
+  const countsBySize: Record<string, number> = {};
+  let totalPieces = 0;
+
+  for (const p of players) {
+    if (!p.shortsSize) continue;
+    const sz = p.shortsSize.toUpperCase().trim();
+    if (!sz || sz === '-' || sz === 'NONE' || sz === 'NO') continue;
+    countsBySize[sz] = (countsBySize[sz] || 0) + 1;
+    totalPieces += 1;
+  }
+
+  const summaryArray = Object.entries(countsBySize).map(([size, count]) => `${size}X${count}`);
+  const summaryString = summaryArray.join('  ');
+
+  return { summaryString, summaryArray, totalPieces, countsBySize };
+};
+
 

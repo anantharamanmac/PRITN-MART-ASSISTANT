@@ -926,6 +926,8 @@ export interface PlayerItem {
   name: string;
   size: string;
   number: string;
+  shortsSize?: string;
+  sleeve?: string; // 'F' for Full, 'H' for Half, 'SL' for Sleeveless
 }
 
 export interface OrderRecord {
@@ -945,6 +947,7 @@ export interface OrderRecord {
   printMethod?: 'sublimation' | 'dft' | 'normal';
   printArea?: 'front_only' | 'front_back' | 'full';
   sleeveType?: 'sleeveless' | 'half' | 'full';
+  hasShorts?: boolean;
   players?: PlayerItem[];
   status: OrderStatus;
   notes?: string;

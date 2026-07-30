@@ -18,7 +18,7 @@ import {
   findOrderByInfoNumber,
   formatLocalDate
 } from '@/lib/db';
-import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown } from '@/lib/excelParser';
+import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown } from '@/lib/excelParser';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import InfoSheetSlip from '@/components/InfoSheetSlip';
@@ -94,6 +94,7 @@ export default function OrdersPage() {
   const [printMethod, setPrintMethod] = useState<'sublimation' | 'dft' | 'normal'>('sublimation');
   const [printArea, setPrintArea] = useState<'front_only' | 'front_back' | 'full'>('full');
   const [sleeveType, setSleeveType] = useState<'sleeveless' | 'half' | 'full'>('full');
+  const [hasShorts, setHasShorts] = useState(false);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,6 +104,8 @@ export default function OrdersPage() {
   const [showExcelBox, setShowExcelBox] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerSize, setNewPlayerSize] = useState('42');
+  const [newPlayerShortsSize, setNewPlayerShortsSize] = useState('32');
+  const [newPlayerSleeve, setNewPlayerSleeve] = useState('F');
   const [newPlayerNumber, setNewPlayerNumber] = useState('');
 
   const frontInputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +197,7 @@ export default function OrdersPage() {
       setPrintMethod(found.printMethod || 'sublimation');
       setPrintArea(found.printArea || 'full');
       setSleeveType(found.sleeveType || 'full');
+      setHasShorts(Boolean(found.hasShorts || found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
       setNotes(found.notes || '');
       if (found.players && found.players.length > 0) {
         setPlayers([...found.players]);
@@ -290,6 +294,7 @@ export default function OrdersPage() {
     setPrintMethod('sublimation');
     setPrintArea('full');
     setSleeveType('full');
+    setHasShorts(false);
     setPlayers([]);
     setExcelInputText('');
     setShowExcelBox(false);
@@ -334,6 +339,7 @@ export default function OrdersPage() {
     setPrintMethod(ord.printMethod || 'sublimation');
     setPrintArea(ord.printArea || 'full');
     setSleeveType(ord.sleeveType || 'full');
+    setHasShorts(Boolean(ord.hasShorts || ord.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
     setNotes(ord.notes || '');
     setPlayers(ord.players ? [...ord.players] : []);
     setExcelInputText('');
@@ -367,7 +373,16 @@ export default function OrdersPage() {
       toast.error('Player name is required');
       return;
     }
-    const updated = [...players, { name: newPlayerName.trim(), size: newPlayerSize.trim(), number: newPlayerNumber.trim() }];
+    const updated = [
+      ...players,
+      {
+        name: newPlayerName.trim(),
+        size: newPlayerSize.trim(),
+        number: newPlayerNumber.trim(),
+        shortsSize: hasShorts ? newPlayerShortsSize.trim() : undefined,
+        sleeve: newPlayerSleeve.trim() || undefined,
+      },
+    ];
     setPlayers(updated);
     setPieces(updated.length);
     setNewPlayerName('');
@@ -379,6 +394,18 @@ export default function OrdersPage() {
     const updated = players.filter((_, idx) => idx !== index);
     setPlayers(updated);
     if (updated.length > 0) setPieces(updated.length);
+  };
+
+  // Inline Edit Player Field
+  const handleUpdatePlayerField = (index: number, field: keyof PlayerItem, value: string) => {
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
   };
 
   // Compress & Set Images
@@ -469,6 +496,7 @@ export default function OrdersPage() {
         printMethod,
         printArea,
         sleeveType,
+        hasShorts,
         players,
         notes: notes.trim(),
       };
@@ -1287,6 +1315,26 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
+                  {/* Include Shorts Option Checkbox */}
+                  <div style={{ background: hasShorts ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.03)', padding: '0.65rem 0.85rem', borderRadius: '10px', border: hasShorts ? '1px solid #10b981' : '1px solid var(--border)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={hasShorts}
+                        onChange={(e) => setHasShorts(e.target.checked)}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
+                      />
+                      <div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: hasShorts ? '#10b981' : 'var(--text-primary)' }}>
+                          🩳 Include Shorts / Pant Specifications
+                        </span>
+                        <span style={{ display: 'block', fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
+                          Check this option to enable Shorts Size selection for each player in the roster
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
                   {/* ── PLAYERS ROSTER SECTION (EXCEL IMPORT + TABLE) ── */}
                   <div style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '0.85rem', background: 'rgba(0,0,0,0.15)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
@@ -1294,11 +1342,18 @@ export default function OrdersPage() {
                         <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <span>📊</span> Players Roster ({players.length} Total)
                         </h4>
-                        {liveBreakdown.summaryString && (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6' }}>
-                            Size Summary: {liveBreakdown.summaryString}
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '2px' }}>
+                          {liveBreakdown.summaryString && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6' }}>
+                              Jersey Summary: {liveBreakdown.summaryString}
+                            </span>
+                          )}
+                          {hasShorts && calculateShortsBreakdown(players).summaryString && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>
+                              Shorts Summary: {calculateShortsBreakdown(players).summaryString}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -1331,11 +1386,11 @@ export default function OrdersPage() {
                     {showExcelBox && (
                       <div style={{ marginBottom: '0.85rem', background: 'var(--bg-main)', padding: '0.65rem', borderRadius: '8px', border: '1px solid #3b82f6' }}>
                         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                          Copy-paste columns directly from Excel sheet (Name, Size, Number):
+                          Copy-paste columns directly from Excel sheet (Name, Size, Number, Shorts Size):
                         </label>
                         <textarea
                           rows={4}
-                          placeholder={`Paste Excel lines here, e.g.:\nJAGAN\t42\t9\nADHI\t40\t3\nSREE\t38\t11`}
+                          placeholder={`Paste Excel lines here, e.g.:\nJAGAN\t42\t9\t34\nADHI\t40\t3\t32\nSREE\t38\t11\t32`}
                           value={excelInputText}
                           onChange={(e) => setExcelInputText(e.target.value)}
                           style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: '0.8rem', fontFamily: 'monospace' }}
@@ -1353,35 +1408,146 @@ export default function OrdersPage() {
                     )}
 
                     {/* Add Manual Player Inputs */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '0.5rem', marginBottom: '0.65rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: hasShorts ? '2fr 1fr 1fr 1fr 1fr auto' : '2fr 1fr 1fr 1fr auto', gap: '0.4rem', marginBottom: '0.65rem' }}>
                       <input type="text" placeholder="Player Name (e.g. JAGAN)" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
-                      <input type="text" placeholder="Size (e.g. 42)" value={newPlayerSize} onChange={(e) => setNewPlayerSize(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
-                      <input type="text" placeholder="No. (e.g. 9)" value={newPlayerNumber} onChange={(e) => setNewPlayerNumber(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
+                      <input type="text" placeholder="Shirt (42)" value={newPlayerSize} onChange={(e) => setNewPlayerSize(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
+                      <select value={newPlayerSleeve} onChange={(e) => setNewPlayerSleeve(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#3b82f6', fontWeight: 700, fontSize: '0.8rem' }}>
+                        <option value="F" style={{ background: '#161e31', color: '#fff' }}>F (Full)</option>
+                        <option value="H" style={{ background: '#161e31', color: '#fff' }}>H (Half)</option>
+                        <option value="SL" style={{ background: '#161e31', color: '#fff' }}>SL (Sleeveless)</option>
+                      </select>
+                      {hasShorts && (
+                        <input type="text" placeholder="Shorts (32)" value={newPlayerShortsSize} onChange={(e) => setNewPlayerShortsSize(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }} />
+                      )}
+                      <input type="text" placeholder="No. (9)" value={newPlayerNumber} onChange={(e) => setNewPlayerNumber(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
                       <button type="button" onClick={handleAddPlayer} style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: 'none', background: '#10b981', color: '#fff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
                     </div>
 
-                    {/* Player List Table */}
+                    {/* Player List Table (Editable Inline) */}
                     {players.length > 0 && (
-                      <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px' }}>
+                      <div style={{ maxHeight: '240px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlign: 'left' }}>
-                          <thead style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>
+                          <thead style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', position: 'sticky', top: 0, zIndex: 1 }}>
                             <tr>
-                              <th style={{ padding: '4px 8px' }}>#</th>
-                              <th style={{ padding: '4px 8px' }}>Name</th>
-                              <th style={{ padding: '4px 8px' }}>Size</th>
-                              <th style={{ padding: '4px 8px' }}>No.</th>
-                              <th style={{ padding: '4px 8px', textAlign: 'right' }}>Action</th>
+                              <th style={{ padding: '6px 6px', width: '24px' }}>#</th>
+                              <th style={{ padding: '6px 6px' }}>Player Name</th>
+                              <th style={{ padding: '6px 6px', width: '75px' }}>Shirt Size</th>
+                              <th style={{ padding: '6px 6px', width: '65px', color: '#3b82f6' }}>Sleeve</th>
+                              {hasShorts && <th style={{ padding: '6px 6px', width: '75px', color: '#10b981' }}>Shorts</th>}
+                              <th style={{ padding: '6px 6px', width: '60px' }}>No.</th>
+                              <th style={{ padding: '6px 6px', textAlign: 'right', width: '32px' }}>Action</th>
                             </tr>
                           </thead>
                           <tbody>
                             {players.map((p, idx) => (
                               <tr key={idx} style={{ borderTop: '1px solid var(--border)' }}>
-                                <td style={{ padding: '4px 8px', opacity: 0.7 }}>{idx + 1}</td>
-                                <td style={{ padding: '4px 8px', fontWeight: 700 }}>{p.name}</td>
-                                <td style={{ padding: '4px 8px' }}>{p.size}</td>
-                                <td style={{ padding: '4px 8px' }}>{p.number}</td>
-                                <td style={{ padding: '4px 8px', textAlign: 'right' }}>
-                                  <button type="button" onClick={() => handleRemovePlayer(idx)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                                <td style={{ padding: '4px 4px', opacity: 0.7, fontSize: '0.75rem' }}>{idx + 1}</td>
+                                <td style={{ padding: '3px 3px' }}>
+                                  <input
+                                    type="text"
+                                    value={p.name}
+                                    onChange={(e) => handleUpdatePlayerField(idx, 'name', e.target.value)}
+                                    placeholder="Name..."
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.25rem 0.35rem',
+                                      borderRadius: '4px',
+                                      border: '1px solid var(--border)',
+                                      background: 'var(--bg-main)',
+                                      color: 'var(--text-primary)',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 700,
+                                      outline: 'none'
+                                    }}
+                                  />
+                                </td>
+                                <td style={{ padding: '3px 3px' }}>
+                                  <input
+                                    type="text"
+                                    value={p.size}
+                                    onChange={(e) => handleUpdatePlayerField(idx, 'size', e.target.value)}
+                                    placeholder="Shirt..."
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.25rem 0.35rem',
+                                      borderRadius: '4px',
+                                      border: '1px solid var(--border)',
+                                      background: 'var(--bg-main)',
+                                      color: 'var(--text-primary)',
+                                      fontSize: '0.78rem',
+                                      outline: 'none'
+                                    }}
+                                  />
+                                </td>
+                                <td style={{ padding: '3px 3px' }}>
+                                  <select
+                                    value={p.sleeve || 'F'}
+                                    onChange={(e) => handleUpdatePlayerField(idx, 'sleeve', e.target.value)}
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.25rem 0.2rem',
+                                      borderRadius: '4px',
+                                      border: '1px solid #3b82f6',
+                                      background: 'var(--bg-main)',
+                                      color: '#3b82f6',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 800,
+                                      outline: 'none'
+                                    }}
+                                  >
+                                    <option value="F" style={{ background: '#161e31', color: '#fff' }}>F (Full)</option>
+                                    <option value="H" style={{ background: '#161e31', color: '#fff' }}>H (Half)</option>
+                                    <option value="SL" style={{ background: '#161e31', color: '#fff' }}>SL (Sleeveless)</option>
+                                  </select>
+                                </td>
+                                {hasShorts && (
+                                  <td style={{ padding: '3px 3px' }}>
+                                    <input
+                                      type="text"
+                                      value={p.shortsSize || ''}
+                                      onChange={(e) => handleUpdatePlayerField(idx, 'shortsSize', e.target.value)}
+                                      placeholder="Shorts..."
+                                      style={{
+                                        width: '100%',
+                                        padding: '0.25rem 0.35rem',
+                                        borderRadius: '4px',
+                                        border: '1px solid #10b981',
+                                        background: 'var(--bg-main)',
+                                        color: '#10b981',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 700,
+                                        outline: 'none'
+                                      }}
+                                    />
+                                  </td>
+                                )}
+                                <td style={{ padding: '3px 3px' }}>
+                                  <input
+                                    type="text"
+                                    value={p.number}
+                                    onChange={(e) => handleUpdatePlayerField(idx, 'number', e.target.value)}
+                                    placeholder="No..."
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.25rem 0.35rem',
+                                      borderRadius: '4px',
+                                      border: '1px solid var(--border)',
+                                      background: 'var(--bg-main)',
+                                      color: 'var(--text-primary)',
+                                      fontSize: '0.78rem',
+                                      outline: 'none'
+                                    }}
+                                  />
+                                </td>
+                                <td style={{ padding: '3px 6px', textAlign: 'right' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemovePlayer(idx)}
+                                    title="Remove player"
+                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}
+                                  >
+                                    ✕
+                                  </button>
                                 </td>
                               </tr>
                             ))}
