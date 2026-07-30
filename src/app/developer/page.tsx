@@ -323,7 +323,7 @@ export default function DeveloperPage() {
                   onClick={() => setShowCreateChangelog(prev => !prev)}
                   className="btn btn-primary !py-2 !text-xs !font-bold"
                 >
-                  {showCreateChangelog ? 'Cancel Form' : '➕ Publish Release Log'}
+                  {showCreateChangelog ? 'Cancel Form' : 'Publish Release Log'}
                 </button>
               </div>
             )}
@@ -417,7 +417,9 @@ export default function DeveloperPage() {
               </div>
             ) : changelogs.length === 0 ? (
               <div className="glass-card text-center p-12">
-                <span className="text-3xl block mb-2">📜</span>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                </div>
                 <h4 className="text-white font-bold mb-1">No release updates found</h4>
                 <p className="text-xs text-secondary">Click 'Publish Release Log' above to write the first changelog.</p>
               </div>
@@ -508,8 +510,10 @@ export default function DeveloperPage() {
                             ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/45' 
                             : 'btn-outline border-transparent bg-white/5'
                         }`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'center' }}
                       >
-                        💡 Suggestion
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6M10 22h4" /></svg>
+                        Suggestion
                       </button>
                       <button
                         type="button"
@@ -519,8 +523,10 @@ export default function DeveloperPage() {
                             ? 'bg-rose-500/20 text-rose-300 border border-rose-500/45' 
                             : 'btn-outline border-transparent bg-white/5'
                         }`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'center' }}
                       >
-                        🐛 Bug Report
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M12 2v3M8 5a4 4 0 0 1 8 0M6 14H4M20 14h-2M6 18H4M20 18h-2" /></svg>
+                        Bug Report
                       </button>
                     </div>
                   </div>
@@ -641,7 +647,9 @@ export default function DeveloperPage() {
                 </div>
               ) : filteredFeedbacks.length === 0 ? (
                 <div className="glass-card text-center p-12">
-                  <span className="text-3xl block mb-2">📭</span>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8z" /><path d="M22 9l-10 7L2 9" /></svg>
+                  </div>
                   <h4 className="text-white font-bold mb-1">No feedback tickets found</h4>
                   <p className="text-xs text-secondary">
                     {feedbackFilter === 'my' 
@@ -688,7 +696,19 @@ export default function DeveloperPage() {
                                 border: '1px solid'
                               }}
                             >
-                              {fb.type === 'bug' ? '🐛 Bug' : '💡 Idea'}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                {fb.type === 'bug' ? (
+                                  <>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M12 2v3M8 5a4 4 0 0 1 8 0M6 14H4M20 14h-2M6 18H4M20 18h-2" /></svg>
+                                    Bug
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6M10 22h4" /></svg>
+                                    Idea
+                                  </>
+                                )}
+                              </span>
                             </span>
                             
                             <span className={`badge dev-log-badge ${

@@ -67,7 +67,7 @@ export default function AIFeedbackSummary({ feedbacks }: AIFeedbackSummaryProps)
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <span>✨</span> AI Feedback Insights
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg> AI Feedback Insights
           </h3>
           <p className="text-xs text-secondary mt-0.5">
             Use Llama 3.3 to analyze and categorize bugs and feature suggestions.
@@ -103,7 +103,14 @@ export default function AIFeedbackSummary({ feedbacks }: AIFeedbackSummaryProps)
                 Analyzing...
               </>
             ) : (
-              <>🤖 Analyze {feedbacks.length} Tickets</>
+              <span className="flex items-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4M8 15h.01M16 15h.01M12 18h.01" />
+                </svg>
+                Analyze {feedbacks.length} Tickets
+              </span>
             )}
           </button>
         </div>
@@ -114,7 +121,7 @@ export default function AIFeedbackSummary({ feedbacks }: AIFeedbackSummaryProps)
           {/* Overall Summary paragraph */}
           <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4 mb-4">
             <h4 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-              <span>📋</span> Executive Summary
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Executive Summary
             </h4>
             <p className="text-sm text-secondary leading-relaxed">
               {summaryData.overallSummary}
@@ -126,7 +133,7 @@ export default function AIFeedbackSummary({ feedbacks }: AIFeedbackSummaryProps)
             {/* Top Suggestions Column */}
             <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4">
               <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <span>💡</span> Key Opportunities
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6M10 22h4" /></svg> Key Opportunities
               </h4>
               {summaryData.topSuggestions && summaryData.topSuggestions.length > 0 ? (
                 <div className="flex flex-col gap-3">
@@ -145,7 +152,7 @@ export default function AIFeedbackSummary({ feedbacks }: AIFeedbackSummaryProps)
             {/* Critical Bugs Column */}
             <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4">
               <h4 className="text-xs font-bold text-rose-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <span>🐛</span> Critical Attention Needed
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M12 2v3M8 5a4 4 0 0 1 8 0M6 14H4M20 14h-2M6 18H4M20 18h-2" /></svg> Critical Attention Needed
               </h4>
               {summaryData.criticalBugs && summaryData.criticalBugs.length > 0 ? (
                 <div className="flex flex-col gap-3">

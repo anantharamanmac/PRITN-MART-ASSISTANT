@@ -339,7 +339,7 @@ export default function AdminDashboard() {
           <div className="modal-calendar-section">
             <div className="calendar-header-wrapper">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                📅 Holiday Calendar
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Holiday Calendar
               </h2>
               <div className="flex items-center gap-2">
                 <button onClick={prevMonthAction} className="calendar-nav-btn" title="Previous Month">
@@ -707,7 +707,7 @@ export default function AdminDashboard() {
           </button>
 
           <h3 className="text-xl font-bold text-white mb-4 flex items-center justify-center gap-2">
-            ⚠️ Confirm File Deletion
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg> Confirm File Deletion
           </h3>
           
           <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-left mb-6">
@@ -1094,7 +1094,7 @@ export default function AdminDashboard() {
             {/* Office Location Settings */}
             <div className="glass-card mt-8">
               <h2 className="subtitle !text-xl !text-white !mb-4 flex items-center gap-2">
-                🏢 Office Location Settings
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg> Office Location Settings
               </h2>
               <form onSubmit={handleSaveOfficeSettings} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div className="input-group !mb-0">
@@ -1157,7 +1157,7 @@ export default function AdminDashboard() {
             {/* File Sharing & Storage */}
             <div className="glass-card mt-8">
               <h2 className="subtitle !text-xl !text-white !mb-6 flex items-center gap-2">
-                📁 File Storage & Shared Designs
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> File Storage & Shared Designs
               </h2>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1348,7 +1348,7 @@ export default function AdminDashboard() {
                   onClick={() => { setShowHolidayModal(true); loadData(); }}
                   className="open-calendar-trigger"
                 >
-                  📅 Open Holiday Calendar
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Open Holiday Calendar
                 </button>
               </div>
               <form onSubmit={handleMarkHoliday} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">

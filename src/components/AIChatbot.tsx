@@ -85,7 +85,7 @@ export default function AIChatbot({ user }: AIChatbotProps) {
       setMessages([
         {
           role: 'assistant',
-          content: `Hi ${user.displayName.split(' ')[0]}! 🤖 I am your PrintMart AI Assistant.
+          content: `Hi ${user.displayName.split(' ')[0]}! I am your PrintMart AI Assistant.
 
 I can securely calculate your working hours, leaves, and overtime pay (at ₹100/hr) from your timesheets.
 
@@ -586,7 +586,13 @@ What would you like me to check?`
           {/* Header */}
           <div className="chatbot-header">
             <div className="chatbot-header-profile">
-              <div className="chatbot-header-avatar">🤖</div>
+              <div className="chatbot-header-avatar">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--sapphire-light)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4M8 15h.01M16 15h.01M12 18h.01" />
+                </svg>
+              </div>
               <div className="chatbot-header-text">
                 <h4 className="chatbot-header-title">PrintMart AI Helper</h4>
                 <div className="chatbot-header-status">
@@ -616,7 +622,15 @@ What would you like me to check?`
                   key={index}
                   className={`chatbot-msg-row ${isAI ? 'bot-row' : 'user-row'}`}
                 >
-                  {isAI && <div className="chatbot-msg-avatar">🤖</div>}
+                  {isAI && (
+                    <div className="chatbot-msg-avatar">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--sapphire-light)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                        <rect x="3" y="11" width="18" height="10" rx="2" />
+                        <circle cx="12" cy="5" r="2" />
+                        <path d="M12 7v4M8 15h.01M16 15h.01M12 18h.01" />
+                      </svg>
+                    </div>
+                  )}
                   <div className={`chatbot-bubble ${isAI ? 'bot-bubble' : 'user-bubble'}`}>
                     {msg.content}
                   </div>
@@ -626,7 +640,13 @@ What would you like me to check?`
 
             {loading && (
               <div className="chatbot-msg-row bot-row">
-                <div className="chatbot-msg-avatar">🤖</div>
+                <div className="chatbot-msg-avatar">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--sapphire-light)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                    <rect x="3" y="11" width="18" height="10" rx="2" />
+                    <circle cx="12" cy="5" r="2" />
+                    <path d="M12 7v4M8 15h.01M16 15h.01M12 18h.01" />
+                  </svg>
+                </div>
                 <div className="chatbot-bubble bot-bubble">
                   <div className="chatbot-typing">
                     <span className="chatbot-typing-dot" />
@@ -701,8 +721,11 @@ What would you like me to check?`
           >
             &#10005;
           </button>
-          <div className="chatbot-tooltip-title">
-            ✨ PrintMart AI Assistant
+          <div className="chatbot-tooltip-title" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--sapphire-light)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+            </svg>
+            PrintMart AI Assistant
           </div>
           <p className="chatbot-tooltip-desc">
             Try checking your working hours, leaves, or calculate your overtime pay. Try checking things out!

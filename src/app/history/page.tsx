@@ -256,8 +256,8 @@ export default function HistoryPage() {
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
               >
-                <option value="desc">Latest Date / Cycle 📉</option>
-                <option value="asc">Oldest Date / Cycle 📈</option>
+                <option value="desc">Latest Date / Cycle</option>
+                <option value="asc">Oldest Date / Cycle</option>
               </select>
             </div>
           </div>
@@ -286,13 +286,13 @@ export default function HistoryPage() {
                   onClick={() => setViewType('date')}
                   className={`view-switcher-btn ${viewType === 'date' ? 'active' : ''}`}
                 >
-                  📅 Daily
+                  Daily
                 </button>
                 <button
                   onClick={() => setViewType('month')}
                   className={`view-switcher-btn ${viewType === 'month' ? 'active' : ''}`}
                 >
-                  💳 Monthly
+                  Monthly
                 </button>
               </div>
             </div>

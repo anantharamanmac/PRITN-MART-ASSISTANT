@@ -146,7 +146,6 @@ export default function WelcomeModal({ displayName, photoURL }: WelcomeModalProp
         <h3 className="welcome-modal-title">
           {greeting},<br />
           <span className="text-gradient font-extrabold welcome-modal-user-name">{displayName}</span>
-          <span className="welcome-modal-wave">👋</span>
         </h3>
 
         {/* Motivational message styled as a quote */}

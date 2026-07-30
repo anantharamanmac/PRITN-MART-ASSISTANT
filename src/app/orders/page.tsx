@@ -49,11 +49,11 @@ const CLOTH_TYPES = [
 ];
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: string; color: string; bg: string; border: string; desc: string }> = {
-  pending: { label: 'Pending', icon: '⏳', color: '#f97316', bg: 'rgba(249, 115, 22, 0.25)', border: 'rgba(249, 115, 22, 0.6)', desc: 'Order received, awaiting printing start' },
-  in_production: { label: 'In Production', icon: '⚙️', color: '#eab308', bg: 'rgba(234, 179, 8, 0.25)', border: 'rgba(234, 179, 8, 0.6)', desc: 'Garments currently printing or curing' },
-  ready: { label: 'Ready for Delivery', icon: '✨', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.25)', border: 'rgba(59, 130, 246, 0.6)', desc: 'Printing completed, packed for dispatch' },
-  delivered: { label: 'Delivered', icon: '✅', color: '#10b981', bg: 'rgba(16, 185, 129, 0.25)', border: 'rgba(16, 185, 129, 0.6)', desc: 'Handed over to customer / courier' },
-  cancelled: { label: 'Cancelled', icon: '❌', color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.25)', border: 'rgba(156, 163, 175, 0.6)', desc: 'Order cancelled or suspended' },
+  pending: { label: 'Pending', icon: '', color: '#f97316', bg: 'rgba(249, 115, 22, 0.25)', border: 'rgba(249, 115, 22, 0.6)', desc: 'Order received, awaiting printing start' },
+  in_production: { label: 'In Production', icon: '', color: '#eab308', bg: 'rgba(234, 179, 8, 0.25)', border: 'rgba(234, 179, 8, 0.6)', desc: 'Garments currently printing or curing' },
+  ready: { label: 'Ready for Delivery', icon: '', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.25)', border: 'rgba(59, 130, 246, 0.6)', desc: 'Printing completed, packed for dispatch' },
+  delivered: { label: 'Delivered', icon: '', color: '#10b981', bg: 'rgba(16, 185, 129, 0.25)', border: 'rgba(16, 185, 129, 0.6)', desc: 'Handed over to customer / courier' },
+  cancelled: { label: 'Cancelled', icon: '', color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.25)', border: 'rgba(156, 163, 175, 0.6)', desc: 'Order cancelled or suspended' },
 };
 
 export default function OrdersPage() {
@@ -259,7 +259,7 @@ export default function OrdersPage() {
           if (file) {
             processImageFile(file, (base64) => {
               setClothImage(base64);
-              toast.success('📷 Design mockup image pasted from clipboard!');
+              toast.success('Design mockup image pasted from clipboard!');
             });
           }
           break;
@@ -622,7 +622,7 @@ export default function OrdersPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.6rem' }}>📦</span> Order Management Workflow
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg> Order Management Workflow
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.825rem', marginTop: '0.2rem' }}>
               Section 1: Receptionist Quick Intake | Section 2: Designer Production Specs & Roster
@@ -647,7 +647,7 @@ export default function OrdersPage() {
                 cursor: 'pointer'
               }}
             >
-              <span>📋</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
               <span>1. Receptionist Intake</span>
             </button>
 
@@ -669,7 +669,7 @@ export default function OrdersPage() {
                 cursor: 'pointer'
               }}
             >
-              <span>✂️</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="9.8" y1="8.2" x2="20" y2="18" /><line x1="9.8" y1="15.8" x2="20" y2="6" /></svg>
               <span>2. Designer Production</span>
             </button>
           </div>
@@ -678,8 +678,8 @@ export default function OrdersPage() {
         {/* Stats Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <div className="card-glass" style={{ padding: '0.85rem 1rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
-              📊
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
             </div>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Total</div>
@@ -688,8 +688,8 @@ export default function OrdersPage() {
           </div>
 
           <div className="card-glass" style={{ padding: '0.85rem 1rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(234, 179, 8, 0.2)', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
-              ⚙️
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(234, 179, 8, 0.2)', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
             </div>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Production</div>
@@ -698,8 +698,8 @@ export default function OrdersPage() {
           </div>
 
           <div className="card-glass" style={{ padding: '0.85rem 1rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
-              ✨
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
             </div>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Ready</div>
@@ -708,8 +708,8 @@ export default function OrdersPage() {
           </div>
 
           <div className="card-glass" style={{ padding: '0.85rem 1rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
-              🚨
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
             </div>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Due Today</div>
@@ -782,7 +782,9 @@ export default function OrdersPage() {
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="card-glass" style={{ textAlign: 'center', padding: '3rem 1rem', borderRadius: '16px' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>👕</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+              <svg width="48" height="48" viewBox="0 0 100 100" fill="none" stroke="var(--text-secondary)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z" /></svg>
+            </div>
             <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', fontWeight: 700 }}>No Orders Found</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', marginBottom: '1.25rem' }}>
               {searchQuery || filterStatus !== 'all'
@@ -840,8 +842,9 @@ export default function OrdersPage() {
                           {ord.customerName} {ord.orderTitle && <span style={{ color: 'var(--sapphire-light)', fontSize: '0.78rem' }}>({ord.orderTitle})</span>}
                         </h4>
                         {ord.customerPhone && (
-                          <div style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem' }}>
-                            📞 {ord.customerPhone}
+                          <div style={{ fontSize: '0.73rem', color: '#10b981', fontWeight: 700, marginTop: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                            {ord.customerPhone}
                           </div>
                         )}
                       </div>
@@ -863,11 +866,11 @@ export default function OrdersPage() {
                           WebkitAppearance: 'menulist'
                         }}
                       >
-                        <option value="pending" style={{ background: '#161e31', color: '#f97316', fontWeight: 700 }}>⏳ Pending</option>
-                        <option value="in_production" style={{ background: '#161e31', color: '#eab308', fontWeight: 700 }}>⚙️ In Production</option>
-                        <option value="ready" style={{ background: '#161e31', color: '#3b82f6', fontWeight: 700 }}>✨ Ready</option>
-                        <option value="delivered" style={{ background: '#161e31', color: '#10b981', fontWeight: 700 }}>✅ Delivered</option>
-                        <option value="cancelled" style={{ background: '#161e31', color: '#9ca3af', fontWeight: 700 }}>❌ Cancelled</option>
+                        <option value="pending" style={{ background: '#161e31', color: '#f97316', fontWeight: 700 }}>Pending</option>
+                        <option value="in_production" style={{ background: '#161e31', color: '#eab308', fontWeight: 700 }}>In Production</option>
+                        <option value="ready" style={{ background: '#161e31', color: '#3b82f6', fontWeight: 700 }}>Ready</option>
+                        <option value="delivered" style={{ background: '#161e31', color: '#10b981', fontWeight: 700 }}>Delivered</option>
+                        <option value="cancelled" style={{ background: '#161e31', color: '#9ca3af', fontWeight: 700 }}>Cancelled</option>
                       </select>
                     </div>
 
@@ -878,8 +881,8 @@ export default function OrdersPage() {
                           ✓ Specs Complete ({ord.players?.length || 0} Players)
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#eab308', background: 'rgba(234, 179, 8, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-                          ⏳ Intake Saved (Awaiting Designer Roster)
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#eab308', background: 'rgba(234, 179, 8, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(234, 179, 8, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#eab308' }} /> Intake Saved (Awaiting Designer Roster)
                         </span>
                       )}
                     </div>
@@ -913,7 +916,7 @@ export default function OrdersPage() {
                             </div>
                           </>
                         ) : (
-                          <span style={{ fontSize: '1.4rem', opacity: 0.5 }}>👕</span>
+                          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" stroke="var(--text-secondary)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}><path d="M 35,10 C 45,18 55,18 65,10 L 78,10 L 92,24 L 84,32 L 76,26 L 76,85 L 24,85 L 24,26 L 16,32 L 8,24 L 22,10 Z" /></svg>
                         )}
                       </div>
 
@@ -948,22 +951,24 @@ export default function OrdersPage() {
                   {/* 2-Section Action Buttons */}
                   <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem', marginTop: '0.3rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: isOverdue ? '#ef4444' : isDueToday ? '#eab308' : 'var(--text-primary)' }}>
-                        🚚 {ord.deliveryDate} {isOverdue && '⚠️ OVERDUE'} {isDueToday && '🚨 TODAY'}
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: isOverdue ? '#ef4444' : isDueToday ? '#eab308' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                        <span>{ord.deliveryDate} {isOverdue && 'OVERDUE'} {isDueToday && 'TODAY'}</span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <button
                           type="button"
                           onClick={() => {
-                            const summaryText = `📦 ORDER INFO #${ord.infoNumber || 2412}\nCustomer: ${ord.customerName}\nPhone: ${ord.customerPhone || 'N/A'}\nOrder: ${ord.orderTitle || 'N/A'}\nPieces: ${ord.players?.length || ord.pieces}\nFabric: ${ord.clothType}\nNeck: ${ord.neckType}\nDelivery: ${ord.deliveryDate}`;
+                            const summaryText = `ORDER INFO #${ord.infoNumber || 2412}\nCustomer: ${ord.customerName}\nPhone: ${ord.customerPhone || 'N/A'}\nOrder: ${ord.orderTitle || 'N/A'}\nPieces: ${ord.players?.length || ord.pieces}\nFabric: ${ord.clothType}\nNeck: ${ord.neckType}\nDelivery: ${ord.deliveryDate}`;
                             navigator.clipboard.writeText(summaryText);
                             toast.success(`Copied summary for INFO #${ord.infoNumber || 2412}!`);
                           }}
                           title="Copy order summary to clipboard"
-                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: '5px', fontSize: '0.68rem', fontWeight: 600, padding: '0.18rem 0.4rem', cursor: 'pointer' }}
+                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: '5px', fontSize: '0.68rem', fontWeight: 600, padding: '0.18rem 0.4rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
                         >
-                          📋 Copy
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                          Copy
                         </button>
 
                         <button
@@ -993,10 +998,15 @@ export default function OrdersPage() {
                           color: 'var(--text-primary)',
                           fontSize: '0.75rem',
                           fontWeight: 700,
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.2rem'
                         }}
                       >
-                        📋 Section 1 (Receptionist)
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                        Section 1 (Intake)
                       </button>
 
                       <button
@@ -1010,10 +1020,15 @@ export default function OrdersPage() {
                           color: '#3b82f6',
                           fontSize: '0.75rem',
                           fontWeight: 700,
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.2rem'
                         }}
                       >
-                        ✂️ Section 2 (Designer)
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="9.8" y1="8.2" x2="20" y2="18" /><line x1="9.8" y1="15.8" x2="20" y2="6" /></svg>
+                        Section 2 (Specs)
                       </button>
                     </div>
 
@@ -1038,7 +1053,7 @@ export default function OrdersPage() {
                         transition: 'all 0.15s'
                       }}
                     >
-                      <span>🖨️</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
                       <span>Print Cutting & Fusing Info Slip</span>
                     </button>
                   </div>
@@ -1056,15 +1071,15 @@ export default function OrdersPage() {
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.6rem' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>✨</span> {editingOrderId ? `Edit Order INFO #${infoNumber}` : 'Add New Order'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg> {editingOrderId ? `Edit Order INFO #${infoNumber}` : 'Add New Order'}
               </h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
 
             {/* Auto-Fetch Existing INFO NO. Bar */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.08)', padding: '0.55rem 0.75rem', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.3)', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--sapphire-light)', whiteSpace: 'nowrap' }}>
-                ⚡ Auto-Fetch Existing INFO:
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--sapphire-light)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg> Auto-Fetch Existing INFO:
               </span>
               <input
                 type="number"
@@ -1076,9 +1091,9 @@ export default function OrdersPage() {
               <button
                 type="button"
                 onClick={() => handleFetchExistingInfo(searchInfoInput)}
-                style={{ padding: '0.35rem 0.85rem', borderRadius: '6px', border: 'none', background: 'var(--sapphire-primary)', color: '#fff', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ padding: '0.35rem 0.85rem', borderRadius: '6px', border: 'none', background: 'var(--sapphire-primary)', color: '#fff', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
               >
-                🔍 Fetch Data
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> Fetch Data
               </button>
             </div>
 
@@ -1095,10 +1110,15 @@ export default function OrdersPage() {
                   color: activeFormTab === 'receptionist' ? '#ffffff' : 'var(--text-secondary)',
                   fontWeight: 700,
                   fontSize: '0.8rem',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.2rem'
                 }}
               >
-                📋 Section 1: Receptionist Quick Intake
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                Section 1: Receptionist Intake
               </button>
 
               <button
@@ -1112,10 +1132,15 @@ export default function OrdersPage() {
                   color: activeFormTab === 'designer' ? '#ffffff' : 'var(--text-secondary)',
                   fontWeight: 700,
                   fontSize: '0.8rem',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.2rem'
                 }}
               >
-                ✂️ Section 2: Designer Production Specs
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="9.8" y1="8.2" x2="20" y2="18" /><line x1="9.8" y1="15.8" x2="20" y2="6" /></svg>
+                Section 2: Designer Specs
               </button>
             </div>
 
@@ -1303,7 +1328,7 @@ export default function OrdersPage() {
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
-                          <span style={{ fontSize: '1.8rem' }}>🖼️</span>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '0.25rem' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
                           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#3b82f6' }}>Click to Upload File OR Press Ctrl+V to Paste Image from Clipboard</span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Upload 1 combined image containing Front & Back artwork</span>
                         </div>
@@ -1352,8 +1377,8 @@ export default function OrdersPage() {
                         style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
                       />
                       <div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: hasShorts ? '#10b981' : 'var(--text-primary)' }}>
-                          🩳 Include Shorts / Pant Specifications
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: hasShorts ? '#10b981' : 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v18h16V2H4zm2 2h4v12H6V4zm12 12h-4V4h4v12z" /></svg> Include Shorts / Pant Specifications
                         </span>
                         <span style={{ display: 'block', fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
                           Check this option to enable Shorts Size selection for each player in the roster
@@ -1367,7 +1392,7 @@ export default function OrdersPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
                       <div>
                         <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>📊</span> Players Roster ({players.length} Total)
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg> Players Roster ({players.length} Total)
                         </h4>
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '2px' }}>
                           {liveBreakdown.summaryString && (
@@ -1389,7 +1414,7 @@ export default function OrdersPage() {
                           onClick={() => excelFileInputRef.current?.click()}
                           style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #10b981', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                         >
-                          <span>📁</span> Upload Excel / CSV / PDF File
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> Upload Excel / CSV / PDF File
                         </button>
                         <input
                           type="file"
@@ -1404,7 +1429,7 @@ export default function OrdersPage() {
                           onClick={() => setShowExcelBox(!showExcelBox)}
                           style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                         >
-                          📋 {showExcelBox ? 'Hide Paste Box' : 'Paste Text'}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg> {showExcelBox ? 'Hide Paste Box' : 'Paste Text'}
                         </button>
                       </div>
                     </div>

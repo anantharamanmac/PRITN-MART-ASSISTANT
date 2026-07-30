@@ -1249,10 +1249,13 @@ export default function WorkerDashboard() {
 
             <div className="flex gap-4 items-start text-left relative z-10">
               <div
-                className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 text-3xl flex-shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 flex-shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
                 style={{ animation: 'float-slow-banner-key 3s ease-in-out infinite' }}
               >
-                🔔
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                </svg>
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white mb-1 tracking-tight">
@@ -1275,10 +1278,15 @@ export default function WorkerDashboard() {
 
             <div className="flex gap-4 items-start text-left relative z-10">
               <div
-                className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30 text-3xl flex-shrink-0 shadow-[0_0_15px_rgba(99,102,241,0.2)] animate-float-slow-banner"
+                className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30 flex-shrink-0 shadow-[0_0_15px_rgba(99,102,241,0.2)] animate-float-slow-banner"
                 style={{ animation: 'float-slow-banner-key 3s ease-in-out infinite' }}
               >
-                📅
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
               </div>
               <div>
                 <style dangerouslySetInnerHTML={{
@@ -1534,7 +1542,12 @@ export default function WorkerDashboard() {
                           Polishing...
                         </>
                       ) : (
-                        <>✨ AI Refine</>
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                          </svg>
+                          AI Refine
+                        </>
                       )}
                     </button>
                   )}

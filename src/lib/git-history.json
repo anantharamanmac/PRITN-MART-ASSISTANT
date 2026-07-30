@@ -1,5 +1,95 @@
 [
   {
+    "id": "a36fdf4",
+    "version": "v1.8 - A36FDF4",
+    "date": "Jul 30, 2026",
+    "title": "chore: update package-lock.json dependencies",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785369600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "03e8a2f",
+    "version": "v1.8 - 03E8A2F",
+    "date": "Jul 30, 2026",
+    "title": "feat: implement order management interface with Excel/PDF parsing and auto-fill functionality",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785369600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "5565e72",
+    "version": "v1.8 - 5565E72",
+    "date": "Jul 30, 2026",
+    "title": "feat: implement order management module with Excel/PDF import and form-based tracking",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785369600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "d46a89b",
+    "version": "v1.8 - D46A89B",
+    "date": "Jul 30, 2026",
+    "title": "feat: add InfoSheetSlip component for printing and PDF generation of order details",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785369600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "639be16",
+    "version": "v1.8 - 639BE16",
+    "date": "Jul 29, 2026",
+    "title": "feat: initialize project git history tracking with release v1.8 summary data",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "f440c32",
+    "version": "v1.8 - F440C32",
+    "date": "Jul 29, 2026",
+    "title": "fix: prevent sizes text breakdown overflow inside order card container",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785283200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "f4ff240",
     "version": "v1.8 - F4FF240",
     "date": "Jul 29, 2026",
@@ -79,96 +169,6 @@
     "version": "v1.8 - 40E9718",
     "date": "Jul 29, 2026",
     "title": "feat: add Auto-Fetch & Pre-fill order data by existing INFO NO.",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "11dd30a",
-    "version": "v1.8 - 11DD30A",
-    "date": "Jul 29, 2026",
-    "title": "feat: implement Firestore attendance and user management utility functions",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "2ced738",
-    "version": "v1.8 - 2CED738",
-    "date": "Jul 29, 2026",
-    "title": "feat: update order management v1.2",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5fbfb9e",
-    "version": "v1.8 - 5FBFB9E",
-    "date": "Jul 29, 2026",
-    "title": "chore: remove unused legacy integration files",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5b9fba2",
-    "version": "v1.8 - 5B9FBA2",
-    "date": "Jul 29, 2026",
-    "title": "feat: implement orders management page with Excel import, order creation, and status tracking features",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "232bcfc",
-    "version": "v1.8 - 232BCFC",
-    "date": "Jul 29, 2026",
-    "title": "feat: add 1-click Copy Summary button to order cards",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "a5a2dcc",
-    "version": "v1.8 - A5A2DCC",
-    "date": "Jul 29, 2026",
-    "title": "feat: implement order management system with CRUD operations, Excel roster parsing, and AI-assisted workflow modules",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

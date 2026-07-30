@@ -129,6 +129,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 /* Ambient Background */
 body::before {
   content: '';
@@ -1128,6 +1144,24 @@ select.input-field option {
   color: var(--sapphire-light);
   background: var(--sapphire-muted);
   border-color: rgba(79, 134, 232, 0.2);
+}
+
+@media (max-width: 1023px) {
+  aside.w-full.lg\:w-64 {
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .sidebar-link {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    text-align: center;
+  }
 }
 
 /* =============================================

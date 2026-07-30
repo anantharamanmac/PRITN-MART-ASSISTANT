@@ -127,7 +127,7 @@ export default function Navbar({ user }: { user: AppUser }) {
             toast((t) => (
               <div className="flex flex-col gap-1 text-left">
                 <div className="font-bold text-white flex items-center gap-1.5">
-                  <span className="animate-pulse text-red-500">🚨</span> New Bug Reported!
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--danger)', display: 'inline-block', boxShadow: '0 0 8px var(--danger)' }} className="animate-pulse" /> New Bug Reported!
                 </div>
                 <div className="text-xs text-secondary">
                   <strong>{fb.userName}</strong>: {fb.title}
@@ -135,7 +135,6 @@ export default function Navbar({ user }: { user: AppUser }) {
               </div>
             ), {
               duration: 6000,
-              icon: '🐛',
             });
           }
         }
