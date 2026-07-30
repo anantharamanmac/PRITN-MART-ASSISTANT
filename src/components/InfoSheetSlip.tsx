@@ -78,6 +78,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   // For 50+ players, splits across full page width into 3 or 4 columns vertically!
   const numColumns = players.length > 40 ? 4 : players.length > 24 ? 3 : players.length > 12 ? 2 : 1;
   const rowsPerCol = Math.max(1, Math.ceil(players.length / numColumns));
+
   const playerColumns = Array.from({ length: numColumns }, (_, colIdx) =>
     players.slice(colIdx * rowsPerCol, (colIdx + 1) * rowsPerCol)
   );
@@ -95,7 +96,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
             Cutting & Fusing Master Info Slip #{order.infoNumber || 2412}
           </h3>
           <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Official A4 Portrait job order printout ({players.length} players loaded below)
+            Official A4 job order printout ({players.length} players loaded below)
           </p>
         </div>
 
@@ -168,7 +169,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         </div>
       </div>
 
-      {/* ── PRINTABLE SLIP CONTAINER (A4 PORTRAIT TOP/BOTTOM LAYOUT) ── */}
+      {/* ── PRINTABLE SLIP CONTAINER ── */}
       <div
         ref={printRef}
         className="printable-info-sheet"
@@ -176,7 +177,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
           background: '#d9d9d9',
           color: '#000000',
           fontFamily: "'Helvetica Neue', Arial, sans-serif",
-          padding: '6px',
+          padding: '8px',
           border: '2px solid #000000',
           boxSizing: 'border-box',
           width: '100%',
@@ -383,7 +384,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                         </tr>
                       ))
                     ) : (
-                      Array.from({ length: 8 }).map((_, idx) => (
+                      Array.from({ length: 6 }).map((_, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #ddd', height: '18px' }}>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
@@ -399,11 +400,11 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         </div>
       </div>
 
-      {/* Embedded Print CSS (Enforces Full Color & 1 Page A4 Portrait Fit) */}
+      {/* Embedded Print CSS (Clean Fit in Any Orientation) */}
       <style jsx global>{`
         @page {
-          size: A4 portrait;
-          margin: 4mm;
+          size: auto;
+          margin: 5mm;
         }
         @media print {
           * {
@@ -412,24 +413,44 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
             color-adjust: exact !important;
           }
           html, body {
-            width: 210mm;
-            height: 297mm;
+            width: 100% !important;
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden !important;
             background: #ffffff !important;
+            overflow: visible !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          .printable-info-sheet,
+          .printable-info-sheet * {
+            visibility: visible !important;
+          }
+          .info-sheet-modal-wrapper,
+          .card-glass {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            position: static !important;
           }
           .printable-info-sheet {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 200mm !important;
-            max-height: 285mm !important;
-            padding: 2mm !important;
-            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 4mm !important;
             background: #d9d9d9 !important;
-            page-break-inside: avoid !important;
+            border: 2px solid #000000 !important;
             box-sizing: border-box !important;
+            page-break-inside: avoid !important;
           }
           .no-print, .navbar, .mobile-tab-bar {
             display: none !important;
