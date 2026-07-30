@@ -57,7 +57,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
 
       const element = printRef.current;
       const opt = {
-        margin: 3,
+        margin: 2,
         filename: fileName,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -76,19 +76,28 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
     }
   };
 
+  // Format cell values: "XXX", "-", "N/A", "NIL" placeholders display as BLANK
+  const formatCellValue = (val?: string) => {
+    if (!val) return '';
+    const trimmed = val.trim();
+    const upper = trimmed.toUpperCase();
+    if (upper === 'XXX' || upper === '-' || upper === 'N/A' || upper === 'NIL' || upper === 'NONE') {
+      return '';
+    }
+    return trimmed;
+  };
+
   // Adaptive Multi-Column Sub-Table Splitting for Bottom Players Roster
-  // For 50+ players, splits across full page width into 3 or 4 columns vertically!
-  const isSmallData = players.length <= 10;
-  const numColumns = players.length > 40 ? 4 : players.length > 24 ? 3 : players.length > 12 ? 2 : 1;
+  const numColumns = players.length > 40 ? 4 : players.length > 20 ? 3 : players.length > 10 ? 2 : 1;
   const rowsPerCol = Math.max(1, Math.ceil(players.length / numColumns));
 
   const playerColumns = Array.from({ length: numColumns }, (_, colIdx) =>
     players.slice(colIdx * rowsPerCol, (colIdx + 1) * rowsPerCol)
   );
 
-  // Dynamic Font Size & Padding for Table Cells
-  const tableFontSize = isSmallData ? '13px' : numColumns >= 4 ? '8px' : numColumns === 3 ? '9px' : '10.5px';
-  const tablePadding = isSmallData ? '6px 10px' : numColumns >= 3 ? '2px 3px' : '3px 5px';
+  // Dynamic Font Size & Padding for Table Cells - BIGGER FOR STITCHING WORKERS!
+  const tableFontSize = numColumns >= 4 ? '11px' : numColumns === 3 ? '13px' : '15px';
+  const tablePadding = numColumns >= 3 ? '4px 5px' : '6px 10px';
 
   return (
     <div className="info-sheet-modal-wrapper" style={{ padding: '1rem', color: '#000000' }}>
@@ -99,7 +108,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
             Cutting & Fusing Master Info Slip #{order.infoNumber || 2412}
           </h3>
           <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Official A4 job order printout ({players.length} players loaded below)
+            Full Page A4 Fit Sheet ({players.length} players loaded below)
           </p>
         </div>
 
@@ -172,262 +181,283 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         </div>
       </div>
 
-      {/* ── PRINTABLE SLIP CONTAINER ── */}
+      {/* ── PRINTABLE SLIP CONTAINER (FULL A4 PAGE FILL) ── */}
       <div
         ref={printRef}
         className="printable-info-sheet"
         style={{
-          background: '#d9d9d9',
+          background: '#ffffff',
           color: '#000000',
-          fontFamily: "'Helvetica Neue', Arial, sans-serif",
-          padding: '8px',
-          border: '2px solid #000000',
+          fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+          padding: '10px',
+          border: '3px solid #000000',
           boxSizing: 'border-box',
           width: '100%',
-          maxWidth: '840px',
+          maxWidth: '880px',
+          minHeight: '275mm',
           margin: '0 auto',
-          fontSize: '12px'
+          fontSize: '13px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
         }}
       >
-        {/* Top Header Block */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #000', paddingBottom: '4px', marginBottom: '6px' }}>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 900, textTransform: 'uppercase', color: '#004c80', letterSpacing: '0.02em' }}>
-              CUSTOMER : <span style={{ color: '#0070ba' }}>{order.customerName || 'LUCKY'}</span>
-            </div>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: '#00264d', marginTop: '2px' }}>
-              NO. : {order.customerPhone || '+91 8848048733'}
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '16px', fontWeight: 900, textTransform: 'uppercase', color: '#005b96', letterSpacing: '0.05em' }}>
-              ORDER: <span style={{ color: '#0084d1' }}>{order.orderTitle || 'SPORTIVATE'}</span>
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', color: '#000' }}>
-              INFO NO.: <span style={{ fontSize: '20px', fontWeight: 900, marginLeft: '4px' }}>{order.infoNumber || 2412}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── TOP SECTION: COMBINED MOCKUP + SPECS + SIZE SUMMARY ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.3fr 1fr', gap: '6px', border: '1px solid #000', background: '#ececec', padding: '6px', marginBottom: '8px' }}>
-          {/* BOX 1: SINGLE COMBINED MOCKUP IMAGE (FRONT & BACK TOGETHER) */}
-          <div style={{ borderRight: '1px solid #aaa', paddingRight: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div>
+          {/* Top Header Block */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '3px solid #000', paddingBottom: '6px', marginBottom: '8px' }}>
             <div>
-              <div style={{ fontSize: isSmallData ? '14px' : '13px', fontWeight: 900, color: '#002b66', marginBottom: '4px', textTransform: 'uppercase', textDecoration: 'underline' }}>
-                ITEM: {order.itemType || 'JERSEY'}
+              <div style={{ fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', color: '#004c80', letterSpacing: '0.01em' }}>
+                CUSTOMER : <span style={{ color: '#0070ba' }}>{order.customerName || 'LUCKY'}</span>
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#00264d', marginTop: '2px' }}>
+                NO. : {order.customerPhone || '+91 8848048733'}
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', color: '#005b96', letterSpacing: '0.04em' }}>
+                ORDER: <span style={{ color: '#0084d1' }}>{order.orderTitle || 'SPORTIVATE'}</span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '16px', fontWeight: 900, textTransform: 'uppercase', color: '#000' }}>
+                INFO NO.: <span style={{ fontSize: '26px', fontWeight: 900, marginLeft: '4px' }}>{order.infoNumber || 2412}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── TOP SECTION: COMBINED MOCKUP + SPECS + SIZE SUMMARY ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1.3fr 1.1fr', gap: '8px', border: '2px solid #000', background: '#ececec', padding: '8px', marginBottom: '10px' }}>
+            {/* BOX 1: COMBINED MOCKUP IMAGE */}
+            <div style={{ borderRight: '1.5px solid #000', paddingRight: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#002b66', marginBottom: '6px', textTransform: 'uppercase', textDecoration: 'underline' }}>
+                  ITEM: {order.itemType || 'JERSEY'}
+                </div>
+
+                {/* Combined Mockup Frame */}
+                <div style={{ height: '210px', background: '#fff', border: '2px solid #000', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
+                  {order.clothImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={order.clothImage} alt="Combined Design Mockup" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <div style={{ textAlign: 'center', color: '#777', fontSize: '12px' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '4px' }}>👕</div>
+                      <div style={{ fontWeight: 900, color: '#000' }}>Combined Front & Back</div>
+                      <div>Mockup Image</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* BOX 2: PRINT & GARMENT SPECS */}
+            <div style={{ borderRight: '1.5px solid #000', paddingRight: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                {/* Delivery Date */}
+                <div style={{ fontSize: '15px', fontWeight: 900, marginBottom: '8px' }}>
+                  Delivery Date : <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px' }}>{formatDelivery(order.deliveryDate)}</span>
+                </div>
+
+                {/* PRINT Section */}
+                <div style={{ marginBottom: '6px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 900, marginBottom: '2px' }}>PRINT</div>
+                  <div style={{ display: 'flex', gap: '6px', fontSize: '10.5px', fontWeight: 900 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      SUBLIMATION <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.printMethod === 'sublimation' || !order.printMethod ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      DFT <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.printMethod === 'dft' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      NORMAL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.printMethod === 'normal' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PRINTING Section */}
+                <div style={{ marginBottom: '6px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 900, marginBottom: '2px' }}>PRINTING</div>
+                  <div style={{ display: 'flex', gap: '5px', fontSize: '10px', fontWeight: 900 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      FRONT ONLY <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.printArea === 'front_only' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      FRONT BACK <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.printArea === 'front_back' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      FULL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.printArea === 'full' || !order.printArea ? '#d92525' : '#fff' }}></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SLEEVE Section */}
+                <div style={{ marginBottom: '6px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 900, marginBottom: '2px' }}>SLEEVE</div>
+                  <div style={{ display: 'flex', gap: '6px', fontSize: '10.5px', fontWeight: 900 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      SLEEVELES <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.sleeveType === 'sleeveless' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      HALF <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.sleeveType === 'half' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      FULL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.sleeveType === 'full' || !order.sleeveType ? '#d92525' : '#fff' }}></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CLOTH & NECK & SHORTS Specifications */}
+                <div style={{ marginTop: '6px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 900, color: '#000' }}>
+                    CLOTH : <span style={{ color: '#d92525', textTransform: 'uppercase' }}>{order.clothType || 'SALEENA'}</span>
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 900, color: '#000', marginTop: '3px' }}>
+                    NECK <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: '13px', textTransform: 'uppercase' }}>{order.neckType || 'ROUND NECK'}</span>
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: 900, color: '#000', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    SHORTS <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
+                  </div>
+                </div>
               </div>
 
-              {/* Single Combined Mockup Frame (Expanded height for <=10 players!) */}
-              <div style={{ height: isSmallData ? '265px' : '175px', background: '#fff', border: '1.5px solid #000', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '3px' }}>
-                {order.clothImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={order.clothImage} alt="Combined Design Mockup" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                ) : (
-                  <div style={{ textAlign: 'center', color: '#777', fontSize: '11px' }}>
-                    <div style={{ fontSize: '1.8rem', marginBottom: '2px' }}>👕</div>
-                    <div>Combined Front & Back</div>
-                    <div>Mockup Image</div>
+              {/* Extra Specs Bottom Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid #000', fontSize: '10.5px', background: '#fff', marginTop: '6px' }}>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #000' }}>
+                    <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000', width: '60%' }}>FULL SLEEVE</td>
+                    <td style={{ padding: '3px 6px' }}></td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #000' }}>
+                    <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000' }}>KIDS</td>
+                    <td style={{ padding: '3px 6px' }}></td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000' }}>OVER SIZE</td>
+                    <td style={{ padding: '3px 6px' }}></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* BOX 3: SIZE SUMMARY BREAKDOWN & TOTAL PIECES BOX */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#004080', textDecoration: 'underline', marginBottom: '8px' }}>
+                  TOTAL : {order.itemType || 'JERSEY'}
+                </div>
+
+                {/* Size Summary Breakdown Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: summaryArray.length > 5 ? '1fr 1fr' : '1fr',
+                  gap: '5px 10px',
+                  fontSize: summaryArray.length > 8 ? '15px' : '18px',
+                  fontWeight: 900,
+                  color: '#005b96',
+                  letterSpacing: '0.06em'
+                }}>
+                  {summaryArray.length > 0 ? (
+                    summaryArray.map((sumStr, idx) => (
+                      <div key={idx}>{sumStr}</div>
+                    ))
+                  ) : (
+                    <div>ALL SIZES : {order.pieces}</div>
+                  )}
+                </div>
+
+                {/* Shorts Summary Breakdown (if enabled) */}
+                {hasShorts && (
+                  <div style={{ marginTop: '10px', borderTop: '1.5px dashed #888', paddingTop: '6px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 900, color: '#d92525', textDecoration: 'underline', marginBottom: '4px' }}>
+                      SHORTS SUMMARY
+                    </div>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: shortsSummaryArray.length > 5 ? '1fr 1fr' : '1fr',
+                      gap: '3px 8px',
+                      fontSize: '14px',
+                      fontWeight: 900,
+                      color: '#b91c1c'
+                    }}>
+                      {shortsSummaryArray.length > 0 ? (
+                        shortsSummaryArray.map((sumStr, idx) => (
+                          <div key={idx}>{sumStr}</div>
+                        ))
+                      ) : (
+                        <div>ALL SHORTS : {displayPieces}</div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* BOX 2: PRINT & GARMENT SPECS */}
-          <div style={{ borderRight: '1px solid #aaa', paddingRight: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              {/* Delivery Date */}
-              <div style={{ fontSize: isSmallData ? '14px' : '13px', fontWeight: 900, marginBottom: isSmallData ? '8px' : '6px' }}>
-                Delivery Date : <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px' }}>{formatDelivery(order.deliveryDate)}</span>
+              {/* Total Pieces Box */}
+              <div style={{ border: '2.5px solid #000', padding: '6px 12px', background: '#ffffff', fontWeight: 900, fontSize: '18px', textAlign: 'center', marginTop: '10px' }}>
+                TOTAL - {displayPieces}
               </div>
-
-              {/* PRINT Section */}
-              <div style={{ marginBottom: isSmallData ? '7px' : '5px' }}>
-                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, marginBottom: '2px' }}>PRINT</div>
-                <div style={{ display: 'flex', gap: '6px', fontSize: isSmallData ? '10.5px' : '9px', fontWeight: 800 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    SUBLIMATION <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printMethod === 'sublimation' || !order.printMethod ? '#d92525' : '#fff' }}></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    DFT <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printMethod === 'dft' ? '#d92525' : '#fff' }}></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    NORMAL <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printMethod === 'normal' ? '#d92525' : '#fff' }}></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* PRINTING Section */}
-              <div style={{ marginBottom: isSmallData ? '7px' : '5px' }}>
-                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, marginBottom: '2px' }}>PRINTING</div>
-                <div style={{ display: 'flex', gap: '4px', fontSize: isSmallData ? '10.5px' : '9px', fontWeight: 800 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    FRONT ONLY <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printArea === 'front_only' ? '#d92525' : '#fff' }}></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    FRONT BACK <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printArea === 'front_back' ? '#d92525' : '#fff' }}></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    FULL <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.printArea === 'full' || !order.printArea ? '#d92525' : '#fff' }}></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SLEEVE Section */}
-              <div style={{ marginBottom: isSmallData ? '7px' : '5px' }}>
-                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, marginBottom: '2px' }}>SLEEVE</div>
-                <div style={{ display: 'flex', gap: '6px', fontSize: isSmallData ? '10.5px' : '9px', fontWeight: 800 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    SLEEVELES <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.sleeveType === 'sleeveless' ? '#d92525' : '#fff' }}></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    HALF <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.sleeveType === 'half' ? '#d92525' : '#fff' }}></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    FULL <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: order.sleeveType === 'full' || !order.sleeveType ? '#d92525' : '#fff' }}></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* CLOTH & NECK & SHORTS Specifications */}
-              <div style={{ marginTop: '4px' }}>
-                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, color: '#000' }}>
-                  CLOTH : <span style={{ color: '#d92525', textTransform: 'uppercase' }}>{order.clothType || 'SALEENA'}</span>
-                </div>
-                <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, color: '#000', marginTop: '2px' }}>
-                  NECK <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: isSmallData ? '12px' : '11px', textTransform: 'uppercase' }}>{order.neckType || 'ROUND NECK'}</span>
-                </div>
-                <div style={{ fontSize: isSmallData ? '12px' : '11px', fontWeight: 900, color: '#000', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  SHORTS <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
-                </div>
-              </div>
-            </div>
-
-            {/* Extra Specs Bottom Table */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: isSmallData ? '10px' : '9px', background: '#fff', marginTop: '4px' }}>
-              <tbody>
-                <tr style={{ borderBottom: '1px solid #000' }}>
-                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000', width: '60%' }}>FULL SLEEVE</td>
-                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px' }}></td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #000' }}>
-                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000' }}>KIDS</td>
-                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px' }}></td>
-                </tr>
-                <tr>
-                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px', fontWeight: 'bold', borderRight: '1px solid #000' }}>OVER SIZE</td>
-                  <td style={{ padding: isSmallData ? '3px 6px' : '2px 4px' }}></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* BOX 3: SIZE SUMMARY BREAKDOWN & TOTAL PIECES BOX */}
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: isSmallData ? '14px' : '13px', fontWeight: 900, color: '#004080', textDecoration: 'underline', marginBottom: '6px' }}>
-                TOTAL : {order.itemType || 'JERSEY'}
-              </div>
-
-              {/* Size Summary Breakdown Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: summaryArray.length > 5 ? '1fr 1fr' : '1fr',
-                gap: isSmallData ? '5px 8px' : '3px 8px',
-                fontSize: isSmallData ? '18px' : (summaryArray.length > 8 ? '13px' : '15px'),
-                fontWeight: 900,
-                color: '#005b96',
-                letterSpacing: '0.06em'
-              }}>
-                {summaryArray.length > 0 ? (
-                  summaryArray.map((sumStr, idx) => (
-                    <div key={idx}>{sumStr}</div>
-                  ))
-                ) : (
-                  <div>ALL SIZES : {order.pieces}</div>
-                )}
-              </div>
-
-              {/* Shorts Summary Breakdown (if enabled) */}
-              {hasShorts && (
-                <div style={{ marginTop: '8px', borderTop: '1px dashed #888', paddingTop: '4px' }}>
-                  <div style={{ fontSize: isSmallData ? '13px' : '12px', fontWeight: 900, color: '#d92525', textDecoration: 'underline', marginBottom: '3px' }}>
-                    SHORTS SUMMARY
-                  </div>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: shortsSummaryArray.length > 5 ? '1fr 1fr' : '1fr',
-                    gap: '2px 6px',
-                    fontSize: isSmallData ? '14px' : '12px',
-                    fontWeight: 900,
-                    color: '#b91c1c'
-                  }}>
-                    {shortsSummaryArray.length > 0 ? (
-                      shortsSummaryArray.map((sumStr, idx) => (
-                        <div key={idx}>{sumStr}</div>
-                      ))
-                    ) : (
-                      <div>ALL SHORTS : {displayPieces}</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Total Pieces Box */}
-            <div style={{ border: '2px solid #000', padding: isSmallData ? '6px 12px' : '4px 10px', background: '#ffffff', fontWeight: 900, fontSize: isSmallData ? '17px' : '15px', textAlign: 'center', marginTop: '8px' }}>
-              TOTAL - {displayPieces}
             </div>
           </div>
         </div>
 
         {/* ── BOTTOM SECTION: PLAYERS DETAILS TABLE BELOW ACROSS FULL PAGE WIDTH ── */}
-        <div style={{ border: '1px solid #000', background: '#ffffff' }}>
+        <div style={{ border: '2px solid #000', background: '#ffffff', flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Category Bar Header */}
-          <div style={{ background: '#d92525', color: '#ffffff', fontWeight: 900, fontSize: isSmallData ? '14px' : '13px', textAlign: 'center', letterSpacing: '0.15em', padding: isSmallData ? '5px 0' : '3px 0' }}>
+          <div style={{ background: '#d92525', color: '#ffffff', fontWeight: 900, fontSize: '15px', textAlign: 'center', letterSpacing: '0.15em', padding: '5px 0' }}>
             PLAYERS DETAILS ({players.length} TOTAL)
           </div>
 
           {/* Multi-Column Sub-Tables Container */}
-          <div style={{ padding: '4px', background: '#ffffff' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${numColumns}, 1fr)`, gap: '4px' }}>
+          <div style={{ padding: '6px', background: '#ffffff', flex: 1, display: 'flex' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${numColumns}, 1fr)`, gap: '6px', width: '100%' }}>
               {playerColumns.map((colPlayers, colIdx) => (
                 <table key={colIdx} style={{ width: '100%', borderCollapse: 'collapse', fontSize: tableFontSize, background: '#ffffff', tableLayout: 'fixed' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1.5px solid #000', background: '#cccccc', fontWeight: 900, fontSize: isSmallData ? '11.5px' : '10px' }}>
-                      <th style={{ textAlign: 'left', padding: tablePadding, borderRight: '1px solid #000' }}>NAME</th>
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '44px' : (hasShorts ? '26px' : '30px'), borderRight: '1px solid #000' }}>SIZE</th>
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '38px' : '24px', borderRight: '1px solid #000', color: '#004c80' }}>SLV</th>
+                    <tr style={{ borderBottom: '2px solid #000', background: '#cccccc', fontWeight: 900, fontSize: '12px' }}>
+                      <th style={{ textAlign: 'left', padding: tablePadding, borderRight: '1.5px solid #000' }}>NAME</th>
+                      <th style={{ textAlign: 'center', padding: tablePadding, width: hasShorts ? '48px' : '55px', borderRight: '1.5px solid #000' }}>SIZE</th>
+                      <th style={{ textAlign: 'center', padding: tablePadding, width: '42px', borderRight: '1.5px solid #000', color: '#004c80' }}>SLV</th>
                       {hasShorts && (
-                        <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '38px' : '26px', borderRight: '1px solid #000', color: '#b91c1c' }}>SH</th>
+                        <th style={{ textAlign: 'center', padding: tablePadding, width: '45px', borderRight: '1.5px solid #000', color: '#b91c1c' }}>SH</th>
                       )}
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: isSmallData ? '42px' : '24px' }}>NO.</th>
+                      <th style={{ textAlign: 'center', padding: tablePadding, width: '45px' }}>NO.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {colPlayers.length > 0 ? (
                       colPlayers.map((p, idx) => {
-                        const sleeveCode = (p.sleeve || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
+                        const nameDisplay = formatCellValue(p.name);
+                        const sizeDisplay = formatCellValue(p.size);
+                        const sleeveRaw = formatCellValue(p.sleeve);
+                        const sleeveCode = (sleeveRaw || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
+                        const shortsDisplay = formatCellValue(p.shortsSize);
+                        const numberDisplay = formatCellValue(p.number);
                         return (
-                          <tr key={idx} style={{ borderBottom: '1px solid #ddd', fontWeight: 800, height: isSmallData ? '28px' : 'auto' }}>
-                            <td style={{ padding: tablePadding, borderRight: '1px solid #ddd', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</td>
-                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap' }}>{p.size}</td>
-                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap', color: '#004c80', fontWeight: 900 }}>{sleeveCode}</td>
+                          <tr key={idx} style={{ borderBottom: '1.5px solid #eee', fontWeight: 900, minHeight: '30px' }}>
+                            <td style={{ padding: tablePadding, borderRight: '1.5px solid #ddd', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px', letterSpacing: '0.02em' }}>
+                              {nameDisplay}
+                            </td>
+                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #ddd', whiteSpace: 'nowrap', fontSize: '16px' }}>
+                              {sizeDisplay}
+                            </td>
+                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #ddd', whiteSpace: 'nowrap', color: '#004c80', fontWeight: 900, fontSize: '15px' }}>
+                              {sleeveCode}
+                            </td>
                             {hasShorts && (
-                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1px solid #ddd', whiteSpace: 'nowrap', color: '#b91c1c', fontWeight: 900 }}>{p.shortsSize || '-'}</td>
+                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #ddd', whiteSpace: 'nowrap', color: '#b91c1c', fontWeight: 900, fontSize: '16px' }}>
+                                {shortsDisplay}
+                              </td>
                             )}
-                            <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap' }}>{p.number}</td>
+                            <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap', color: '#d92525', fontSize: '16px', fontWeight: 900 }}>
+                              {numberDisplay}
+                            </td>
                           </tr>
                         );
                       })
                     ) : (
-                      Array.from({ length: 6 }).map((_, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #ddd', height: '18px' }}>
+                      Array.from({ length: 8 }).map((_, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #ddd', height: '24px' }}>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
                           <td style={{ borderRight: '1px solid #ddd' }}></td>
@@ -444,20 +474,11 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         </div>
       </div>
 
-      {/* Embedded Print & Responsive CSS */}
+      {/* ── EMBEDDED PRINT CSS FOR FULL A4 PORTRAIT PAGE FILL ── */}
       <style jsx global>{`
-        @media screen and (max-width: 640px) {
-          .printable-info-sheet {
-            padding: 4px !important;
-            font-size: 11px !important;
-          }
-          .printable-info-sheet > div:nth-child(2) {
-            grid-template-columns: 1fr !important;
-          }
-        }
         @page {
-          size: auto;
-          margin: 5mm;
+          size: A4 portrait;
+          margin: 4mm;
         }
         @media print {
           * {
@@ -467,7 +488,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
           }
           html, body {
             width: 100% !important;
-            height: auto !important;
+            height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
@@ -498,12 +519,17 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
             top: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
+            height: 98vh !important;
+            min-height: 280mm !important;
             margin: 0 !important;
             padding: 4mm !important;
-            background: #d9d9d9 !important;
-            border: 2px solid #000000 !important;
+            background: #ffffff !important;
+            border: 3px solid #000000 !important;
             box-sizing: border-box !important;
             page-break-inside: avoid !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
           }
           .no-print, .navbar, .mobile-tab-bar {
             display: none !important;

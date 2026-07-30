@@ -329,8 +329,8 @@ export const calculateSizeBreakdown = (players: PlayerDetail[]) => {
   let totalPieces = 0;
 
   for (const p of players) {
-    const sz = (p.size || 'Unspecified').toUpperCase().trim();
-    if (!sz) continue;
+    const sz = (p.size || '').toUpperCase().trim();
+    if (!sz || sz === 'XXX' || sz === '-' || sz === 'N/A' || sz === 'NIL' || sz === 'NONE' || sz === 'UNSPECIFIED') continue;
     countsBySize[sz] = (countsBySize[sz] || 0) + 1;
     totalPieces += 1;
   }
@@ -352,7 +352,7 @@ export const calculateShortsBreakdown = (players: PlayerDetail[]) => {
   for (const p of players) {
     if (!p.shortsSize) continue;
     const sz = p.shortsSize.toUpperCase().trim();
-    if (!sz || sz === '-' || sz === 'NONE' || sz === 'NO') continue;
+    if (!sz || sz === 'XXX' || sz === '-' || sz === 'N/A' || sz === 'NIL' || sz === 'NONE' || sz === 'NO') continue;
     countsBySize[sz] = (countsBySize[sz] || 0) + 1;
     totalPieces += 1;
   }

@@ -134,7 +134,13 @@ export default function OrdersPage() {
         return;
       }
 
-      const updated = [...players, ...parsed];
+      const defaultCode = sleeveType === 'half' ? 'H' : sleeveType === 'sleeveless' ? 'SL' : 'F';
+      const parsedWithSleeve = parsed.map((p) => ({
+        ...p,
+        sleeve: p.sleeve || defaultCode,
+      }));
+
+      const updated = [...players, ...parsedWithSleeve];
       setPlayers(updated);
       setPieces(updated.length);
       toast.success(`Imported ${parsed.length} players directly from ${file.name}! Total: ${updated.length}`);
@@ -347,6 +353,21 @@ export default function OrdersPage() {
     setShowModal(true);
   };
 
+  // Handle Sleeve Type Change from Designer Top Section
+  const handleSleeveTypeChange = (newType: 'full' | 'half' | 'sleeveless') => {
+    setSleeveType(newType);
+    const code = newType === 'half' ? 'H' : newType === 'sleeveless' ? 'SL' : 'F';
+    setNewPlayerSleeve(code);
+
+    // Update ALL players in the roster list to match the newly selected sleeve type
+    setPlayers((prev) =>
+      prev.map((p) => ({
+        ...p,
+        sleeve: code,
+      }))
+    );
+  };
+
   // Process Excel Copy-Pasted Data
   const handleParseExcel = () => {
     if (!excelInputText.trim()) {
@@ -359,7 +380,13 @@ export default function OrdersPage() {
       return;
     }
 
-    const updatedPlayers = [...players, ...parsed];
+    const defaultCode = sleeveType === 'half' ? 'H' : sleeveType === 'sleeveless' ? 'SL' : 'F';
+    const parsedWithSleeve = parsed.map((p) => ({
+      ...p,
+      sleeve: p.sleeve || defaultCode,
+    }));
+
+    const updatedPlayers = [...players, ...parsedWithSleeve];
     setPlayers(updatedPlayers);
     setPieces(updatedPlayers.length);
     setExcelInputText('');
@@ -1306,11 +1333,11 @@ export default function OrdersPage() {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>SLEEVE TYPE</label>
-                      <select value={sleeveType} onChange={(e) => setSleeveType(e.target.value as any)} style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
-                        <option value="full" style={{ background: '#161e31', color: '#fff' }}>Full Sleeve</option>
-                        <option value="half" style={{ background: '#161e31', color: '#fff' }}>Half Sleeve</option>
-                        <option value="sleeveless" style={{ background: '#161e31', color: '#fff' }}>Sleeveless</option>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>SLEEVE TYPE (Master Default)</label>
+                      <select value={sleeveType} onChange={(e) => handleSleeveTypeChange(e.target.value as any)} style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
+                        <option value="full" style={{ background: '#161e31', color: '#fff' }}>Full Sleeve (F)</option>
+                        <option value="half" style={{ background: '#161e31', color: '#fff' }}>Half Sleeve (H)</option>
+                        <option value="sleeveless" style={{ background: '#161e31', color: '#fff' }}>Sleeveless (SL)</option>
                       </select>
                     </div>
                   </div>
