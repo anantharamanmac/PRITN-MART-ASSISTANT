@@ -88,16 +88,54 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   };
 
   // Adaptive Multi-Column Sub-Table Splitting for Bottom Players Roster
-  const numColumns = players.length > 40 ? 4 : players.length > 20 ? 3 : players.length > 10 ? 2 : 1;
+  const numColumns = players.length > 42 ? 4 : players.length > 20 ? 3 : players.length > 10 ? 2 : 1;
   const rowsPerCol = Math.max(1, Math.ceil(players.length / numColumns));
 
   const playerColumns = Array.from({ length: numColumns }, (_, colIdx) =>
     players.slice(colIdx * rowsPerCol, (colIdx + 1) * rowsPerCol)
   );
 
-  // Dynamic Font Size & Padding for Table Cells - BIGGER FOR STITCHING WORKERS!
-  const tableFontSize = numColumns >= 4 ? '11px' : numColumns === 3 ? '13px' : '15px';
-  const tablePadding = numColumns >= 3 ? '4px 5px' : '6px 10px';
+  // Dynamic Font Size & Padding for Table Cells - Fits A4 Page Perfectly
+  const tableFontSize = numColumns >= 4 ? '11px' : numColumns === 3 ? '12px' : '13.5px';
+  const tablePadding = rowsPerCol > 16 ? '2px 4px' : rowsPerCol > 10 ? '3px 5px' : '4px 6px';
+
+  // Helper for dynamic player name font sizing & wrapping so NO player name is truncated!
+  const getPlayerNameStyle = (nameStr: string, colsCount: number) => {
+    const len = nameStr.length;
+    let fontSize = '14px';
+    let letterSpacing = '0.01em';
+    let lineHeight = '1.1';
+
+    if (colsCount >= 4) {
+      if (len > 20) { fontSize = '8.5px'; letterSpacing = '-0.04em'; }
+      else if (len > 15) { fontSize = '9.5px'; letterSpacing = '-0.03em'; }
+      else if (len > 10) { fontSize = '11px'; letterSpacing = '-0.01em'; }
+      else { fontSize = '12px'; }
+    } else if (colsCount === 3) {
+      if (len > 22) { fontSize = '9px'; letterSpacing = '-0.04em'; }
+      else if (len > 16) { fontSize = '10.5px'; letterSpacing = '-0.02em'; }
+      else if (len > 11) { fontSize = '12px'; }
+      else { fontSize = '13.5px'; }
+    } else if (colsCount === 2) {
+      if (len > 25) { fontSize = '10.5px'; letterSpacing = '-0.02em'; }
+      else if (len > 18) { fontSize = '12px'; }
+      else { fontSize = '14px'; }
+    } else {
+      if (len > 25) { fontSize = '12.5px'; }
+      else { fontSize = '15px'; }
+    }
+
+    return {
+      fontSize,
+      letterSpacing,
+      lineHeight,
+      textTransform: 'uppercase' as const,
+      fontWeight: 900,
+      wordBreak: 'break-word' as const,
+      overflowWrap: 'anywhere' as const,
+      whiteSpace: 'normal' as const,
+    };
+  };
 
   return (
     <div className="info-sheet-modal-wrapper" style={{ padding: '1rem', color: '#000000' }}>
@@ -404,72 +442,84 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
         </div>
 
         {/* ── BOTTOM SECTION: PLAYERS DETAILS TABLE BELOW ACROSS FULL PAGE WIDTH ── */}
-        <div style={{ border: '2px solid #000', background: '#ffffff', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ border: '2.5px solid #000', background: '#ffffff', flex: 1, display: 'flex', flexDirection: 'column', marginTop: '4px' }}>
           {/* Category Bar Header */}
-          <div style={{ background: '#d92525', color: '#ffffff', fontWeight: 900, fontSize: '15px', textAlign: 'center', letterSpacing: '0.15em', padding: '5px 0' }}>
+          <div style={{ background: '#d92525', color: '#ffffff', fontWeight: 900, fontSize: '15px', textAlign: 'center', letterSpacing: '0.15em', padding: '4px 0', borderBottom: '2px solid #000' }}>
             PLAYERS DETAILS ({players.length} TOTAL)
           </div>
 
-          {/* Multi-Column Sub-Tables Container */}
-          <div style={{ padding: '6px', background: '#ffffff', flex: 1, display: 'flex' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${numColumns}, 1fr)`, gap: '6px', width: '100%' }}>
+          {/* Multi-Column Sub-Tables Container with Column Separator Dividers */}
+          <div style={{ padding: '4px', background: '#ffffff', flex: 1, display: 'flex' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${numColumns}, 1fr)`, gap: '8px', width: '100%' }}>
               {playerColumns.map((colPlayers, colIdx) => (
-                <table key={colIdx} style={{ width: '100%', borderCollapse: 'collapse', fontSize: tableFontSize, background: '#ffffff', tableLayout: 'fixed' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #000', background: '#cccccc', fontWeight: 900, fontSize: '12px' }}>
-                      <th style={{ textAlign: 'left', padding: tablePadding, borderRight: '1.5px solid #000' }}>NAME</th>
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: hasShorts ? '48px' : '55px', borderRight: '1.5px solid #000' }}>SIZE</th>
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: '42px', borderRight: '1.5px solid #000', color: '#004c80' }}>SLV</th>
-                      {hasShorts && (
-                        <th style={{ textAlign: 'center', padding: tablePadding, width: '45px', borderRight: '1.5px solid #000', color: '#b91c1c' }}>SH</th>
-                      )}
-                      <th style={{ textAlign: 'center', padding: tablePadding, width: '45px' }}>NO.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {colPlayers.length > 0 ? (
-                      colPlayers.map((p, idx) => {
-                        const nameDisplay = formatCellValue(p.name);
-                        const sizeDisplay = formatCellValue(p.size);
-                        const sleeveRaw = formatCellValue(p.sleeve);
-                        const sleeveCode = (sleeveRaw || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
-                        const shortsDisplay = formatCellValue(p.shortsSize);
-                        const numberDisplay = formatCellValue(p.number);
-                        return (
-                          <tr key={idx} style={{ borderBottom: '1.5px solid #eee', fontWeight: 900, minHeight: '30px' }}>
-                            <td style={{ padding: tablePadding, borderRight: '1.5px solid #ddd', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px', letterSpacing: '0.02em' }}>
-                              {nameDisplay}
-                            </td>
-                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #ddd', whiteSpace: 'nowrap', fontSize: '16px' }}>
-                              {sizeDisplay}
-                            </td>
-                            <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #ddd', whiteSpace: 'nowrap', color: '#004c80', fontWeight: 900, fontSize: '15px' }}>
-                              {sleeveCode}
-                            </td>
-                            {hasShorts && (
-                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #ddd', whiteSpace: 'nowrap', color: '#b91c1c', fontWeight: 900, fontSize: '16px' }}>
-                                {shortsDisplay}
+                <div
+                  key={colIdx}
+                  style={{
+                    borderRight: colIdx < numColumns - 1 ? '2.5px solid #000000' : 'none',
+                    paddingRight: colIdx < numColumns - 1 ? '6px' : '0',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                >
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: tableFontSize, background: '#ffffff', tableLayout: 'fixed', border: '1.5px solid #000' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #000', background: '#d0d0d0', fontWeight: 900, fontSize: '11.5px' }}>
+                        <th style={{ textAlign: 'left', padding: tablePadding, borderRight: '1.5px solid #000' }}>NAME</th>
+                        <th style={{ textAlign: 'center', padding: tablePadding, width: hasShorts ? '32px' : '36px', borderRight: '1.5px solid #000' }}>SIZE</th>
+                        <th style={{ textAlign: 'center', padding: tablePadding, width: '26px', borderRight: '1.5px solid #000', color: '#004c80' }}>SLV</th>
+                        {hasShorts && (
+                          <th style={{ textAlign: 'center', padding: tablePadding, width: '32px', borderRight: '1.5px solid #000', color: '#b91c1c' }}>SH</th>
+                        )}
+                        <th style={{ textAlign: 'center', padding: tablePadding, width: '30px' }}>NO.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {colPlayers.length > 0 ? (
+                        colPlayers.map((p, idx) => {
+                          const nameDisplay = formatCellValue(p.name);
+                          const sizeDisplay = formatCellValue(p.size);
+                          const sleeveRaw = formatCellValue(p.sleeve);
+                          const sleeveCode = (sleeveRaw || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
+                          const shortsDisplay = formatCellValue(p.shortsSize);
+                          const numberDisplay = formatCellValue(p.number);
+                          const nameStyle = getPlayerNameStyle(nameDisplay, numColumns);
+
+                          return (
+                            <tr key={idx} style={{ borderBottom: '1.5px solid #000000', fontWeight: 900, background: idx % 2 === 1 ? '#f5f7fa' : '#ffffff' }}>
+                              <td style={{ padding: tablePadding, borderRight: '1.5px solid #000', ...nameStyle }}>
+                                {nameDisplay}
                               </td>
-                            )}
-                            <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap', color: '#d92525', fontSize: '16px', fontWeight: 900 }}>
-                              {numberDisplay}
-                            </td>
+                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #000', whiteSpace: 'nowrap', fontSize: rowsPerCol > 14 ? '13px' : '15px' }}>
+                                {sizeDisplay}
+                              </td>
+                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #000', whiteSpace: 'nowrap', color: '#004c80', fontWeight: 900, fontSize: rowsPerCol > 14 ? '12px' : '14px' }}>
+                                {sleeveCode}
+                              </td>
+                              {hasShorts && (
+                                <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #000', whiteSpace: 'nowrap', color: '#b91c1c', fontWeight: 900, fontSize: rowsPerCol > 14 ? '13px' : '15px' }}>
+                                  {shortsDisplay}
+                                </td>
+                              )}
+                              <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap', color: '#d92525', fontSize: rowsPerCol > 14 ? '13px' : '15px', fontWeight: 900 }}>
+                                {numberDisplay}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        Array.from({ length: 6 }).map((_, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #000', height: '22px' }}>
+                            <td style={{ borderRight: '1px solid #000' }}></td>
+                            <td style={{ borderRight: '1px solid #000' }}></td>
+                            <td style={{ borderRight: '1px solid #000' }}></td>
+                            {hasShorts && <td style={{ borderRight: '1px solid #000' }}></td>}
+                            <td></td>
                           </tr>
-                        );
-                      })
-                    ) : (
-                      Array.from({ length: 8 }).map((_, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #ddd', height: '24px' }}>
-                          <td style={{ borderRight: '1px solid #ddd' }}></td>
-                          <td style={{ borderRight: '1px solid #ddd' }}></td>
-                          <td style={{ borderRight: '1px solid #ddd' }}></td>
-                          {hasShorts && <td style={{ borderRight: '1px solid #ddd' }}></td>}
-                          <td></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               ))}
             </div>
           </div>
