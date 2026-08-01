@@ -40,6 +40,20 @@ export const DEFAULT_PRICING_RATES: PricingRates = {
 
 const PRICING_DOC_PATH = 'pricing_settings/rates';
 
+const LEGACY_OBSOLETE_KEYS = [
+  'DRYFIT',
+  'SUPER POLY',
+  'MICRO PP',
+  'SALEENA',
+  'INTERLOCK',
+  'DOT KNIT',
+  'PURE COTTON',
+  'POLY COTTON',
+  'NJS',
+  'MARS',
+  '100% PURE COTTON'
+];
+
 /**
  * Fetch Pricing Rates from Firestore or return Defaults
  */
@@ -50,8 +64,22 @@ export async function getPricingRates(): Promise<PricingRates> {
 
     if (snap.exists()) {
       const data = snap.data() as Partial<PricingRates>;
+      const rawMaterials = data.materials || {};
+      
+      const cleanedMaterials: Record<string, number> = { ...DEFAULT_PRICING_RATES.materials };
+
+      // Overwrite rates from Firestore for valid keys and purge legacy keys
+      for (const [k, v] of Object.entries(rawMaterials)) {
+        const upperK = k.trim().toUpperCase();
+        // If the key is not in DEFAULT_PRICING_RATES.materials AND matches a legacy name, skip it
+        const isLegacyKey = LEGACY_OBSOLETE_KEYS.includes(upperK) && !DEFAULT_PRICING_RATES.materials[k];
+        if (!isLegacyKey && typeof v === 'number') {
+          cleanedMaterials[k] = v;
+        }
+      }
+
       return {
-        materials: { ...DEFAULT_PRICING_RATES.materials, ...(data.materials || {}) },
+        materials: cleanedMaterials,
         sleeves: { ...DEFAULT_PRICING_RATES.sleeves, ...(data.sleeves || {}) },
         necks: { ...DEFAULT_PRICING_RATES.necks, ...(data.necks || {}) },
         shortsRate: typeof data.shortsRate === 'number' ? data.shortsRate : DEFAULT_PRICING_RATES.shortsRate,
@@ -75,7 +103,7 @@ export async function savePricingRates(rates: PricingRates): Promise<void> {
       ...rates,
       updatedAt: new Date().toISOString(),
     };
-    await setDoc(docRef, updatedRates, { merge: true });
+    await setDoc(docRef, updatedRates);
   } catch (err) {
     console.error('Error saving pricing rates to Firestore:', err);
     throw err;

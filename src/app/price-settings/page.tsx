@@ -226,7 +226,7 @@ export default function PriceSettingsPage() {
                       onChange={(e) => handleMaterialChange(mat, Number(e.target.value))}
                       style={{ width: '85px', padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: '#3b82f6', fontWeight: 800, fontSize: '0.85rem', textAlign: 'right' }}
                     />
-                    {mat !== 'Saleena' && mat !== 'Custom / Other' && (
+                    {mat !== 'Custom / Other' && (
                       <button
                         type="button"
                         onClick={() => handleRemoveMaterial(mat)}
