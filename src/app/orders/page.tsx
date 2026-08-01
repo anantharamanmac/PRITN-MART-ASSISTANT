@@ -1147,30 +1147,52 @@ export default function OrdersPage() {
                       </button>
                     </div>
 
-                    {/* View / Print Cutting & Fusing Info Slip Button */}
-                    <button
-                      type="button"
-                      onClick={() => setInfoSheetOrder(ord)}
-                      style={{
-                        width: '100%',
-                        padding: '0.45rem',
-                        borderRadius: '8px',
-                        border: '1px solid #d92525',
-                        background: 'rgba(217, 37, 37, 0.15)',
-                        color: '#ef4444',
-                        fontSize: '0.78rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        transition: 'all 0.15s'
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
-                      <span>Print Cutting & Fusing Info Slip</span>
-                    </button>
+                    {/* View / Print Cutting & Fusing Info Slip & Generate Bill Buttons */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.1rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/billing?info=${ord.infoNumber}`)}
+                        style={{
+                          padding: '0.42rem',
+                          borderRadius: '8px',
+                          border: '1px solid #10b981',
+                          background: 'rgba(16, 185, 129, 0.12)',
+                          color: '#10b981',
+                          fontSize: '0.76rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                        Bill / Invoice
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setInfoSheetOrder(ord)}
+                        style={{
+                          padding: '0.42rem',
+                          borderRadius: '8px',
+                          border: '1px solid #d92525',
+                          background: 'rgba(217, 37, 37, 0.15)',
+                          color: '#ef4444',
+                          fontSize: '0.76rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                        Info Slip
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

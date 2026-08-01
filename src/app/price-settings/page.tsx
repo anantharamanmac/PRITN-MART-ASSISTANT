@@ -201,6 +201,24 @@ export default function PriceSettingsPage() {
           </button>
         </div>
 
+        {/* Sub-Nav Toggle for Mobile & Quick Switch */}
+        <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.25rem', background: 'var(--bg-surface)', padding: '0.25rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <button
+            type="button"
+            onClick={() => router.push('/billing')}
+            style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
+          >
+            📄 Receptionist Billing Hub
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/price-settings')}
+            style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: 'none', background: 'var(--sapphire-primary)', color: '#fff', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
+          >
+            ⚙ Material Price Rates
+          </button>
+        </div>
+
         {/* ── PRICING GRID SECTIONS ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
 

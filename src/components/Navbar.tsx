@@ -54,6 +54,13 @@ const PriceIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
+const BillingIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+  </svg>
+);
+
 const SignOutIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -159,14 +166,35 @@ export default function Navbar({ user }: { user: AppUser }) {
     ? user.displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'PM';
 
-  const navItems = [
+  const desktopNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
     { href: '/orders', label: 'Orders', icon: OrdersIcon },
+    { href: '/billing', label: 'Billing', icon: BillingIcon },
     { href: '/price-settings', label: 'Prices', icon: PriceIcon },
     { href: '/history', label: 'History', icon: HistoryIcon },
     {
       href: '/developer',
       label: 'Dev Logs',
+      icon: DevIcon,
+      badge: user.role === 'admin' && pendingCount > 0 ? pendingCount : 0,
+    },
+    ...(user.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: AdminIcon }] : []),
+  ];
+
+  const mobileNavItems = [
+    { href: '/dashboard', label: 'Home', icon: DashboardIcon },
+    { href: '/orders', label: 'Orders', icon: OrdersIcon },
+    {
+      href: '/billing',
+      secondaryHref: '/price-settings',
+      label: 'Bill & Price',
+      icon: BillingIcon,
+      isCombined: true
+    },
+    { href: '/history', label: 'History', icon: HistoryIcon },
+    {
+      href: '/developer',
+      label: 'Logs',
       icon: DevIcon,
       badge: user.role === 'admin' && pendingCount > 0 ? pendingCount : 0,
     },
@@ -185,7 +213,7 @@ export default function Navbar({ user }: { user: AppUser }) {
 
         {/* Desktop Nav Links */}
         <div className="nav-links">
-          {navItems.map((item) => (
+          {desktopNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -257,13 +285,20 @@ export default function Navbar({ user }: { user: AppUser }) {
 
       {/* ── MOBILE BOTTOM TAB BAR ── */}
       <div className="mobile-tab-bar">
-        {navItems.map((item) => {
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const isCombinedActive = item.isCombined && (pathname.startsWith('/billing') || pathname.startsWith('/price-settings'));
+          const isActive = isCombinedActive || pathname === item.href || (!item.isCombined && item.href !== '/dashboard' && pathname.startsWith(item.href));
+          
+          // Target URL when tapping combined tab on mobile
+          const targetHref = item.isCombined
+            ? (pathname.startsWith('/billing') ? '/price-settings' : '/billing')
+            : item.href;
+
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={item.label}
+              href={targetHref}
               className={`mobile-tab-item ${isActive ? 'active' : ''}`}
             >
               <div className="mobile-tab-icon-wrap" style={{ position: 'relative' }}>
