@@ -11,14 +11,16 @@ export interface PricingRates {
 
 export const DEFAULT_PRICING_RATES: PricingRates = {
   materials: {
-    'Saleena': 250,
-    'Dot Knit': 270,
-    'Super Poly': 240,
-    'Micro PP': 260,
-    'Interlock': 280,
-    'DryFit': 290,
-    'Poly Cotton': 310,
-    'Pure Cotton': 350,
+    'SALEENA': 250,
+    'SUPERPOLY': 240,
+    'LYCRA 2 WAY': 280,
+    'LYCRA 4 WAY': 320,
+    'PP': 260,
+    'DOTKNIT 140': 270,
+    'DOTKNIT 180': 290,
+    'HONEYCOMB': 300,
+    'BOXNET': 310,
+    'JAGUARD': 320,
     'Custom / Other': 250,
   },
   sleeves: {

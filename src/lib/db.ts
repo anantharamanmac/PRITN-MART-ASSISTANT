@@ -986,6 +986,30 @@ export const getNextInfoNumber = async (): Promise<number> => {
   }
 };
 
+/**
+ * Recursively strips undefined values from objects/arrays so Firebase Firestore does not reject writes.
+ */
+export function sanitizeForFirestore<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof obj === 'object' && !(obj instanceof Date)) {
+    // Preserve FieldValue / ServerTimestamp sentinel objects if present
+    const isFieldValue = (obj as any)?._methodName || (obj as any)?.constructor?.name === 'FieldValueImpl';
+    if (isFieldValue) return obj;
+
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}
+
 // Create a new order
 export const createOrder = async (orderData: Omit<OrderRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
   const colRef = collection(db, 'orders');
@@ -998,17 +1022,19 @@ export const createOrder = async (orderData: Omit<OrderRecord, 'id' | 'createdAt
     updatedAt: serverTimestamp() as unknown as Timestamp,
   };
 
-  await setDoc(newDocRef, record);
+  const sanitized = sanitizeForFirestore(record);
+  await setDoc(newDocRef, sanitized);
   return newDocRef.id;
 };
 
 // Update Full Order Details
 export const updateOrder = async (orderId: string, orderData: Partial<OrderRecord>) => {
   const docRef = doc(db, 'orders', orderId);
-  await updateDoc(docRef, {
+  const sanitized = sanitizeForFirestore({
     ...orderData,
     updatedAt: serverTimestamp(),
   });
+  await updateDoc(docRef, sanitized);
 };
 
 // Subscribe to real-time orders list

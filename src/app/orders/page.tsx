@@ -39,14 +39,15 @@ const NECK_TYPES = [
 
 const CLOTH_TYPES = [
   'SALEENA',
-  'NJS',
+  'SUPERPOLY',
+  'LYCRA 2 WAY',
+  'LYCRA 4 WAY',
   'PP',
   'DOTKNIT 140',
   'DOTKNIT 180',
-  'JAGUARD',
   'HONEYCOMB',
-  'MARS',
-  '100% Pure Cotton',
+  'BOXNET',
+  'JAGUARD',
   'Custom / Other'
 ];
 
@@ -588,6 +589,18 @@ export default function OrdersPage() {
 
     setSubmitting(true);
     try {
+      const cleanedPlayers = (players || []).map((p) => {
+        const item: PlayerItem = {
+          name: p.name || '',
+          size: p.size || '',
+          number: p.number || '',
+          isGK: Boolean(p.isGK),
+        };
+        if (p.shortsSize) item.shortsSize = p.shortsSize;
+        if (p.sleeve) item.sleeve = p.sleeve;
+        return item;
+      });
+
       const payload = {
         infoNumber: Number(infoNumber) || 2412,
         orderNumber: orderNumber || `ORD-${infoNumber}`,
@@ -610,7 +623,7 @@ export default function OrdersPage() {
         discountAmount: Number(discountAmount) || 0,
         advanceAmount: Number(advanceAmount) || 0,
         balanceAmount: Math.max(0, (Number(totalAmount) || 0) - (Number(advanceAmount) || 0)),
-        players,
+        players: cleanedPlayers,
         notes: notes.trim(),
       };
 

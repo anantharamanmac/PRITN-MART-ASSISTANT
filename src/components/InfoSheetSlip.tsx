@@ -50,21 +50,21 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
     toast.loading(`Generating PDF ${fileName}...`, { id: 'pdf-download' });
 
     try {
-      // Dynamic import html2pdf.js for client-side execution
+      // Dynamic import standalone html2pdf bundle to prevent Next.js ChunkLoadError
       // @ts-ignore
-      const html2pdfModule = await import('html2pdf.js');
-      const html2pdf = html2pdfModule.default || html2pdfModule;
+      const html2pdfModule = await import('html2pdf.js/dist/html2pdf.bundle.min.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule || (window as any).html2pdf;
 
       const element = printRef.current;
       const opt = {
         margin: 2,
         filename: fileName,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
         jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      await html2pdf().from(element).set(opt).save();
       toast.dismiss('pdf-download');
       toast.success(`Downloaded ${fileName}!`);
     } catch (err) {
@@ -278,7 +278,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                 <div style={{ height: '210px', background: '#fff', border: '2px solid #000', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
                   {order.clothImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={order.clothImage} alt="Combined Design Mockup" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={order.clothImage} crossOrigin="anonymous" alt="Combined Design Mockup" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#777', fontSize: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px', opacity: 0.5 }}>
