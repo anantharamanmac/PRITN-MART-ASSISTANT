@@ -6,6 +6,7 @@ export interface PlayerDetail {
   number: string;
   shortsSize?: string;
   sleeve?: string;
+  isGK?: boolean;
 }
 
 /**
@@ -97,7 +98,8 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
           if (/^(name|player|size|no|number)$/i.test(name) && /^(size|no|number)$/i.test(size)) continue;
           if (!name && !size && !number) continue;
 
-          players.push({ name, size, number });
+          const isGK = /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(name);
+          players.push({ name, size, number, isGK: isGK ? true : undefined });
         }
 
         resolve(players);
@@ -149,10 +151,13 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
     if (!cName || isGibberish(cName)) return;
     if (/^(name|player|sl\s*no|sr\s*no|size|no|number|customer|order|info)$/i.test(cName)) return;
 
+    const isGK = /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(cName);
+
     players.push({
       name: cName,
       size: cSize,
       number: cNum,
+      isGK: isGK ? true : undefined,
     });
   };
 

@@ -476,7 +476,10 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                     <tbody>
                       {colPlayers.length > 0 ? (
                         colPlayers.map((p, idx) => {
-                          const nameDisplay = formatCellValue(p.name);
+                          const nameRaw = formatCellValue(p.name);
+                          const isGK = Boolean(p.isGK || /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(p.name));
+                          const hasGKInName = /\b(GK|G\.K)\b/i.test(nameRaw);
+                          const nameDisplay = isGK && !hasGKInName && nameRaw ? `${nameRaw} (GK)` : nameRaw;
                           const sizeDisplay = formatCellValue(p.size);
                           const sleeveRaw = formatCellValue(p.sleeve);
                           const sleeveCode = (sleeveRaw || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
@@ -485,22 +488,74 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                           const nameStyle = getPlayerNameStyle(nameDisplay, numColumns);
 
                           return (
-                            <tr key={idx} style={{ borderBottom: '1.5px solid #000000', fontWeight: 900, background: idx % 2 === 1 ? '#f5f7fa' : '#ffffff' }}>
-                              <td style={{ padding: tablePadding, borderRight: '1.5px solid #000', ...nameStyle }}>
+                            <tr
+                              key={idx}
+                              style={{
+                                borderBottom: '1.5px solid #000000',
+                                fontWeight: 900,
+                                background: isGK ? '#fee2e2' : idx % 2 === 1 ? '#f5f7fa' : '#ffffff'
+                              }}
+                            >
+                              <td
+                                style={{
+                                  padding: tablePadding,
+                                  borderRight: '1.5px solid #000',
+                                  ...nameStyle,
+                                  color: isGK ? '#d92525' : '#000000'
+                                }}
+                              >
                                 {nameDisplay}
                               </td>
-                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #000', whiteSpace: 'nowrap', fontSize: rowsPerCol > 14 ? '13px' : '15px' }}>
+                              <td
+                                style={{
+                                  padding: tablePadding,
+                                  textAlign: 'center',
+                                  borderRight: '1.5px solid #000',
+                                  whiteSpace: 'nowrap',
+                                  fontSize: rowsPerCol > 14 ? '13px' : '15px',
+                                  color: isGK ? '#d92525' : '#000000'
+                                }}
+                              >
                                 {sizeDisplay}
                               </td>
-                              <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #000', whiteSpace: 'nowrap', color: '#004c80', fontWeight: 900, fontSize: rowsPerCol > 14 ? '12px' : '14px' }}>
+                              <td
+                                style={{
+                                  padding: tablePadding,
+                                  textAlign: 'center',
+                                  borderRight: '1.5px solid #000',
+                                  whiteSpace: 'nowrap',
+                                  color: isGK ? '#d92525' : '#004c80',
+                                  fontWeight: 900,
+                                  fontSize: rowsPerCol > 14 ? '12px' : '14px'
+                                }}
+                              >
                                 {sleeveCode}
                               </td>
                               {hasShorts && (
-                                <td style={{ padding: tablePadding, textAlign: 'center', borderRight: '1.5px solid #000', whiteSpace: 'nowrap', color: '#b91c1c', fontWeight: 900, fontSize: rowsPerCol > 14 ? '13px' : '15px' }}>
+                                <td
+                                  style={{
+                                    padding: tablePadding,
+                                    textAlign: 'center',
+                                    borderRight: '1.5px solid #000',
+                                    whiteSpace: 'nowrap',
+                                    color: isGK ? '#d92525' : '#b91c1c',
+                                    fontWeight: 900,
+                                    fontSize: rowsPerCol > 14 ? '13px' : '15px'
+                                  }}
+                                >
                                   {shortsDisplay}
                                 </td>
                               )}
-                              <td style={{ padding: tablePadding, textAlign: 'center', whiteSpace: 'nowrap', color: '#d92525', fontSize: rowsPerCol > 14 ? '13px' : '15px', fontWeight: 900 }}>
+                              <td
+                                style={{
+                                  padding: tablePadding,
+                                  textAlign: 'center',
+                                  whiteSpace: 'nowrap',
+                                  color: '#d92525',
+                                  fontSize: rowsPerCol > 14 ? '13px' : '15px',
+                                  fontWeight: 900
+                                }}
+                              >
                                 {numberDisplay}
                               </td>
                             </tr>

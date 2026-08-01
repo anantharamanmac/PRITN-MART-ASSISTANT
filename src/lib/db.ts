@@ -928,6 +928,7 @@ export interface PlayerItem {
   number: string;
   shortsSize?: string;
   sleeve?: string; // 'F' for Full, 'H' for Half, 'SL' for Sleeveless
+  isGK?: boolean; // Goal Keeper marker flag
 }
 
 export interface OrderRecord {
@@ -948,6 +949,11 @@ export interface OrderRecord {
   printArea?: 'front_only' | 'front_back' | 'full';
   sleeveType?: 'sleeveless' | 'half' | 'full';
   hasShorts?: boolean;
+  ratePerPiece?: number;
+  totalAmount?: number;
+  discountAmount?: number;
+  advanceAmount?: number;
+  balanceAmount?: number;
   players?: PlayerItem[];
   status: OrderStatus;
   notes?: string;

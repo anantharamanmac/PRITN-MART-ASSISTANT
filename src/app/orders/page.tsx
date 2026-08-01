@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import {
@@ -19,6 +20,7 @@ import {
   formatLocalDate
 } from '@/lib/db';
 import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown } from '@/lib/excelParser';
+import { getPricingRates, calculateOrderPrice, PricingRates, DEFAULT_PRICING_RATES } from '@/lib/pricing';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import InfoSheetSlip from '@/components/InfoSheetSlip';
@@ -98,6 +100,14 @@ export default function OrdersPage() {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Pricing & Amount State
+  const [pricingRates, setPricingRates] = useState<PricingRates>(DEFAULT_PRICING_RATES);
+  const [ratePerPiece, setRatePerPiece] = useState<number | string>(250);
+  const [totalAmount, setTotalAmount] = useState<number | string>(2500);
+  const [discountAmount, setDiscountAmount] = useState<number | string>(0);
+  const [advanceAmount, setAdvanceAmount] = useState<number | string>(0);
+  const [isManualPriceOverride, setIsManualPriceOverride] = useState(false);
+
   // Player Roster State
   const [players, setPlayers] = useState<PlayerItem[]>([]);
   const [excelInputText, setExcelInputText] = useState('');
@@ -107,6 +117,7 @@ export default function OrdersPage() {
   const [newPlayerShortsSize, setNewPlayerShortsSize] = useState('32');
   const [newPlayerSleeve, setNewPlayerSleeve] = useState('F');
   const [newPlayerNumber, setNewPlayerNumber] = useState('');
+  const [isNewPlayerGK, setIsNewPlayerGK] = useState(false);
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
@@ -271,6 +282,55 @@ export default function OrdersPage() {
     return () => window.removeEventListener('paste', handlePaste);
   }, [showModal]);
 
+  // Load Pricing Rates on Mount
+  useEffect(() => {
+    async function loadRates() {
+      const r = await getPricingRates();
+      setPricingRates(r);
+    }
+    loadRates();
+  }, []);
+
+  // Auto-Calculate Order Price unless manually overridden
+  useEffect(() => {
+    if (isManualPriceOverride) return;
+
+    const finalCloth = clothType === 'Custom / Other' ? (customClothType || 'Custom / Other') : clothType;
+    const finalNeck = neckType === 'Custom / Other' ? (customNeckType || 'Custom / Other') : neckType;
+    const numPieces = Number(pieces) || 1;
+    const numDiscount = Number(discountAmount) || 0;
+
+    const calc = calculateOrderPrice({
+      clothType: finalCloth,
+      sleeveType,
+      neckType: finalNeck,
+      hasShorts,
+      pieces: numPieces,
+      rates: pricingRates,
+    });
+
+    setRatePerPiece(calc.unitRate);
+    setTotalAmount(Math.max(0, calc.unitRate * numPieces - numDiscount));
+  }, [clothType, customClothType, sleeveType, neckType, customNeckType, hasShorts, pieces, discountAmount, pricingRates, isManualPriceOverride]);
+
+  // Price handler helpers
+  const handleRatePerPieceChange = (val: string) => {
+    setIsManualPriceOverride(true);
+    setRatePerPiece(val);
+    const numRate = Number(val) || 0;
+    const numPieces = Number(pieces) || 1;
+    const numDiscount = Number(discountAmount) || 0;
+    setTotalAmount(Math.max(0, numRate * numPieces - numDiscount));
+  };
+
+  const handleDiscountChange = (val: string) => {
+    setDiscountAmount(val);
+    const numDiscount = Number(val) || 0;
+    const numRate = Number(ratePerPiece) || 0;
+    const numPieces = Number(pieces) || 1;
+    setTotalAmount(Math.max(0, numRate * numPieces - numDiscount));
+  };
+
   // Set default delivery date to 3 days from today
   useEffect(() => {
     const defaultDate = new Date();
@@ -304,6 +364,13 @@ export default function OrdersPage() {
     setPlayers([]);
     setExcelInputText('');
     setShowExcelBox(false);
+
+    // Reset pricing state
+    setIsManualPriceOverride(false);
+    setRatePerPiece(250);
+    setTotalAmount(2500);
+    setDiscountAmount(0);
+    setAdvanceAmount(0);
 
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 3);
@@ -350,6 +417,18 @@ export default function OrdersPage() {
     setPlayers(ord.players ? [...ord.players] : []);
     setExcelInputText('');
     setShowExcelBox(false);
+
+    // Pre-fill pricing state
+    if (typeof ord.ratePerPiece === 'number' && ord.ratePerPiece > 0) {
+      setIsManualPriceOverride(true);
+      setRatePerPiece(ord.ratePerPiece);
+    } else {
+      setIsManualPriceOverride(false);
+    }
+    setTotalAmount(ord.totalAmount ?? 0);
+    setDiscountAmount(ord.discountAmount ?? 0);
+    setAdvanceAmount(ord.advanceAmount ?? 0);
+
     setShowModal(true);
   };
 
@@ -408,12 +487,14 @@ export default function OrdersPage() {
         number: newPlayerNumber.trim(),
         shortsSize: hasShorts ? newPlayerShortsSize.trim() : undefined,
         sleeve: newPlayerSleeve.trim() || undefined,
+        isGK: isNewPlayerGK,
       },
     ];
     setPlayers(updated);
     setPieces(updated.length);
     setNewPlayerName('');
     setNewPlayerNumber('');
+    setIsNewPlayerGK(false);
   };
 
   // Remove Player from Table
@@ -424,7 +505,7 @@ export default function OrdersPage() {
   };
 
   // Inline Edit Player Field
-  const handleUpdatePlayerField = (index: number, field: keyof PlayerItem, value: string) => {
+  const handleUpdatePlayerField = (index: number, field: keyof PlayerItem, value: any) => {
     setPlayers((prev) => {
       const updated = [...prev];
       updated[index] = {
@@ -524,6 +605,11 @@ export default function OrdersPage() {
         printArea,
         sleeveType,
         hasShorts,
+        ratePerPiece: Number(ratePerPiece) || 0,
+        totalAmount: Number(totalAmount) || 0,
+        discountAmount: Number(discountAmount) || 0,
+        advanceAmount: Number(advanceAmount) || 0,
+        balanceAmount: Math.max(0, (Number(totalAmount) || 0) - (Number(advanceAmount) || 0)),
         players,
         notes: notes.trim(),
       };
@@ -939,6 +1025,22 @@ export default function OrdersPage() {
                           <span style={{ color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'underline', fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ord.neckType}</span>
                         </div>
 
+                        {ord.totalAmount != null && ord.totalAmount > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, marginTop: '0.05rem' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>Amount:</span>
+                            <span style={{ color: '#10b981', fontWeight: 900, fontSize: '0.75rem' }}>₹{ord.totalAmount.toLocaleString()}</span>
+                            {ord.balanceAmount != null && ord.balanceAmount > 0 ? (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ef4444', background: 'rgba(239, 68, 68, 0.12)', padding: '0.05rem 0.3rem', borderRadius: '4px' }}>
+                                (Bal: ₹{ord.balanceAmount.toLocaleString()})
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '0.05rem 0.3rem', borderRadius: '4px' }}>
+                                ✓ Paid
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {ordBreakdown.summaryString && (
                           <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.05rem', wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
                             Sizes: {ordBreakdown.summaryString}
@@ -1236,6 +1338,107 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
+                  {/* ── RECEPTIONIST ORDER PRICING & AMOUNT CALCULATOR ── */}
+                  <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                        Order Pricing & Amount Calculation
+                      </h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {isManualPriceOverride && (
+                          <button
+                            type="button"
+                            onClick={() => setIsManualPriceOverride(false)}
+                            style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            ↺ Reset to Auto-Rate
+                          </button>
+                        )}
+                        <Link
+                          href="/price-settings"
+                          target="_blank"
+                          style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none' }}
+                        >
+                          ⚙ Pricing Settings
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Rate Breakdown Chips */}
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                      <span style={{ background: 'var(--bg-surface)', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                        Fabric ({clothType}): ₹{pricingRates.materials[clothType === 'Custom / Other' ? (customClothType || 'Custom / Other') : clothType] ?? pricingRates.materials['Custom / Other'] ?? 250}/pc
+                      </span>
+                      <span style={{ background: 'var(--bg-surface)', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                        Sleeve ({sleeveType}): {(pricingRates.sleeves[sleeveType] ?? 0) >= 0 ? `+₹${pricingRates.sleeves[sleeveType] ?? 0}` : `-₹${Math.abs(pricingRates.sleeves[sleeveType] ?? 0)}`}/pc
+                      </span>
+                      <span style={{ background: 'var(--bg-surface)', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                        Neck ({neckType}): +₹{pricingRates.necks[neckType === 'Custom / Other' ? (customNeckType || 'Custom / Other') : neckType] ?? 0}/pc
+                      </span>
+                      {hasShorts && (
+                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid #10b981' }}>
+                          Shorts: +₹{pricingRates.shortsRate || 120}/pc
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 5-Field Financial Inputs Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '0.6rem' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Rate / Pc (₹)</label>
+                        <input
+                          type="number"
+                          value={ratePerPiece}
+                          onChange={(e) => handleRatePerPieceChange(e.target.value)}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: isManualPriceOverride ? '1px solid #f59e0b' : '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontSize: '0.85rem', fontWeight: 800 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Discount (₹)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={discountAmount}
+                          onChange={(e) => handleDiscountChange(e.target.value)}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#ef4444', fontSize: '0.85rem', fontWeight: 800 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 800, color: '#10b981', marginBottom: '0.25rem' }}>Total Amount (₹)</label>
+                        <input
+                          type="number"
+                          value={totalAmount}
+                          onChange={(e) => {
+                            setIsManualPriceOverride(true);
+                            setTotalAmount(e.target.value);
+                          }}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid #10b981', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: '0.88rem', fontWeight: 900 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 800, color: '#3b82f6', marginBottom: '0.25rem' }}>Advance Paid (₹)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={advanceAmount}
+                          onChange={(e) => setAdvanceAmount(e.target.value)}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid #3b82f6', background: 'var(--bg-main)', color: '#3b82f6', fontSize: '0.85rem', fontWeight: 800 }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 800, color: Number(totalAmount || 0) - Number(advanceAmount || 0) > 0 ? '#ef4444' : '#10b981', marginBottom: '0.25rem' }}>Balance Due (₹)</label>
+                        <div style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: Number(totalAmount || 0) - Number(advanceAmount || 0) > 0 ? '#ef4444' : '#10b981', fontSize: '0.88rem', fontWeight: 900, textAlign: 'center' }}>
+                          ₹{Math.max(0, (Number(totalAmount) || 0) - (Number(advanceAmount) || 0)).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Receptionist Notes */}
                   <div>
                     <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Receptionist Notes / Special Instructions</label>
@@ -1460,8 +1663,26 @@ export default function OrdersPage() {
                     )}
 
                     {/* Add Manual Player Inputs */}
-                    <div style={{ display: 'grid', gridTemplateColumns: hasShorts ? '2fr 1fr 1fr 1fr 1fr auto' : '2fr 1fr 1fr 1fr auto', gap: '0.4rem', marginBottom: '0.65rem' }}>
-                      <input type="text" placeholder="Player Name (e.g. JAGAN)" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: hasShorts ? '2fr auto 1fr 1fr 1fr 1fr auto' : '2fr auto 1fr 1fr 1fr auto', gap: '0.4rem', marginBottom: '0.65rem' }}>
+                      <input type="text" placeholder="Player Name (e.g. JAGAN)" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: isNewPlayerGK ? '1px solid #ef4444' : '1px solid var(--border)', background: isNewPlayerGK ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-main)', color: isNewPlayerGK ? '#ef4444' : 'var(--text-primary)', fontSize: '0.8rem', fontWeight: isNewPlayerGK ? 800 : 400 }} />
+                      <button
+                        type="button"
+                        onClick={() => setIsNewPlayerGK(!isNewPlayerGK)}
+                        title="Mark player as Goal Keeper (rendered in Red)"
+                        style={{
+                          padding: '0.45rem 0.6rem',
+                          borderRadius: '6px',
+                          border: isNewPlayerGK ? '1px solid #ef4444' : '1px solid var(--border)',
+                          background: isNewPlayerGK ? '#ef4444' : 'var(--bg-main)',
+                          color: isNewPlayerGK ? '#ffffff' : 'var(--text-secondary)',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {isNewPlayerGK ? '✓ GK' : '+ GK'}
+                      </button>
                       <input type="text" placeholder="Shirt (42)" value={newPlayerSize} onChange={(e) => setNewPlayerSize(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
                       <select value={newPlayerSleeve} onChange={(e) => setNewPlayerSleeve(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#3b82f6', fontWeight: 700, fontSize: '0.8rem' }}>
                         <option value="F" style={{ background: '#161e31', color: '#fff' }}>F (Full)</option>
@@ -1483,6 +1704,7 @@ export default function OrdersPage() {
                             <tr>
                               <th style={{ padding: '6px 6px', width: '24px' }}>#</th>
                               <th style={{ padding: '6px 6px' }}>Player Name</th>
+                              <th style={{ padding: '6px 4px', width: '42px', color: '#ef4444', textAlign: 'center' }}>GK</th>
                               <th style={{ padding: '6px 6px', width: '75px' }}>Shirt Size</th>
                               <th style={{ padding: '6px 6px', width: '65px', color: '#3b82f6' }}>Sleeve</th>
                               {hasShorts && <th style={{ padding: '6px 6px', width: '75px', color: '#10b981' }}>Shorts</th>}
@@ -1491,118 +1713,140 @@ export default function OrdersPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {players.map((p, idx) => (
-                              <tr key={idx} style={{ borderTop: '1px solid var(--border)' }}>
-                                <td style={{ padding: '4px 4px', opacity: 0.7, fontSize: '0.75rem' }}>{idx + 1}</td>
-                                <td style={{ padding: '3px 3px' }}>
-                                  <input
-                                    type="text"
-                                    value={p.name}
-                                    onChange={(e) => handleUpdatePlayerField(idx, 'name', e.target.value)}
-                                    placeholder="Name..."
-                                    style={{
-                                      width: '100%',
-                                      padding: '0.25rem 0.35rem',
-                                      borderRadius: '4px',
-                                      border: '1px solid var(--border)',
-                                      background: 'var(--bg-main)',
-                                      color: 'var(--text-primary)',
-                                      fontSize: '0.78rem',
-                                      fontWeight: 700,
-                                      outline: 'none'
-                                    }}
-                                  />
-                                </td>
-                                <td style={{ padding: '3px 3px' }}>
-                                  <input
-                                    type="text"
-                                    value={p.size}
-                                    onChange={(e) => handleUpdatePlayerField(idx, 'size', e.target.value)}
-                                    placeholder="Shirt..."
-                                    style={{
-                                      width: '100%',
-                                      padding: '0.25rem 0.35rem',
-                                      borderRadius: '4px',
-                                      border: '1px solid var(--border)',
-                                      background: 'var(--bg-main)',
-                                      color: 'var(--text-primary)',
-                                      fontSize: '0.78rem',
-                                      outline: 'none'
-                                    }}
-                                  />
-                                </td>
-                                <td style={{ padding: '3px 3px' }}>
-                                  <select
-                                    value={p.sleeve || 'F'}
-                                    onChange={(e) => handleUpdatePlayerField(idx, 'sleeve', e.target.value)}
-                                    style={{
-                                      width: '100%',
-                                      padding: '0.25rem 0.2rem',
-                                      borderRadius: '4px',
-                                      border: '1px solid #3b82f6',
-                                      background: 'var(--bg-main)',
-                                      color: '#3b82f6',
-                                      fontSize: '0.78rem',
-                                      fontWeight: 800,
-                                      outline: 'none'
-                                    }}
-                                  >
-                                    <option value="F" style={{ background: '#161e31', color: '#fff' }}>F (Full)</option>
-                                    <option value="H" style={{ background: '#161e31', color: '#fff' }}>H (Half)</option>
-                                    <option value="SL" style={{ background: '#161e31', color: '#fff' }}>SL (Sleeveless)</option>
-                                  </select>
-                                </td>
-                                {hasShorts && (
+                            {players.map((p, idx) => {
+                              const isGK = Boolean(p.isGK || /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(p.name));
+                              return (
+                                <tr key={idx} style={{ borderTop: '1px solid var(--border)', background: isGK ? 'rgba(239, 68, 68, 0.12)' : 'transparent' }}>
+                                  <td style={{ padding: '4px 4px', opacity: 0.7, fontSize: '0.75rem' }}>{idx + 1}</td>
                                   <td style={{ padding: '3px 3px' }}>
                                     <input
                                       type="text"
-                                      value={p.shortsSize || ''}
-                                      onChange={(e) => handleUpdatePlayerField(idx, 'shortsSize', e.target.value)}
-                                      placeholder="Shorts..."
+                                      value={p.name}
+                                      onChange={(e) => handleUpdatePlayerField(idx, 'name', e.target.value)}
+                                      placeholder="Name..."
                                       style={{
                                         width: '100%',
                                         padding: '0.25rem 0.35rem',
                                         borderRadius: '4px',
-                                        border: '1px solid #10b981',
+                                        border: isGK ? '1px solid #ef4444' : '1px solid var(--border)',
                                         background: 'var(--bg-main)',
-                                        color: '#10b981',
+                                        color: isGK ? '#ef4444' : 'var(--text-primary)',
                                         fontSize: '0.78rem',
                                         fontWeight: 700,
                                         outline: 'none'
                                       }}
                                     />
                                   </td>
-                                )}
-                                <td style={{ padding: '3px 3px' }}>
-                                  <input
-                                    type="text"
-                                    value={p.number}
-                                    onChange={(e) => handleUpdatePlayerField(idx, 'number', e.target.value)}
-                                    placeholder="No..."
-                                    style={{
-                                      width: '100%',
-                                      padding: '0.25rem 0.35rem',
-                                      borderRadius: '4px',
-                                      border: '1px solid var(--border)',
-                                      background: 'var(--bg-main)',
-                                      color: 'var(--text-primary)',
-                                      fontSize: '0.78rem',
-                                      outline: 'none'
-                                    }}
-                                  />
-                                </td>
-                                <td style={{ padding: '3px 6px', textAlign: 'right' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemovePlayer(idx)}
-                                    title="Remove player"
-                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}
-                                  >
-                                    ✕
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
+                                  <td style={{ padding: '3px 3px', textAlign: 'center' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdatePlayerField(idx, 'isGK', !isGK)}
+                                      title="Toggle Goal Keeper status"
+                                      style={{
+                                        padding: '0.15rem 0.35rem',
+                                        borderRadius: '4px',
+                                        border: isGK ? '1px solid #ef4444' : '1px solid var(--border)',
+                                        background: isGK ? '#ef4444' : 'transparent',
+                                        color: isGK ? '#ffffff' : 'var(--text-secondary)',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      {isGK ? 'GK' : '-'}
+                                    </button>
+                                  </td>
+                                  <td style={{ padding: '3px 3px' }}>
+                                    <input
+                                      type="text"
+                                      value={p.size}
+                                      onChange={(e) => handleUpdatePlayerField(idx, 'size', e.target.value)}
+                                      placeholder="Shirt..."
+                                      style={{
+                                        width: '100%',
+                                        padding: '0.25rem 0.35rem',
+                                        borderRadius: '4px',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--bg-main)',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '0.78rem',
+                                        outline: 'none'
+                                      }}
+                                    />
+                                  </td>
+                                  <td style={{ padding: '3px 3px' }}>
+                                    <select
+                                      value={p.sleeve || 'F'}
+                                      onChange={(e) => handleUpdatePlayerField(idx, 'sleeve', e.target.value)}
+                                      style={{
+                                        width: '100%',
+                                        padding: '0.25rem 0.2rem',
+                                        borderRadius: '4px',
+                                        border: '1px solid #3b82f6',
+                                        background: 'var(--bg-main)',
+                                        color: '#3b82f6',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 800,
+                                        outline: 'none'
+                                      }}
+                                    >
+                                      <option value="F" style={{ background: '#161e31', color: '#fff' }}>F (Full)</option>
+                                      <option value="H" style={{ background: '#161e31', color: '#fff' }}>H (Half)</option>
+                                      <option value="SL" style={{ background: '#161e31', color: '#fff' }}>SL (Sleeveless)</option>
+                                    </select>
+                                  </td>
+                                  {hasShorts && (
+                                    <td style={{ padding: '3px 3px' }}>
+                                      <input
+                                        type="text"
+                                        value={p.shortsSize || ''}
+                                        onChange={(e) => handleUpdatePlayerField(idx, 'shortsSize', e.target.value)}
+                                        placeholder="Shorts..."
+                                        style={{
+                                          width: '100%',
+                                          padding: '0.25rem 0.35rem',
+                                          borderRadius: '4px',
+                                          border: '1px solid #10b981',
+                                          background: 'var(--bg-main)',
+                                          color: '#10b981',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 700,
+                                          outline: 'none'
+                                        }}
+                                      />
+                                    </td>
+                                  )}
+                                  <td style={{ padding: '3px 3px' }}>
+                                    <input
+                                      type="text"
+                                      value={p.number}
+                                      onChange={(e) => handleUpdatePlayerField(idx, 'number', e.target.value)}
+                                      placeholder="No..."
+                                      style={{
+                                        width: '100%',
+                                        padding: '0.25rem 0.35rem',
+                                        borderRadius: '4px',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--bg-main)',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '0.78rem',
+                                        outline: 'none'
+                                      }}
+                                    />
+                                  </td>
+                                  <td style={{ padding: '3px 6px', textAlign: 'right' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemovePlayer(idx)}
+                                      title="Remove player"
+                                      style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
