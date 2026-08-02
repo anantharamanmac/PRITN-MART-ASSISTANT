@@ -7,6 +7,7 @@ import { OrderRecord } from '@/lib/db';
 export interface InvoiceData {
   docType?: 'QUOTATION' | 'INVOICE';
   invoiceNumber: string;
+  quotationNumber?: string;
   invoiceDate: string;
   customerName: string;
   customerPhone: string;
@@ -27,6 +28,8 @@ export interface InvoiceData {
   balanceAmount: number;
   paymentMode: string;
   notes?: string;
+  dtfOption?: string;
+  dtfRate?: number;
 }
 
 interface InvoiceSlipProps {
@@ -84,12 +87,17 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
     }
   };
 
-  // Generate description string matching sample bill
-  const descriptionLine = `${invoice.clothType || 'PP'} - CLOTH ${invoice.itemType || 'JERSEY'} PRINT ${invoice.neckType || 'ROUND NECK'}${invoice.sleeveType ? ` (${invoice.sleeveType.toUpperCase()})` : ''}`.toUpperCase();
+  const dtfOptionActive = invoice.dtfOption && invoice.dtfOption !== 'none';
+  const dtfRate = invoice.dtfRate || 0;
+  const baseRate = invoice.ratePerPiece - dtfRate;
+
+  const baseDescriptionLine = `${invoice.clothType || 'PP'} - CLOTH ${invoice.itemType || 'JERSEY'} PRINT ${invoice.neckType || 'ROUND NECK'}${invoice.sleeveType ? ` (${invoice.sleeveType.toUpperCase()})` : ''}`.toUpperCase();
+  const dtfDescriptionLine = dtfOptionActive ? `DTF PRINTING (${invoice.dtfOption?.toUpperCase()})` : '';
 
   // Create 12 table rows to fill page height perfectly like sample bill
   const totalRowsCount = 12;
   const emptyRowsNeeded = Math.max(0, totalRowsCount - 1);
+  const emptyRowsCount = emptyRowsNeeded - (invoice.hasShorts ? 1 : 0) - (dtfOptionActive ? 1 : 0);
 
   return (
     <div className="invoice-modal-wrapper" style={{ padding: '1rem', color: '#000000' }}>
@@ -98,7 +106,7 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Print Mart {docType} Slip #{invoice.invoiceNumber}
+              Print Mart {docType} Slip #{docType === 'INVOICE' ? invoice.invoiceNumber : (invoice.quotationNumber || invoice.invoiceNumber.replace('INV-', 'QT-'))}
             </h3>
             <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Customer: {invoice.customerName}
@@ -306,8 +314,13 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
               </div>
             </div>
 
-            <div style={{ fontSize: '17px', fontWeight: 900, color: '#000000' }}>
-              DATE : <span style={{ fontFamily: 'Arial, sans-serif', marginLeft: '6px' }}>{invoice.invoiceDate}</span>
+            <div style={{ textAlign: 'right', fontSize: '17px', fontWeight: 900, color: '#000000' }}>
+              <div style={{ marginBottom: '4px' }}>
+                {docType === 'INVOICE' ? 'INVOICE NO' : 'QUOTATION NO'} : <span style={{ fontFamily: 'Arial, sans-serif', marginLeft: '6px' }}>{docType === 'INVOICE' ? invoice.invoiceNumber : (invoice.quotationNumber || invoice.invoiceNumber.replace('INV-', 'QT-'))}</span>
+              </div>
+              <div>
+                DATE : <span style={{ fontFamily: 'Arial, sans-serif', marginLeft: '6px' }}>{invoice.invoiceDate}</span>
+              </div>
             </div>
           </div>
 
@@ -333,23 +346,41 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
                 </tr>
               </thead>
               <tbody>
-                {/* Row 1: Item details */}
+                {/* Row 1: Item details (Base Garment) */}
                 <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
                   <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
-                    {descriptionLine}
+                    {baseDescriptionLine}
                   </td>
                   <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                    {invoice.ratePerPiece}
+                    {baseRate}
                   </td>
                   <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
                     {invoice.pieces}
                   </td>
                   <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
-                    {invoice.subtotal.toLocaleString()}
+                    {(baseRate * invoice.pieces).toLocaleString()}
                   </td>
                 </tr>
 
-                {/* Optional Row 2: Shorts Add-on if applicable */}
+                {/* Optional Row 2: DTF Printing details */}
+                {dtfOptionActive && (
+                  <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
+                    <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
+                      {dtfDescriptionLine}
+                    </td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                      {dtfRate}
+                    </td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                      {invoice.pieces}
+                    </td>
+                    <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
+                      {(dtfRate * invoice.pieces).toLocaleString()}
+                    </td>
+                  </tr>
+                )}
+
+                {/* Optional Row 3: Shorts Add-on if applicable */}
                 {invoice.hasShorts && (
                   <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
                     <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
@@ -368,7 +399,7 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
                 )}
 
                 {/* Lined Empty Rows to fill 12 total table rows */}
-                {Array.from({ length: emptyRowsNeeded - (invoice.hasShorts ? 1 : 0) }).map((_, idx) => (
+                {Array.from({ length: Math.max(0, emptyRowsCount) }).map((_, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid #38d39f', height: '28px' }}>
                     <td style={{ borderRight: '1px solid #38d39f' }}></td>
                     <td style={{ borderRight: '1px solid #38d39f' }}></td>

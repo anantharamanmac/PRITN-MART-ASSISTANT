@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
 import { toast } from 'react-hot-toast';
+import SalaryStatementSlip from '@/components/SalaryStatementSlip';
 
 interface SalaryCycleOption {
   label: string;
@@ -55,6 +56,13 @@ export default function AdminHours() {
   const [selectedUserForExport, setSelectedUserForExport] = useState<AppUser | null>(null);
   const [selectedCycleIndex, setSelectedCycleIndex] = useState<number>(0);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    user: AppUser;
+    cycleRecords: AttendanceRecord[];
+    startDate: Date;
+    endDate: Date;
+  } | null>(null);
 
   const handleOpenExportModal = (user: AppUser) => {
     setSelectedUserForExport(user);
@@ -63,25 +71,9 @@ export default function AdminHours() {
   };
 
   const handleExportSalaryPDF = async (user: AppUser, cycleIdx: number) => {
-    const toastId = toast.loading("Generating professional PDF...");
+    const toastId = toast.loading("Preparing statement preview...");
 
     try {
-      let base64Logo = "";
-      try {
-        const logoUrl = `${window.location.origin}/logo.png`;
-        const logoRes = await fetch(logoUrl);
-        if (logoRes.ok) {
-          const blob = await logoRes.blob();
-          base64Logo = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          });
-        }
-      } catch (err) {
-        console.warn("Could not load logo.png for PDF. Using fallback.", err);
-      }
-
       const history = await getUserAttendanceHistory(user.uid);
 
       const startDay = user.salaryStartDay || 1;
@@ -101,628 +93,19 @@ export default function AdminHours() {
         return;
       }
 
-      const totalWorkedHrs = cycleRecords.reduce((sum, r) => sum + (r.totalHours || 0), 0);
-      const totalOtHrs = cycleRecords.reduce((sum, r) => sum + (r.overtimeHours || 0), 0);
-      const totalOtPay = totalOtHrs * 100;
-      const statementRef = `PM/STMT/${startDate.getFullYear()}${String(startDate.getMonth() + 1).padStart(2, '0')}/${user.uid.substring(0, 5).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-
-      const formatHours = (decimalHrs: number) => {
-        const hrs = Math.floor(decimalHrs);
-        const mins = Math.round((decimalHrs - hrs) * 60);
-        return `${hrs}h ${mins}m`;
-      };
-
-      const periodStartStr = startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      const periodEndStr = endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>PrintMart Salary Statement - ${user.displayName}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-            
-            body {
-              font-family: 'Outfit', sans-serif;
-              color: #1e293b;
-              margin: 0;
-              padding: 0;
-              background-color: #ffffff;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            
-            .letterhead {
-              width: 800px;
-              margin: 0 auto;
-              padding: 40px;
-              box-sizing: border-box;
-              position: relative;
-              background: #ffffff;
-              overflow: hidden;
-            }
-            
-            .top-stripe {
-              height: 8px;
-              background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-              width: 100%;
-              position: absolute;
-              top: 0;
-              left: 0;
-            }
-            
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              border-bottom: 2px solid #e2e8f0;
-              padding-bottom: 25px;
-              margin-bottom: 30px;
-              margin-top: 10px;
-            }
-            
-            .logo-area {
-              display: flex;
-              align-items: center;
-              gap: 14px;
-            }
-            
-            .logo-img-wrapper {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            
-            .logo-fallback {
-              width: 46px;
-              height: 46px;
-              background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-              border-radius: 12px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-size: 24px;
-              font-weight: 900;
-              box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-            }
-            
-            .logo-text-group {
-              display: flex;
-              flex-direction: column;
-            }
-            
-            .logo-text {
-              font-size: 26px;
-              font-weight: 900;
-              letter-spacing: -0.04em;
-              color: #1e1b4b;
-              line-height: 1;
-            }
-            
-            .logo-text span {
-              color: #6366f1;
-            }
-            
-            .logo-subtext {
-              font-size: 9px;
-              font-weight: 700;
-              letter-spacing: 0.15em;
-              color: #94a3b8;
-              text-transform: uppercase;
-              margin-top: 4px;
-            }
-            
-            .company-info {
-              text-align: right;
-              font-size: 11px;
-              color: #475569;
-              line-height: 1.6;
-              max-width: 320px;
-            }
-            
-            .company-title {
-              font-size: 13px;
-              font-weight: 800;
-              color: #1e1b4b;
-              margin-bottom: 4px;
-              letter-spacing: -0.01em;
-            }
-            
-            .company-reg {
-              font-size: 9px;
-              color: #64748b;
-              margin-top: 3px;
-              font-weight: 500;
-            }
-            
-            .watermark-container {
-              position: absolute;
-              top: 52%;
-              left: 50%;
-              transform: translate(-50%, -50%) rotate(-30deg);
-              text-align: center;
-              pointer-events: none;
-              z-index: 0;
-              opacity: 0.022;
-              width: 100%;
-            }
-            
-            .watermark-text {
-              font-size: 80px;
-              font-weight: 900;
-              letter-spacing: 14px;
-              color: #6366f1;
-              margin: 0;
-              white-space: nowrap;
-            }
-            
-            .watermark-sub {
-              font-size: 20px;
-              font-weight: 700;
-              letter-spacing: 8px;
-              color: #8b5cf6;
-              margin-top: 5px;
-              text-transform: uppercase;
-            }
-            
-            .doc-title-block {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              margin-bottom: 25px;
-              position: relative;
-              z-index: 10;
-            }
-            
-            .doc-title {
-              font-size: 20px;
-              font-weight: 800;
-              letter-spacing: -0.02em;
-              color: #1e1b4b;
-              margin: 0;
-              border-left: 4px solid #6366f1;
-              padding-left: 12px;
-            }
-            
-            .doc-date {
-              font-size: 11px;
-              color: #64748b;
-              font-weight: 500;
-            }
-            
-            .info-grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 16px;
-              background: #f8fafc;
-              border: 1px solid #e2e8f0;
-              border-radius: 14px;
-              padding: 18px;
-              margin-bottom: 30px;
-              position: relative;
-              z-index: 10;
-            }
-            
-            .info-item {
-              display: flex;
-              flex-direction: column;
-              gap: 3px;
-            }
-            
-            .info-label {
-              font-size: 9px;
-              text-transform: uppercase;
-              font-weight: 800;
-              color: #94a3b8;
-              letter-spacing: 0.06em;
-            }
-            
-            .info-value {
-              font-size: 13px;
-              font-weight: 600;
-              color: #1e293b;
-            }
-            
-            .status-pill {
-              display: inline-flex;
-              align-items: center;
-              gap: 4px;
-              color: #059669;
-              font-weight: 700;
-            }
-            
-            .stats-row {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 16px;
-              margin-bottom: 30px;
-              position: relative;
-              z-index: 10;
-            }
-            
-            .stat-card {
-              background: #ffffff;
-              border: 1px solid #e2e8f0;
-              border-radius: 12px;
-              padding: 14px 16px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-              position: relative;
-              overflow: hidden;
-            }
-            
-            .stat-card::before {
-              content: '';
-              position: absolute;
-              left: 0;
-              top: 0;
-              bottom: 0;
-              width: 4px;
-              background-color: #cbd5e1;
-            }
-            
-            .stat-card.blue::before {
-              background-color: #6366f1;
-            }
-            
-            .stat-card.pink::before {
-              background-color: #d946ef;
-            }
-            
-            .stat-card.green::before {
-              background-color: #10b981;
-            }
-            
-            .stat-card.highlighted {
-              background: #f5f3ff;
-              border-color: #ddd6fe;
-            }
-            
-            .stat-card .info-value {
-              font-size: 18px;
-              font-weight: 800;
-              color: #1e1b4b;
-              margin-top: 4px;
-            }
-            
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 40px;
-              position: relative;
-              z-index: 10;
-            }
-            
-            thead {
-              display: table-header-group;
-            }
-            
-            th {
-              background-color: #f1f5f9;
-              color: #475569;
-              font-weight: 700;
-              font-size: 10px;
-              text-transform: uppercase;
-              letter-spacing: 0.06em;
-              padding: 10px 12px;
-              border-bottom: 2px solid #e2e8f0;
-              text-align: left;
-            }
-            
-            td {
-              padding: 10px 12px;
-              border-bottom: 1px solid #f1f5f9;
-              font-size: 11px;
-              color: #334155;
-            }
-            
-            tr {
-              page-break-inside: avoid;
-            }
-            
-            tr:nth-child(even) td {
-              background-color: #fafbfc;
-            }
-            
-            .badge {
-              display: inline-block;
-              padding: 2px 7px;
-              font-size: 9px;
-              font-weight: 700;
-              border-radius: 9999px;
-              text-transform: uppercase;
-              letter-spacing: 0.02em;
-            }
-            
-            .badge-present {
-              background-color: #e6fcf5;
-              color: #0ca678;
-              border: 1px solid #c3fae8;
-            }
-            
-            .badge-half-day {
-              background-color: #fff9db;
-              color: #f08c00;
-              border: 1px solid #fff3bf;
-            }
-            
-            .badge-leave {
-              background-color: #fff5f5;
-              color: #e03131;
-              border: 1px solid #ffc9c9;
-            }
-            
-            .signature-section {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-top: 50px;
-              padding-top: 20px;
-              position: relative;
-              z-index: 10;
-              page-break-inside: avoid;
-            }
-            
-            .signature-block {
-              width: 180px;
-              text-align: center;
-            }
-            
-            .signature-line {
-              border-top: 1px solid #94a3b8;
-              margin-bottom: 6px;
-            }
-            
-            .signature-label {
-              font-size: 10px;
-              color: #64748b;
-              font-weight: 600;
-              text-transform: uppercase;
-              letter-spacing: 0.04em;
-            }
-            
-            .signature-sub {
-              font-size: 9px;
-              color: #94a3b8;
-              margin-top: 2px;
-            }
-            
-            .stamp-box {
-              width: 100px;
-              height: 100px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            
-            .stamp-circle {
-              width: 80px;
-              height: 80px;
-              border: 2px dashed rgba(99, 102, 241, 0.35);
-              border-radius: 50%;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              color: rgba(99, 102, 241, 0.45);
-              font-size: 9px;
-              font-weight: 800;
-              letter-spacing: 0.5px;
-              text-align: center;
-              transform: rotate(-12deg);
-            }
-            
-            .stamp-circle span {
-              display: block;
-            }
-            
-            .footer-note {
-              margin-top: 45px;
-              border-top: 1px solid #e2e8f0;
-              padding-top: 12px;
-              font-size: 9px;
-              color: #94a3b8;
-              text-align: center;
-              line-height: 1.5;
-              position: relative;
-              z-index: 10;
-              page-break-inside: avoid;
-            }
-            
-            @media print {
-              body {
-                background: none;
-                background-color: #ffffff;
-              }
-              .letterhead {
-                width: 100%;
-                padding: 0;
-                margin: 0;
-              }
-              @page {
-                size: A4;
-                margin: 15mm;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="letterhead">
-            <div class="top-stripe"></div>
-            <div class="watermark-container">
-              <div class="watermark-text">PRINT MART</div>
-              <div class="watermark-sub">OFFICIAL HOURS STATEMENT</div>
-            </div>
-            <div class="header">
-              <div class="logo-area">
-                <div class="logo-img-wrapper">
-                  ${base64Logo
-                    ? `<img src="${base64Logo}" alt="PrintMart Logo" style="height: 52px; width: auto; object-fit: contain;" />`
-                    : `<div class="logo-fallback">P</div>`
-                  }
-                </div>
-                <div class="logo-text-group">
-                  <div class="logo-text">Print<span>Mart</span></div>
-                  <div class="logo-subtext">The Apparel Company</div>
-                </div>
-              </div>
-              <div class="company-info">
-                <div class="company-title">Print Mart Apparel Private Ltd.</div>
-                <div>Thattarkonam</div>
-                <div>Kollam, Kerala 691001</div>
-                <div>Email: payroll@printmart.com | Web: www.printmart.com</div>
-                <div class="company-reg">CIN: U18101TN2024PTC168420 | GSTIN: 33AADCP8420M1Z5</div>
-              </div>
-            </div>
-            
-            <div class="doc-title-block">
-              <h2 class="doc-title">Employee Salary & Hours Statement</h2>
-              <div class="doc-date">Generated: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-            </div>
-            
-            <div class="info-grid">
-              <div class="info-item">
-                <span class="info-label">Statement Reference</span>
-                <span class="info-value" style="font-family: monospace; font-size: 14px; color: #4f46e5;">${statementRef}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Statement Period</span>
-                <span class="info-value">${periodStartStr} &ndash; ${periodEndStr}</span>
-              </div>
-              <div class="info-item" style="margin-top: 8px;">
-                <span class="info-label">Employee Details</span>
-                <span class="info-value">${user.displayName}</span>
-                <span style="font-size: 11px; color:#64748b; font-weight:500;">ID: EMP-${user.uid.substring(0, 8).toUpperCase()} | ${user.email}</span>
-              </div>
-              <div class="info-item" style="margin-top: 8px;">
-                <span class="info-label">Designation & Department</span>
-                <span class="info-value" style="text-transform: capitalize;">${user.designation || "Apparel Specialist"}</span>
-                <span style="font-size: 11px; color:#64748b; font-weight:500;">Apparel Production Dept. | Cycle Day: ${formatOrdinal(startDay)}</span>
-              </div>
-            </div>
-            
-            <div class="stats-row">
-              <div class="stat-card blue">
-                <span class="info-label">Standard Worked Hours</span>
-                <div class="info-value">${formatHours(totalWorkedHrs - totalOtHrs)}</div>
-              </div>
-              <div class="stat-card pink">
-                <span class="info-label">Overtime Hours</span>
-                <div class="info-value" style="color: #d946ef;">${formatHours(totalOtHrs)}</div>
-              </div>
-              <div class="stat-card highlighted green">
-                <span class="info-label">Est. Overtime Earnings</span>
-                <div class="info-value" style="color: #10b981;">₹${Math.round(totalOtPay).toLocaleString('en-IN')}</div>
-              </div>
-            </div>
-            
-            <h3 style="font-size: 13px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em; color: #1e1b4b; margin-bottom: 12px; border-left: 3px solid #6366f1; padding-left: 8px;">Detailed Shift Log</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Punch In</th>
-                  <th>Punch Out</th>
-                  <th>Total Hours</th>
-                  <th>Overtime</th>
-                  <th>Overtime Pay</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${cycleRecords.map(rec => {
-                  const inStr = rec.punchIn ? new Date(rec.punchIn.toDate()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-";
-                  const outStr = rec.punchOut ? new Date(rec.punchOut.toDate()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-";
-                  const otPayVal = (rec.overtimeHours || 0) * 100;
-                  const badgeClass = rec.status === 'present' ? 'badge-present' : rec.status === 'half-day' ? 'badge-half-day' : 'badge-leave';
-        
-                  return `
-                    <tr>
-                      <td style="font-weight: 600; font-family: monospace;">${rec.date}</td>
-                      <td><span class="badge ${badgeClass}">${rec.status}</span></td>
-                      <td>${inStr}</td>
-                      <td>${outStr}</td>
-                      <td>${formatHours(rec.totalHours || 0)}</td>
-                      <td style="font-weight: 600; color: ${rec.overtimeHours > 0 ? '#d946ef' : '#64748b'};">${rec.overtimeHours > 0 ? '+' + formatHours(rec.overtimeHours) : '-'}</td>
-                      <td style="font-weight: 700; color: ${rec.overtimeHours > 0 ? '#10b981' : '#334155'};">${rec.overtimeHours > 0 ? '₹' + Math.round(otPayVal).toLocaleString('en-IN') : '₹0'}</td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-            
-            <div class="signature-section">
-              <div class="signature-block">
-                <div style="height: 45px;"></div>
-                <div class="signature-line"></div>
-                <div class="signature-label">Employee Signature</div>
-                <div class="signature-sub">Date: ____/____/________</div>
-              </div>
-              
-              <div class="stamp-box">
-                <div class="stamp-circle">
-                  <span>PRINT MART</span>
-                  <span style="font-size: 6px; font-weight: normal; margin: 2px 0;">* KOLLAM *</span>
-                  <span>PAYROLL OFFICE</span>
-                </div>
-              </div>
-        
-              <div class="signature-block">
-                <div style="height: 45px; display: flex; align-items: flex-end; justify-content: center; font-family: 'Outfit'; font-size: 11px; font-weight: bold; color: rgba(99, 102, 241, 0.6); margin-bottom: 2px;">
-                  PrintMart HR Dept
-                </div>
-                <div class="signature-line"></div>
-                <div class="signature-label">HR Payroll Administrator</div>
-                <div class="signature-sub">Print Mart Apparel Private Ltd.</div>
-              </div>
-            </div>
-        
-            <div class="footer-note">
-              <strong>Verification Statement:</strong> This is a computer-generated statement summarizing recorded biometric punch schedules and approved leaves. Signatures verify accuracy of hours logged.
-              <br />
-              Generated on PrintMart Core ERP System. Confidential.
-              <br />
-              <span style="display: block; margin-top: 6px; font-weight: 600; color: #6366f1;">Developed by Gforx Production | Contact: 8848347162 | Email: anantharamanmac@gmail.com | Discord: https://discord.gg/42RkQ545</span>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentWindow?.document || iframe.contentDocument;
-      if (doc) {
-        doc.open();
-        doc.write(htmlContent);
-        doc.close();
-
-        setTimeout(() => {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
-        }, 500);
-      }
-
-      toast.dismiss(toastId);
-      toast.success("Professional PDF statement generated!");
+      setPreviewData({
+        user,
+        cycleRecords,
+        startDate,
+        endDate
+      });
+      setShowPreviewModal(true);
       setShowExportModal(false);
-    } catch (error) {
-      console.error("Export failed:", error);
       toast.dismiss(toastId);
-      toast.error("Failed to generate PDF summary.");
+    } catch (error) {
+      console.error("Export preparation failed:", error);
+      toast.dismiss(toastId);
+      toast.error("Failed to prepare statement preview.");
     }
   };
   const formatHrsMins = (decimalHrs: number) => {
@@ -1231,6 +614,21 @@ export default function AdminHours() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Statement Preview Modal Overlay */}
+      {showPreviewModal && previewData && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}>
+          <div className="card-glass" style={{ width: '100%', maxWidth: '900px', maxHeight: '94vh', overflowY: 'auto', borderRadius: '20px', padding: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+            <SalaryStatementSlip
+              user={previewData.user}
+              cycleRecords={previewData.cycleRecords}
+              startDate={previewData.startDate}
+              endDate={previewData.endDate}
+              onClose={() => setShowPreviewModal(false)}
+            />
           </div>
         </div>
       )}

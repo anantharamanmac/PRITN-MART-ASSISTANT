@@ -6,6 +6,9 @@ export interface PricingRates {
   sleeves: Record<string, number>;   // e.g. { 'full': 30, 'half': 0, 'sleeveless': -10 }
   necks: Record<string, number>;     // e.g. { 'Round Neck': 0, 'V-Neck': 10, 'Collar / Polo': 40, 'Chinese Collar': 35, 'Custom / Other': 0 }
   shortsRate: number;                // e.g. 120 (Rate added if shorts enabled)
+  shortsMaterials?: Record<string, number>; // e.g. { 'SALEENA': 120, 'SUPERPOLY': 120, ... }
+  dtfMaterials?: Record<string, number>;    // Jersey DTF material rates
+  dtfRates?: Record<string, number>;        // Placement and size modifiers: front, back, front and back, a4 size, a3 size
   updatedAt?: string;
 }
 
@@ -36,6 +39,39 @@ export const DEFAULT_PRICING_RATES: PricingRates = {
     'Custom / Other': 0,
   },
   shortsRate: 120, // Add-on per piece when shorts included
+  shortsMaterials: {
+    'SALEENA': 120,
+    'SUPERPOLY': 120,
+    'LYCRA 2 WAY': 120,
+    'LYCRA 4 WAY': 120,
+    'PP': 120,
+    'DOTKNIT 140': 120,
+    'DOTKNIT 180': 120,
+    'HONEYCOMB': 120,
+    'BOXNET': 120,
+    'JAGUARD': 120,
+    'Custom / Other': 120,
+  },
+  dtfMaterials: {
+    'SALEENA': 180,
+    'SUPERPOLY': 170,
+    'LYCRA 2 WAY': 210,
+    'LYCRA 4 WAY': 240,
+    'PP': 190,
+    'DOTKNIT 140': 200,
+    'DOTKNIT 180': 220,
+    'HONEYCOMB': 230,
+    'BOXNET': 240,
+    'JAGUARD': 250,
+    'Custom / Other': 180,
+  },
+  dtfRates: {
+    'front': 50,
+    'back': 50,
+    'front and back': 90,
+    'a4 size': 60,
+    'a3 size': 80,
+  },
 };
 
 const PRICING_DOC_PATH = 'pricing_settings/rates';
@@ -78,11 +114,22 @@ export async function getPricingRates(): Promise<PricingRates> {
         }
       }
 
+      const rawDtfMaterials = data.dtfMaterials || {};
+      const cleanedDtfMaterials: Record<string, number> = { ...DEFAULT_PRICING_RATES.dtfMaterials };
+      for (const [k, v] of Object.entries(rawDtfMaterials)) {
+        if (typeof v === 'number') {
+          cleanedDtfMaterials[k] = v;
+        }
+      }
+
       return {
         materials: cleanedMaterials,
         sleeves: { ...DEFAULT_PRICING_RATES.sleeves, ...(data.sleeves || {}) },
         necks: { ...DEFAULT_PRICING_RATES.necks, ...(data.necks || {}) },
         shortsRate: typeof data.shortsRate === 'number' ? data.shortsRate : DEFAULT_PRICING_RATES.shortsRate,
+        shortsMaterials: { ...DEFAULT_PRICING_RATES.shortsMaterials, ...(data.shortsMaterials || {}) },
+        dtfMaterials: cleanedDtfMaterials,
+        dtfRates: { ...DEFAULT_PRICING_RATES.dtfRates, ...(data.dtfRates || {}) },
         updatedAt: data.updatedAt,
       };
     }
@@ -120,11 +167,27 @@ export function calculateOrderPrice(params: {
   hasShorts: boolean;
   pieces: number;
   rates: PricingRates;
+  dtfOption?: string;
 }) {
-  const { clothType, sleeveType, neckType, hasShorts, pieces, rates } = params;
+  const { clothType, sleeveType, neckType, hasShorts, pieces, rates, dtfOption = 'none' } = params;
+
+  // Determine if it is DTF or Sublimation
+  const isDtf = dtfOption && dtfOption !== 'none';
 
   // Material Base Rate
-  const materialRate = rates.materials[clothType] ?? rates.materials['Custom / Other'] ?? 250;
+  let materialRate = 0;
+  if (isDtf) {
+    materialRate = rates.dtfMaterials?.[clothType] ?? rates.dtfMaterials?.['Custom / Other'] ?? 180;
+  } else {
+    materialRate = rates.materials[clothType] ?? rates.materials['Custom / Other'] ?? 250;
+  }
+
+  // DTF Option Add-on
+  let dtfAddon = 0;
+  if (isDtf) {
+    const key = dtfOption.toLowerCase();
+    dtfAddon = rates.dtfRates?.[key] ?? 0;
+  }
 
   // Sleeve Rate Adjustment
   const sleeveKey = (sleeveType || 'half').toLowerCase();
@@ -134,16 +197,19 @@ export function calculateOrderPrice(params: {
   const neckRate = rates.necks[neckType] ?? rates.necks['Custom / Other'] ?? 0;
 
   // Shorts Rate
-  const shortsRate = hasShorts ? (rates.shortsRate || 0) : 0;
+  const shortsRate = hasShorts
+    ? (rates.shortsMaterials?.[clothType] ?? rates.shortsMaterials?.[clothType.toUpperCase()] ?? rates.shortsMaterials?.['Custom / Other'] ?? rates.shortsRate ?? 120)
+    : 0;
 
   // Unit Rate per piece
-  const unitRate = materialRate + sleeveRate + neckRate + shortsRate;
+  const unitRate = materialRate + dtfAddon + sleeveRate + neckRate + shortsRate;
 
   // Total Amount
   const totalAmount = Math.max(0, unitRate * (pieces || 1));
 
   return {
     materialRate,
+    dtfAddon,
     sleeveRate,
     neckRate,
     shortsRate,

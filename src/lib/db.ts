@@ -954,9 +954,12 @@ export interface OrderRecord {
   discountAmount?: number;
   advanceAmount?: number;
   balanceAmount?: number;
+  invoiceNumber?: string;
+  quotationNumber?: string;
   players?: PlayerItem[];
   status: OrderStatus;
   notes?: string;
+  dtfOption?: string;
   createdByUid: string;
   createdByName: string;
   createdAt: Timestamp;

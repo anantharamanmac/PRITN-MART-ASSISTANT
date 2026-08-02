@@ -63,8 +63,11 @@ function BillingContent() {
   const [neckType, setNeckType] = useState(NECK_TYPES[0]);
   const [hasShorts, setHasShorts] = useState(false);
   const [pieces, setPieces] = useState<number>(10);
+  const [dtfOption, setDtfOption] = useState<string>('none');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [invoiceNum, setInvoiceNum] = useState('');
+  const [quotationNum, setQuotationNum] = useState('');
 
   // Financial & Pricing State
   const [pricingRates, setPricingRates] = useState<PricingRates>(DEFAULT_PRICING_RATES);
@@ -125,6 +128,17 @@ function BillingContent() {
     }
   }, [infoParam]);
 
+  useEffect(() => {
+    // Only generate if we don't have matching ones for this infoNumber
+    const currentInvInfo = invoiceNum.split('-')[1];
+    if (invoiceNum === '' || currentInvInfo !== String(infoNumber)) {
+      const rand = Math.floor(100000 + Math.random() * 900000);
+      const rand2 = Math.floor(100000 + Math.random() * 900000);
+      setInvoiceNum(`INV-${infoNumber || 2412}-${rand}`);
+      setQuotationNum(`QT-${infoNumber || 2412}-${rand2}`);
+    }
+  }, [infoNumber, invoiceNum]);
+
   // Auto-Calculate Unit Rate & Total unless manually overridden
   useEffect(() => {
     if (isManualOverride) return;
@@ -136,10 +150,11 @@ function BillingContent() {
       hasShorts,
       pieces,
       rates: pricingRates,
+      dtfOption,
     });
 
     setRatePerPiece(calc.unitRate);
-  }, [clothType, sleeveType, neckType, hasShorts, pieces, pricingRates, isManualOverride]);
+  }, [clothType, sleeveType, neckType, hasShorts, pieces, pricingRates, dtfOption, isManualOverride]);
 
   // Fetch Order Data by INFO NO.
   const handleFetchOrderByInfo = async (infoStr: string) => {
@@ -170,8 +185,14 @@ function BillingContent() {
       setNeckType(found.neckType || NECK_TYPES[0]);
       setHasShorts(Boolean(found.hasShorts || found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
       setPieces(found.players && found.players.length > 0 ? found.players.length : (found.pieces || 10));
+      setDtfOption(found.dtfOption || 'none');
       setDeliveryDate(found.deliveryDate || '');
       setNotes(found.notes || '');
+
+      const rand = Math.floor(100000 + Math.random() * 900000);
+      const rand2 = Math.floor(100000 + Math.random() * 900000);
+      setInvoiceNum(found.invoiceNumber || `INV-${found.infoNumber}-${rand}`);
+      setQuotationNum(found.quotationNumber || `QT-${found.infoNumber}-${rand2}`);
 
       if (typeof found.ratePerPiece === 'number' && found.ratePerPiece > 0) {
         setIsManualOverride(true);
@@ -193,8 +214,19 @@ function BillingContent() {
 
   // Build Invoice Data Object
   const buildInvoiceDataObject = (): InvoiceData => {
+    const calc = calculateOrderPrice({
+      clothType,
+      sleeveType,
+      neckType,
+      hasShorts,
+      pieces,
+      rates: pricingRates,
+      dtfOption,
+    });
+
     return {
-      invoiceNumber: `INV-${infoNumber || 2412}`,
+      invoiceNumber: invoiceNum || `INV-${infoNumber || 2412}`,
+      quotationNumber: quotationNum || `QT-${infoNumber || 2412}`,
       invoiceDate: formatLocalDate(new Date()),
       customerName: customerName.trim() || 'LUCKY',
       customerPhone: customerPhone.trim() || '+91 8848048733',
@@ -215,6 +247,8 @@ function BillingContent() {
       balanceAmount,
       paymentMode,
       notes: notes.trim(),
+      dtfOption,
+      dtfRate: dtfOption !== 'none' ? calc.dtfAddon : 0,
     };
   };
 
@@ -255,6 +289,9 @@ function BillingContent() {
           advanceAmount,
           balanceAmount,
           notes: notes.trim(),
+          invoiceNumber: invoiceNum,
+          quotationNumber: quotationNum,
+          dtfOption,
         });
         toast.dismiss('save-bill');
         toast.success(`Updated financial record for INFO #${infoNumber}!`);
@@ -463,7 +500,10 @@ function BillingContent() {
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', marginBottom: '0.25rem' }}>FABRIC / MATERIAL</label>
                   <select
                     value={clothType}
-                    onChange={(e) => setClothType(e.target.value)}
+                    onChange={(e) => {
+                      setClothType(e.target.value);
+                      setIsManualOverride(false);
+                    }}
                     style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
                   >
                     {CLOTH_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
@@ -474,7 +514,10 @@ function BillingContent() {
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#10b981', marginBottom: '0.25rem' }}>SLEEVE TYPE</label>
                   <select
                     value={sleeveType}
-                    onChange={(e) => setSleeveType(e.target.value as any)}
+                    onChange={(e) => {
+                      setSleeveType(e.target.value as any);
+                      setIsManualOverride(false);
+                    }}
                     style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
                   >
                     <option value="full" style={{ background: '#161e31', color: '#fff' }}>Full Sleeve (F)</option>
@@ -487,7 +530,10 @@ function BillingContent() {
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '0.25rem' }}>NECK TYPE</label>
                   <select
                     value={neckType}
-                    onChange={(e) => setNeckType(e.target.value)}
+                    onChange={(e) => {
+                      setNeckType(e.target.value);
+                      setIsManualOverride(false);
+                    }}
                     style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
                   >
                     {NECK_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
@@ -500,9 +546,31 @@ function BillingContent() {
                     type="number"
                     min="1"
                     value={pieces}
-                    onChange={(e) => setPieces(Number(e.target.value) || 1)}
+                    onChange={(e) => {
+                      setPieces(Number(e.target.value) || 1);
+                      setIsManualOverride(false);
+                    }}
                     style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#3b82f6', fontWeight: 800, fontSize: '0.85rem' }}
                   />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#ec4899', marginBottom: '0.25rem' }}>DTF PRINTING</label>
+                  <select
+                    value={dtfOption}
+                    onChange={(e) => {
+                      setDtfOption(e.target.value);
+                      setIsManualOverride(false);
+                    }}
+                    style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
+                  >
+                    <option value="none" style={{ background: '#161e31', color: '#fff' }}>None</option>
+                    <option value="front" style={{ background: '#161e31', color: '#fff' }}>Front</option>
+                    <option value="back" style={{ background: '#161e31', color: '#fff' }}>Back</option>
+                    <option value="front and back" style={{ background: '#161e31', color: '#fff' }}>Front & Back</option>
+                    <option value="a4 size" style={{ background: '#161e31', color: '#fff' }}>A4 Size</option>
+                    <option value="a3 size" style={{ background: '#161e31', color: '#fff' }}>A3 Size</option>
+                  </select>
                 </div>
               </div>
 
@@ -512,10 +580,13 @@ function BillingContent() {
                   <input
                     type="checkbox"
                     checked={hasShorts}
-                    onChange={(e) => setHasShorts(e.target.checked)}
+                    onChange={(e) => {
+                      setHasShorts(e.target.checked);
+                      setIsManualOverride(false);
+                    }}
                     style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
                   />
-                  <span>Includes Shorts / Pants (+₹{pricingRates.shortsRate || 120}/pc)</span>
+                  <span>Includes Shorts / Pants (+₹{pricingRates.shortsMaterials?.[clothType] ?? pricingRates.shortsRate ?? 120}/pc)</span>
                 </label>
               </div>
 
@@ -555,14 +626,26 @@ function BillingContent() {
               {/* Live Rate Breakdown Chips */}
               <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
                 <span style={{ background: 'var(--bg-main)', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                  Fabric: ₹{pricingRates.materials[clothType] ?? 250}
+                  Fabric: ₹{dtfOption && dtfOption !== 'none'
+                    ? (pricingRates.dtfMaterials?.[clothType] ?? pricingRates.dtfMaterials?.['Custom / Other'] ?? 180)
+                    : (pricingRates.materials[clothType] ?? pricingRates.materials['Custom / Other'] ?? 250)}
                 </span>
+                {dtfOption && dtfOption !== 'none' && (
+                  <span style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid #ec4899' }}>
+                    DTF Print: +₹{pricingRates.dtfRates?.[dtfOption.toLowerCase()] ?? 0} ({dtfOption})
+                  </span>
+                )}
                 <span style={{ background: 'var(--bg-main)', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
                   Sleeve: {(pricingRates.sleeves[sleeveType] ?? 0) >= 0 ? `+₹${pricingRates.sleeves[sleeveType] ?? 0}` : `-₹${Math.abs(pricingRates.sleeves[sleeveType] ?? 0)}`}
                 </span>
                 <span style={{ background: 'var(--bg-main)', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
                   Neck: +₹{pricingRates.necks[neckType] ?? 0}
                 </span>
+                {hasShorts && (
+                  <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid #10b981' }}>
+                    Shorts: +₹{pricingRates.shortsMaterials?.[clothType] ?? pricingRates.shortsRate ?? 120}
+                  </span>
+                )}
               </div>
 
               {/* Interactive Financial Form */}

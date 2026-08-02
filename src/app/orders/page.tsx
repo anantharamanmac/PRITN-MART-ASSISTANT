@@ -98,6 +98,7 @@ export default function OrdersPage() {
   const [printArea, setPrintArea] = useState<'front_only' | 'front_back' | 'full'>('full');
   const [sleeveType, setSleeveType] = useState<'sleeveless' | 'half' | 'full'>('full');
   const [hasShorts, setHasShorts] = useState(false);
+  const [dtfOption, setDtfOption] = useState<string>('none');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -308,11 +309,12 @@ export default function OrdersPage() {
       hasShorts,
       pieces: numPieces,
       rates: pricingRates,
+      dtfOption,
     });
 
     setRatePerPiece(calc.unitRate);
     setTotalAmount(Math.max(0, calc.unitRate * numPieces - numDiscount));
-  }, [clothType, customClothType, sleeveType, neckType, customNeckType, hasShorts, pieces, discountAmount, pricingRates, isManualPriceOverride]);
+  }, [clothType, customClothType, sleeveType, neckType, customNeckType, hasShorts, pieces, discountAmount, pricingRates, dtfOption, isManualPriceOverride]);
 
   // Price handler helpers
   const handleRatePerPieceChange = (val: string) => {
@@ -362,6 +364,7 @@ export default function OrdersPage() {
     setPrintArea('full');
     setSleeveType('full');
     setHasShorts(false);
+    setDtfOption('none');
     setPlayers([]);
     setExcelInputText('');
     setShowExcelBox(false);
@@ -414,6 +417,7 @@ export default function OrdersPage() {
     setPrintArea(ord.printArea || 'full');
     setSleeveType(ord.sleeveType || 'full');
     setHasShorts(Boolean(ord.hasShorts || ord.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+    setDtfOption(ord.dtfOption || 'none');
     setNotes(ord.notes || '');
     setPlayers(ord.players ? [...ord.players] : []);
     setExcelInputText('');
@@ -618,6 +622,7 @@ export default function OrdersPage() {
         printArea,
         sleeveType,
         hasShorts,
+        dtfOption,
         ratePerPiece: Number(ratePerPiece) || 0,
         totalAmount: Number(totalAmount) || 0,
         discountAmount: Number(discountAmount) || 0,
@@ -1327,15 +1332,18 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Pieces, Delivery Date, Cloth & Neck Type */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem' }}>
+                  {/* Pieces, Delivery Date, Cloth, Neck Type & DTF Option */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 1.1fr 1.1fr 1.1fr', gap: '0.75rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>Total Pieces *</label>
                       <input
                         type="number"
                         min="1"
                         value={pieces}
-                        onChange={(e) => setPieces(e.target.value)}
+                        onChange={(e) => {
+                          setPieces(e.target.value);
+                          setIsManualPriceOverride(false);
+                        }}
                         required
                         style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                       />
@@ -1354,22 +1362,73 @@ export default function OrdersPage() {
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#ef4444', marginBottom: '0.3rem' }}>Cloth / Fabric *</label>
-                      <select value={clothType} onChange={(e) => setClothType(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                      <select
+                        value={clothType}
+                        onChange={(e) => {
+                          setClothType(e.target.value);
+                          setIsManualPriceOverride(false);
+                        }}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      >
                         {CLOTH_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
                       </select>
                       {clothType === 'Custom / Other' && (
-                        <input type="text" placeholder="Custom cloth..." value={customClothType} onChange={(e) => setCustomClothType(e.target.value)} style={{ width: '100%', marginTop: '0.3rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
+                        <input
+                          type="text"
+                          placeholder="Custom cloth..."
+                          value={customClothType}
+                          onChange={(e) => {
+                            setCustomClothType(e.target.value);
+                            setIsManualPriceOverride(false);
+                          }}
+                          style={{ width: '100%', marginTop: '0.3rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
+                        />
                       )}
                     </div>
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#ef4444', marginBottom: '0.3rem' }}>Neck Type *</label>
-                      <select value={neckType} onChange={(e) => setNeckType(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                      <select
+                        value={neckType}
+                        onChange={(e) => {
+                          setNeckType(e.target.value);
+                          setIsManualPriceOverride(false);
+                        }}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      >
                         {NECK_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
                       </select>
                       {neckType === 'Custom / Other' && (
-                        <input type="text" placeholder="Custom neck..." value={customNeckType} onChange={(e) => setCustomNeckType(e.target.value)} style={{ width: '100%', marginTop: '0.3rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
+                        <input
+                          type="text"
+                          placeholder="Custom neck..."
+                          value={customNeckType}
+                          onChange={(e) => {
+                            setCustomNeckType(e.target.value);
+                            setIsManualPriceOverride(false);
+                          }}
+                          style={{ width: '100%', marginTop: '0.3rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
+                        />
                       )}
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#ec4899', marginBottom: '0.3rem' }}>DTF Printing</label>
+                      <select
+                        value={dtfOption}
+                        onChange={(e) => {
+                          setDtfOption(e.target.value);
+                          setIsManualPriceOverride(false);
+                        }}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      >
+                        <option value="none" style={{ background: '#161e31', color: '#fff' }}>None</option>
+                        <option value="front" style={{ background: '#161e31', color: '#fff' }}>Front</option>
+                        <option value="back" style={{ background: '#161e31', color: '#fff' }}>Back</option>
+                        <option value="front and back" style={{ background: '#161e31', color: '#fff' }}>Front & Back</option>
+                        <option value="a4 size" style={{ background: '#161e31', color: '#fff' }}>A4 Size</option>
+                        <option value="a3 size" style={{ background: '#161e31', color: '#fff' }}>A3 Size</option>
+                      </select>
                     </div>
                   </div>
 
@@ -1403,8 +1462,15 @@ export default function OrdersPage() {
                     {/* Rate Breakdown Chips */}
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
                       <span style={{ background: 'var(--bg-surface)', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                        Fabric ({clothType}): ₹{pricingRates.materials[clothType === 'Custom / Other' ? (customClothType || 'Custom / Other') : clothType] ?? pricingRates.materials['Custom / Other'] ?? 250}/pc
+                        Fabric ({clothType}): ₹{dtfOption !== 'none'
+                          ? (pricingRates.dtfMaterials?.[clothType === 'Custom / Other' ? (customClothType || 'Custom / Other') : clothType] ?? pricingRates.dtfMaterials?.['Custom / Other'] ?? 180)
+                          : (pricingRates.materials[clothType === 'Custom / Other' ? (customClothType || 'Custom / Other') : clothType] ?? pricingRates.materials['Custom / Other'] ?? 250)}/pc
                       </span>
+                      {dtfOption !== 'none' && (
+                        <span style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid #ec4899' }}>
+                          DTF Print: +₹{pricingRates.dtfRates?.[dtfOption.toLowerCase()] ?? 0}/pc ({dtfOption})
+                        </span>
+                      )}
                       <span style={{ background: 'var(--bg-surface)', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                         Sleeve ({sleeveType}): {(pricingRates.sleeves[sleeveType] ?? 0) >= 0 ? `+₹${pricingRates.sleeves[sleeveType] ?? 0}` : `-₹${Math.abs(pricingRates.sleeves[sleeveType] ?? 0)}`}/pc
                       </span>
@@ -1413,7 +1479,7 @@ export default function OrdersPage() {
                       </span>
                       {hasShorts && (
                         <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.45rem', borderRadius: '6px', border: '1px solid #10b981' }}>
-                          Shorts: +₹{pricingRates.shortsRate || 120}/pc
+                          Shorts: +₹{pricingRates.shortsMaterials?.[clothType === 'Custom / Other' ? (customClothType || 'Custom / Other') : clothType] ?? pricingRates.shortsMaterials?.['Custom / Other'] ?? pricingRates.shortsRate ?? 120}/pc
                         </span>
                       )}
                     </div>
