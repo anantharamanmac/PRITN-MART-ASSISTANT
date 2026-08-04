@@ -10,12 +10,49 @@ export interface PlayerDetail {
 }
 
 /**
+ * Converts letter sizes (XS, S, M, L, XL, XXL/2XL, 3XL/XXXL, 4XL/XXXXL, 5XL/XXXXXL)
+ * into company standard numeric size strings (34, 36, 38, 40, 42, 44, 46, 48, 50).
+ */
+export const convertLetterSizeToNumber = (rawSize: string): string => {
+  if (!rawSize) return '';
+  const trimmed = rawSize.trim();
+  const cleaned = trimmed.toUpperCase().replace(/[\s\-_]+/g, '');
+
+  switch (cleaned) {
+    case 'XS':
+      return '34';
+    case 'S':
+      return '36';
+    case 'M':
+      return '38';
+    case 'L':
+      return '40';
+    case 'XL':
+      return '42';
+    case 'XXL':
+    case '2XL':
+      return '44';
+    case 'XXXL':
+    case '3XL':
+      return '46';
+    case 'XXXXL':
+    case '4XL':
+      return '48';
+    case 'XXXXXL':
+    case '5XL':
+      return '50';
+    default:
+      return trimmed;
+  }
+};
+
+/**
  * Checks if a cell string represents a clothing size (e.g. 42, 40, 38, S, M, L, XL, KIDS, etc.)
  */
 const isSizeValue = (val: string): boolean => {
   if (!val) return false;
-  const cleaned = val.trim().toUpperCase();
-  return /^(30|32|34|36|38|40|42|44|46|48|50|XS|S|M|L|XL|2XL|3XL|4XL|5XL|KIDS|FREE|OVERSIZE|\d{2})$/i.test(cleaned);
+  const cleaned = val.trim().toUpperCase().replace(/[\s\-_]+/g, '');
+  return /^(30|32|34|36|38|40|42|44|46|48|50|XS|S|M|L|XL|2XL|XXL|3XL|XXXL|4XL|XXXXL|5XL|XXXXXL|KIDS|FREE|OVERSIZE|\d{2})$/i.test(cleaned);
 };
 
 /**
@@ -87,17 +124,18 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
 
           const name = String(row[nameIdx] ?? '').trim();
           let number = String(row[numIdx] ?? '').trim();
-          let size = String(row[sizeIdx] ?? '').trim();
+          let rawSize = String(row[sizeIdx] ?? '').trim();
 
           // Fallback if sheet has 3 columns total (Name, Number, Size without empty 3rd column)
-          if (!size && row.length >= 3 && isSizeValue(String(row[2] ?? ''))) {
-            size = String(row[2] ?? '').trim();
+          if (!rawSize && row.length >= 3 && isSizeValue(String(row[2] ?? ''))) {
+            rawSize = String(row[2] ?? '').trim();
           }
 
           // Skip repeated header row if found
-          if (/^(name|player|size|no|number)$/i.test(name) && /^(size|no|number)$/i.test(size)) continue;
-          if (!name && !size && !number) continue;
+          if (/^(name|player|size|no|number)$/i.test(name) && /^(size|no|number)$/i.test(rawSize)) continue;
+          if (!name && !rawSize && !number) continue;
 
+          const size = convertLetterSizeToNumber(rawSize);
           const isGK = /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(name);
           players.push({ name, size, number, isGK: isGK ? true : undefined });
         }
@@ -145,7 +183,7 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
 
   const addPlayerIfValid = (rawName: string, rawSize: string, rawNumber: string) => {
     const cName = cleanText(rawName);
-    const cSize = cleanText(rawSize);
+    const cSize = convertLetterSizeToNumber(cleanText(rawSize));
     const cNum = cleanText(rawNumber);
 
     if (!cName || isGibberish(cName)) return;
@@ -334,8 +372,9 @@ export const calculateSizeBreakdown = (players: PlayerDetail[]) => {
   let totalPieces = 0;
 
   for (const p of players) {
-    const sz = (p.size || '').toUpperCase().trim();
-    if (!sz || sz === 'XXX' || sz === '-' || sz === 'N/A' || sz === 'NIL' || sz === 'NONE' || sz === 'UNSPECIFIED') continue;
+    let raw = (p.size || '').trim();
+    if (!raw || raw === 'XXX' || raw === '-' || raw === 'N/A' || raw === 'NIL' || raw === 'NONE' || raw === 'UNSPECIFIED') continue;
+    const sz = convertLetterSizeToNumber(raw);
     countsBySize[sz] = (countsBySize[sz] || 0) + 1;
     totalPieces += 1;
   }
@@ -356,8 +395,9 @@ export const calculateShortsBreakdown = (players: PlayerDetail[]) => {
 
   for (const p of players) {
     if (!p.shortsSize) continue;
-    const sz = p.shortsSize.toUpperCase().trim();
-    if (!sz || sz === 'XXX' || sz === '-' || sz === 'N/A' || sz === 'NIL' || sz === 'NONE' || sz === 'NO') continue;
+    let raw = p.shortsSize.trim();
+    if (!raw || raw === 'XXX' || raw === '-' || raw === 'N/A' || raw === 'NIL' || raw === 'NONE' || raw === 'NO') continue;
+    const sz = convertLetterSizeToNumber(raw);
     countsBySize[sz] = (countsBySize[sz] || 0) + 1;
     totalPieces += 1;
   }

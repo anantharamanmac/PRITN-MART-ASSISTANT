@@ -19,7 +19,7 @@ import {
   findOrderByInfoNumber,
   formatLocalDate
 } from '@/lib/db';
-import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown } from '@/lib/excelParser';
+import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown, convertLetterSizeToNumber } from '@/lib/excelParser';
 import { getPricingRates, calculateOrderPrice, PricingRates, DEFAULT_PRICING_RATES } from '@/lib/pricing';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
@@ -488,9 +488,9 @@ export default function OrdersPage() {
       ...players,
       {
         name: newPlayerName.trim(),
-        size: newPlayerSize.trim(),
+        size: convertLetterSizeToNumber(newPlayerSize.trim()),
         number: newPlayerNumber.trim(),
-        shortsSize: hasShorts ? newPlayerShortsSize.trim() : undefined,
+        shortsSize: hasShorts && newPlayerShortsSize ? convertLetterSizeToNumber(newPlayerShortsSize.trim()) : undefined,
         sleeve: newPlayerSleeve.trim() || undefined,
         isGK: isNewPlayerGK,
       },
@@ -513,9 +513,13 @@ export default function OrdersPage() {
   const handleUpdatePlayerField = (index: number, field: keyof PlayerItem, value: any) => {
     setPlayers((prev) => {
       const updated = [...prev];
+      let val = value;
+      if ((field === 'size' || field === 'shortsSize') && typeof value === 'string') {
+        val = convertLetterSizeToNumber(value);
+      }
       updated[index] = {
         ...updated[index],
-        [field]: value,
+        [field]: val,
       };
       return updated;
     });
@@ -596,11 +600,11 @@ export default function OrdersPage() {
       const cleanedPlayers = (players || []).map((p) => {
         const item: PlayerItem = {
           name: p.name || '',
-          size: p.size || '',
+          size: convertLetterSizeToNumber(p.size || ''),
           number: p.number || '',
           isGK: Boolean(p.isGK),
         };
-        if (p.shortsSize) item.shortsSize = p.shortsSize;
+        if (p.shortsSize) item.shortsSize = convertLetterSizeToNumber(p.shortsSize);
         if (p.sleeve) item.sleeve = p.sleeve;
         return item;
       });
