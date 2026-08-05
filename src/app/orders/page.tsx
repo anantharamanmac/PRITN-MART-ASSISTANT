@@ -59,6 +59,49 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: string; color: s
   cancelled: { label: 'Cancelled', icon: '', color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.25)', border: 'rgba(156, 163, 175, 0.6)', desc: 'Order cancelled or suspended' },
 };
 
+// Helper functions for Month Filtering
+const getOrderMonthKey = (ord: OrderRecord): string => {
+  if (ord.createdAt) {
+    if (typeof (ord.createdAt as any).toDate === 'function') {
+      const d = (ord.createdAt as any).toDate();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+    if ((ord.createdAt as any).seconds) {
+      const d = new Date((ord.createdAt as any).seconds * 1000);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+  }
+  if (ord.deliveryDate && ord.deliveryDate.length >= 7) {
+    return ord.deliveryDate.substring(0, 7);
+  }
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+};
+
+const getCurrentMonthKey = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+};
+
+const formatMonthLabel = (key: string): string => {
+  if (key === 'all') return 'All Months';
+  const parts = key.split('-');
+  if (parts.length !== 2) return key;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  if (isNaN(year) || isNaN(month)) return key;
+  const d = new Date(year, month, 1);
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+};
+
 export default function OrdersPage() {
   const router = useRouter();
   const [user, setUser] = useState<AppUser | null>(null);
@@ -68,6 +111,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthKey());
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals & Detail States
@@ -683,10 +727,27 @@ export default function OrdersPage() {
     }
   };
 
+  // Month Breakdown & Month-Wise Filter Logic
+  const currentMonthKey = getCurrentMonthKey();
+  const monthCounts: Record<string, number> = {};
+
+  orders.forEach((ord) => {
+    const mKey = getOrderMonthKey(ord);
+    monthCounts[mKey] = (monthCounts[mKey] || 0) + 1;
+  });
+
+  if (monthCounts[currentMonthKey] === undefined) {
+    monthCounts[currentMonthKey] = 0;
+  }
+
+  const availableMonths = Object.keys(monthCounts).sort().reverse();
+
   // Filter & Search Logic
   const filteredOrders = orders.filter((ord) => {
+    const ordMonth = getOrderMonthKey(ord);
+    const matchesMonth = selectedMonth === 'all' || ordMonth === selectedMonth;
     const matchesStatus = filterStatus === 'all' || ord.status === filterStatus;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
     const matchesQuery =
       !q ||
       String(ord.infoNumber || '').includes(q) ||
@@ -697,15 +758,16 @@ export default function OrdersPage() {
       ord.clothType.toLowerCase().includes(q) ||
       ord.neckType.toLowerCase().includes(q) ||
       ord.createdByName.toLowerCase().includes(q);
-    return matchesStatus && matchesQuery;
+    return matchesMonth && matchesStatus && matchesQuery;
   });
 
-  // Calculate Order Statistics
+  // Calculate Order Statistics (for selected month view)
   const todayStr = formatLocalDate(new Date());
-  const totalOrders = orders.length;
-  const inProductionCount = orders.filter((o) => o.status === 'in_production').length;
-  const readyCount = orders.filter((o) => o.status === 'ready').length;
-  const urgentCount = orders.filter(
+  const monthOrders = orders.filter((o) => selectedMonth === 'all' || getOrderMonthKey(o) === selectedMonth);
+  const totalOrders = monthOrders.length;
+  const inProductionCount = monthOrders.filter((o) => o.status === 'in_production').length;
+  const readyCount = monthOrders.filter((o) => o.status === 'ready').length;
+  const urgentCount = monthOrders.filter(
     (o) => o.status !== 'delivered' && o.status !== 'cancelled' && o.deliveryDate <= todayStr
   ).length;
 
@@ -827,11 +889,117 @@ export default function OrdersPage() {
         </div>
 
         {/* Filter & Search Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem', background: 'var(--bg-surface)', padding: '0.75rem', borderRadius: '14px', border: '1px solid var(--border)' }}>
-          {/* Status Filter Tabs */}
-          <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.25rem', width: '100%', scrollbarWidth: 'none' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem', background: 'var(--bg-surface)', padding: '0.85rem', borderRadius: '14px', border: '1px solid var(--border)' }}>
+          {/* Row 1: Month Wise Tabs & Month Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingBottom: '0.6rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflowX: 'auto', scrollbarWidth: 'none', width: '100%' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--sapphire-light)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, marginRight: '0.2rem' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                Month:
+              </span>
+
+              {availableMonths.slice(0, 6).map((mKey) => {
+                const isCurrent = mKey === currentMonthKey;
+                const isActive = selectedMonth === mKey;
+                const count = monthCounts[mKey] || 0;
+                return (
+                  <button
+                    key={mKey}
+                    onClick={() => setSelectedMonth(mKey)}
+                    style={{
+                      padding: '0.4rem 0.75rem',
+                      borderRadius: '20px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      border: isActive ? '1px solid #3b82f6' : '1px solid var(--border)',
+                      cursor: 'pointer',
+                      background: isActive
+                        ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                        : 'rgba(255,255,255,0.05)',
+                      color: isActive ? '#ffffff' : 'var(--text-secondary)',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      boxShadow: isActive ? '0 3px 10px rgba(59, 130, 246, 0.35)' : 'none'
+                    }}
+                  >
+                    <span>{formatMonthLabel(mKey)}</span>
+                    {isCurrent && (
+                      <span style={{ fontSize: '0.58rem', padding: '0.05rem 0.3rem', borderRadius: '4px', background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(59, 130, 246, 0.2)', color: isActive ? '#fff' : '#3b82f6', textTransform: 'uppercase', fontWeight: 900 }}>
+                        CURRENT
+                      </span>
+                    )}
+                    <span style={{ fontSize: '0.68rem', opacity: 0.9, background: 'rgba(0,0,0,0.25)', padding: '0.05rem 0.35rem', borderRadius: '10px' }}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* View All Months Tab */}
+              <button
+                onClick={() => setSelectedMonth('all')}
+                style={{
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '20px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  border: selectedMonth === 'all' ? '1px solid #10b981' : '1px solid var(--border)',
+                  cursor: 'pointer',
+                  background: selectedMonth === 'all' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.05)',
+                  color: selectedMonth === 'all' ? '#10b981' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                <span>All Months</span>
+                <span style={{ fontSize: '0.68rem', opacity: 0.9, background: 'rgba(0,0,0,0.25)', padding: '0.05rem 0.35rem', borderRadius: '10px' }}>
+                  {orders.length}
+                </span>
+              </button>
+
+              {/* Month Dropdown Select for older history */}
+              {availableMonths.length > 0 && (
+                <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    style={{
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-main)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value={currentMonthKey}>📅 Current Month ({formatMonthLabel(currentMonthKey)})</option>
+                    {availableMonths.map((mKey) => (
+                      <option key={mKey} value={mKey}>
+                        {formatMonthLabel(mKey)} ({monthCounts[mKey] || 0} orders) {mKey === currentMonthKey ? '★ Current' : ''}
+                      </option>
+                    ))}
+                    <option value="all">📅 All Months ({orders.length} orders)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: Status Filter Tabs */}
+          <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.1rem', width: '100%', scrollbarWidth: 'none' }}>
             {[
-              { id: 'all', label: 'All Orders' },
+              { id: 'all', label: 'All Statuses' },
               { id: 'pending', label: 'Pending' },
               { id: 'in_production', label: 'In Production' },
               { id: 'ready', label: 'Ready' },
@@ -841,7 +1009,7 @@ export default function OrdersPage() {
                 key={tab.id}
                 onClick={() => setFilterStatus(tab.id)}
                 style={{
-                  padding: '0.45rem 0.75rem',
+                  padding: '0.42rem 0.75rem',
                   borderRadius: '8px',
                   fontSize: '0.78rem',
                   fontWeight: 700,
@@ -859,7 +1027,7 @@ export default function OrdersPage() {
             ))}
           </div>
 
-          {/* Search Box */}
+          {/* Row 3: Search Box */}
           <div style={{ position: 'relative', width: '100%' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
               <circle cx="11" cy="11" r="8" />
@@ -867,7 +1035,7 @@ export default function OrdersPage() {
             </svg>
             <input
               type="text"
-              placeholder="Search INFO NO, customer, phone, order name, fabric, neck..."
+              placeholder={`Search in ${formatMonthLabel(selectedMonth)} (INFO NO, customer, phone, order title, fabric...)`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -881,6 +1049,28 @@ export default function OrdersPage() {
               }}
             />
           </div>
+
+          {/* Search helper notice if search yields no results in selected month but matches exist in other months */}
+          {searchQuery && filteredOrders.length === 0 && selectedMonth !== 'all' && orders.some(o => {
+            const q = searchQuery.toLowerCase().trim();
+            return (
+              String(o.infoNumber || '').includes(q) ||
+              o.orderNumber.toLowerCase().includes(q) ||
+              o.customerName.toLowerCase().includes(q) ||
+              (o.customerPhone && o.customerPhone.toLowerCase().includes(q)) ||
+              (o.orderTitle && o.orderTitle.toLowerCase().includes(q))
+            );
+          }) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', color: '#eab308', fontSize: '0.78rem' }}>
+              <span>No results in {formatMonthLabel(selectedMonth)}, but matching orders were found in other months!</span>
+              <button
+                onClick={() => setSelectedMonth('all')}
+                style={{ padding: '0.25rem 0.65rem', borderRadius: '6px', border: 'none', background: '#eab308', color: '#000', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+              >
+                Search All Months
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Orders Grid */}
