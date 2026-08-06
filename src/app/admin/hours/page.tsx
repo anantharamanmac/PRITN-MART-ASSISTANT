@@ -176,6 +176,17 @@ export default function AdminHours() {
     setEndDateFilter(lastDay);
   };
 
+  const setLast30DaysPreset = () => {
+    const end = new Date();
+    const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+    setStartDateFilter(startStr);
+    setEndDateFilter(endStr);
+  };
+
+
   const loadData = async (start: string, end: string, isInitial: boolean = false) => {
     await Promise.resolve();
     if (isInitial) {
@@ -464,23 +475,90 @@ export default function AdminHours() {
                   </select>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[rgba(255,255,255,0.06)]">
-                <span className="text-xs text-secondary font-medium">Quick Date Ranges:</span>
-                <button
-                  type="button"
-                  onClick={setThisMonthPreset}
-                  className="px-2.5 py-1 text-xs bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 rounded-md border border-indigo-500/20 transition-colors font-medium"
-                >
-                  This Month
-                </button>
-                <button
-                  type="button"
-                  onClick={setLastMonthPreset}
-                  className="px-2.5 py-1 text-xs bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 rounded-md border border-purple-500/20 transition-colors font-medium"
-                >
-                  Last Month
-                </button>
-              </div>
+              {/* Quick Presets styling */}
+              {(() => {
+                const { firstDay: tmFirst, lastDay: tmLast } = getInitialDates();
+                const isThisMonth = startDateFilter === tmFirst && endDateFilter === tmLast;
+
+                const d = new Date();
+                const prevYear = d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear();
+                const prevMonth = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
+                const lmFirst = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-01`;
+                const lmLastDate = new Date(prevYear, prevMonth + 1, 0);
+                const lmLast = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(lmLastDate.getDate()).padStart(2, '0')}`;
+                const isLastMonth = startDateFilter === lmFirst && endDateFilter === lmLast;
+
+                const end30 = new Date();
+                const end30Str = `${end30.getFullYear()}-${String(end30.getMonth() + 1).padStart(2, '0')}-${String(end30.getDate()).padStart(2, '0')}`;
+                const start30 = new Date();
+                start30.setDate(start30.getDate() - 30);
+                const start30Str = `${start30.getFullYear()}-${String(start30.getMonth() + 1).padStart(2, '0')}-${String(start30.getDate()).padStart(2, '0')}`;
+                const isLast30Days = startDateFilter === start30Str && endDateFilter === end30Str;
+
+                return (
+                  <div className="flex flex-wrap items-center gap-2.5 mt-4 pt-3.5 border-t border-[rgba(255,255,255,0.08)]">
+                    <span className="text-xs text-secondary font-semibold uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      Quick Date Ranges:
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={setThisMonthPreset}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 cursor-pointer border shadow-sm active:scale-95 ${
+                        isThisMonth
+                          ? 'bg-indigo-600 text-white border-indigo-400 shadow-indigo-500/30 shadow-md ring-2 ring-indigo-400/40'
+                          : 'bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-white border-indigo-500/25 hover:border-indigo-400/40'
+                      }`}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      This Month
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={setLastMonthPreset}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 cursor-pointer border shadow-sm active:scale-95 ${
+                        isLastMonth
+                          ? 'bg-purple-600 text-white border-purple-400 shadow-purple-500/30 shadow-md ring-2 ring-purple-400/40'
+                          : 'bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-white border-purple-500/25 hover:border-purple-400/40'
+                      }`}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                      Last Month
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={setLast30DaysPreset}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 cursor-pointer border shadow-sm active:scale-95 ${
+                        isLast30Days
+                          ? 'bg-teal-600 text-white border-teal-400 shadow-teal-500/30 shadow-md ring-2 ring-teal-400/40'
+                          : 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-white border-teal-500/25 hover:border-teal-400/40'
+                      }`}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      Last 30 Days
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Hours list panel */}
