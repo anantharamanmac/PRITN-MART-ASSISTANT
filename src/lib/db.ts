@@ -310,14 +310,23 @@ export const getAttendanceForSalaryRange = async (monthStr: string): Promise<Att
 
 // Admin: Get attendance records in a date range (YYYY-MM-DD to YYYY-MM-DD)
 export const getAttendanceForDateRange = async (startDate: string, endDate: string): Promise<AttendanceRecord[]> => {
+  if (!startDate || !endDate) return [];
+  
+  let start = startDate;
+  let end = endDate;
+  if (start > end) {
+    [start, end] = [end, start];
+  }
+
   const q = query(
     collection(db, 'attendance'),
-    where('date', '>=', startDate),
-    where('date', '<=', endDate)
+    where('date', '>=', start),
+    where('date', '<=', end)
   );
   const snap = await getDocs(q);
   return snap.docs.map(doc => doc.data() as AttendanceRecord);
 };
+
 
 // Calculate starting and ending date of active salary cycle for a given start day
 export const getCurrentSalaryPeriod = (startDay: number, refDate: Date = new Date()) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { getAllUsers, getAttendanceForDateRange, AttendanceRecord, getBreakTimeMs, getTodayDateString, getUserAttendanceHistory } from '@/lib/db';
@@ -44,7 +44,9 @@ export default function AdminHours() {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
   const [allAttendance, setAllAttendance] = useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const isFirstLoad = useRef(true);
   const [searchName, setSearchName] = useState('');
   const [now, setNow] = useState(new Date());
 
@@ -157,9 +159,30 @@ export default function AdminHours() {
     return () => unsubscribe();
   }, [router]);
 
-  const loadData = async (start: string, end: string) => {
+  const setThisMonthPreset = () => {
+    const { firstDay, lastDay } = getInitialDates();
+    setStartDateFilter(firstDay);
+    setEndDateFilter(lastDay);
+  };
+
+  const setLastMonthPreset = () => {
+    const d = new Date();
+    const prevYear = d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear();
+    const prevMonth = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
+    const firstDay = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-01`;
+    const lastDayDate = new Date(prevYear, prevMonth + 1, 0);
+    const lastDay = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+    setStartDateFilter(firstDay);
+    setEndDateFilter(lastDay);
+  };
+
+  const loadData = async (start: string, end: string, isInitial: boolean = false) => {
     await Promise.resolve();
-    setLoading(true);
+    if (isInitial) {
+      setInitialLoading(true);
+    } else {
+      setIsFetching(true);
+    }
     try {
       const [usersList, attendanceList] = await Promise.all([
         getAllUsers(),
@@ -172,14 +195,22 @@ export default function AdminHours() {
     } catch (error) {
       console.error("Error loading hours data", error);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setInitialLoading(false);
+      } else {
+        setIsFetching(false);
+      }
     }
   };
 
   useEffect(() => {
     if (!currentUser) return;
+    const isInitial = isFirstLoad.current;
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+    }
     const t = setTimeout(() => {
-      loadData(startDateFilter, endDateFilter);
+      loadData(startDateFilter, endDateFilter, isInitial);
     }, 0);
     return () => clearTimeout(t);
   }, [currentUser, startDateFilter, endDateFilter]);
@@ -189,13 +220,13 @@ export default function AdminHours() {
 
     // Silent background refresh every 1 minute
     const interval = setInterval(() => {
-      loadData(startDateFilter, endDateFilter);
+      loadData(startDateFilter, endDateFilter, false);
     }, 60000);
 
     return () => clearInterval(interval);
   }, [currentUser, startDateFilter, endDateFilter]);
 
-  if (!currentUser || loading) return <PrinterLoader text="Loading Employee Reports..." fullscreen type="tshirt" />;
+  if (!currentUser || initialLoading) return <PrinterLoader text="Loading Employee Reports..." fullscreen type="tshirt" />;
 
   // Filter users by search query
   const filteredUsers = allUsers.filter(u =>
@@ -384,7 +415,9 @@ export default function AdminHours() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-secondary mb-1 block">Start Date</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs text-secondary">Start Date</label>
+                  </div>
                   <input
                     type="date"
                     className="input-field w-full !py-1.5 !px-3 !text-sm"
@@ -393,7 +426,9 @@ export default function AdminHours() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-secondary mb-1 block">End Date</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs text-secondary">End Date</label>
+                  </div>
                   <input
                     type="date"
                     className="input-field w-full !py-1.5 !px-3 !text-sm"
@@ -429,25 +464,61 @@ export default function AdminHours() {
                   </select>
                 </div>
               </div>
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[rgba(255,255,255,0.06)]">
+                <span className="text-xs text-secondary font-medium">Quick Date Ranges:</span>
+                <button
+                  type="button"
+                  onClick={setThisMonthPreset}
+                  className="px-2.5 py-1 text-xs bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 rounded-md border border-indigo-500/20 transition-colors font-medium"
+                >
+                  This Month
+                </button>
+                <button
+                  type="button"
+                  onClick={setLastMonthPreset}
+                  className="px-2.5 py-1 text-xs bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 rounded-md border border-purple-500/20 transition-colors font-medium"
+                >
+                  Last Month
+                </button>
+              </div>
             </div>
 
             {/* Hours list panel */}
-            <div className="glass-card">
-              <h2 className="subtitle !text-xl !text-white !mb-4">Work Hours & Days Report</h2>
+            <div className="glass-card relative">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="subtitle !text-xl !text-white !mb-0">Work Hours & Days Report</h2>
+                {isFetching && (
+                  <span className="flex items-center gap-2 text-xs text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 animate-pulse">
+                    <svg className="animate-spin h-3.5 w-3.5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating report...
+                  </span>
+                )}
+              </div>
               {sortedUserStatsList.length === 0 ? (
                 <p className="text-secondary text-sm">No employees match your search criteria.</p>
               ) : (
                 <>
-                  <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 mb-2">
+                  <div className={`flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 mb-2 transition-opacity duration-200 ${isFetching ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                     {paginatedUserStatsList.map(({ user, workingDays, presentDays, halfDays, leaveDays, totalHours, overtimeHours }) => {
-                      // Compute periods range dates
+                      // Compute periods range dates safely
                       const startDay = user.salaryStartDay || 1;
-                      const [y, mVal] = startDateFilter.split('-').map(Number);
-                      const m = mVal - 1; // 0-indexed
-                      const sDate = new Date(y, m, startDay);
-                      const eDate = new Date(y, m + 1, startDay);
-                      const formatOption: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-                      const periodRangeStr = `${sDate.toLocaleDateString('en-US', formatOption)} - ${eDate.toLocaleDateString('en-US', formatOption)}`;
+                      let periodRangeStr = "Custom Range";
+                      if (startDateFilter && endDateFilter) {
+                        const parts = startDateFilter.split('-').map(Number);
+                        if (parts.length === 3 && !parts.some(isNaN)) {
+                          const [y, mVal] = parts;
+                          const m = mVal - 1;
+                          const sDate = new Date(y, m, startDay);
+                          const eDate = new Date(y, m + 1, startDay);
+                          if (!isNaN(sDate.getTime()) && !isNaN(eDate.getTime())) {
+                            const formatOption: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+                            periodRangeStr = `${sDate.toLocaleDateString('en-US', formatOption)} - ${eDate.toLocaleDateString('en-US', formatOption)}`;
+                          }
+                        }
+                      }
 
                       return (
                         <div key={user.uid} className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
