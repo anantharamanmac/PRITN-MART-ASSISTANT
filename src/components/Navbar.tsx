@@ -61,6 +61,15 @@ const BillingIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
+const TaxIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+  </svg>
+);
+
 const SignOutIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -170,6 +179,7 @@ export default function Navbar({ user }: { user: AppUser }) {
     { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
     { href: '/orders', label: 'Orders', icon: OrdersIcon },
     { href: '/billing', label: 'Billing', icon: BillingIcon },
+    { href: '/tally-export', label: 'Tally Tax', icon: TaxIcon },
     { href: '/price-settings', label: 'Prices', icon: PriceIcon },
     { href: '/history', label: 'History', icon: HistoryIcon },
     {
@@ -184,6 +194,7 @@ export default function Navbar({ user }: { user: AppUser }) {
   const mobileNavItems = [
     { href: '/dashboard', label: 'Home', icon: DashboardIcon },
     { href: '/orders', label: 'Orders', icon: OrdersIcon },
+    { href: '/tally-export', label: 'Tally Tax', icon: TaxIcon },
     {
       href: '/billing',
       secondaryHref: '/price-settings',

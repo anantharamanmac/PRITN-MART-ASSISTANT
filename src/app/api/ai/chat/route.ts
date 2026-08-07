@@ -123,12 +123,15 @@ You must output exactly a single, valid JSON object with the following keys:
 
 Do NOT include any markdown code blocks (\`\`\`json ...) or conversational text outside of the JSON object.`;
 
-    // 5. Query Groq Chat Completion with JSON mode enabled
+    // 5. Trim conversation window to latest 10 messages for lower latency and token optimization
+    const trimmedMessages = (messages || []).slice(-10);
+
+    // Query Groq Chat Completion with JSON mode enabled
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
-        ...messages
+        ...trimmedMessages
       ],
       temperature: 0.3,
       max_tokens: 500,

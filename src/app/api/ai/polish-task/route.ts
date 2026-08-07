@@ -28,14 +28,16 @@ Guidelines:
 4. Keep the output relatively concise (around 2-4 bullet points or a short professional paragraph, depending on the input).
 5. Output ONLY the polished text. Do not include introductory text (like "Here is your polished task:") or conversational filler. Just output the list/accomplishments directly.`;
 
+    const cleanTaskText = (taskText || '').trim().slice(0, 1000);
+
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: taskText },
+        { role: 'user', content: cleanTaskText },
       ],
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 300,
     });
 
     const polishedText = completion.choices[0]?.message?.content?.trim() || '';

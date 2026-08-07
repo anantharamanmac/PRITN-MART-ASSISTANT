@@ -1,53 +1,173 @@
 [
   {
-    "id": "a36fdf4",
-    "version": "v1.8 - A36FDF4",
-    "date": "Jul 30, 2026",
-    "title": "chore: update package-lock.json dependencies",
+    "id": "47a3ecd",
+    "version": "v1.8 - 47A3ECD",
+    "date": "Aug 7, 2026",
+    "title": "feat: implement order management system with creation, tracking, and info slip generation functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785369600,
+      "seconds": 1786060800,
       "nanoseconds": 0
     }
   },
   {
-    "id": "03e8a2f",
-    "version": "v1.8 - 03E8A2F",
-    "date": "Jul 30, 2026",
-    "title": "feat: implement order management interface with Excel/PDF parsing and auto-fill functionality",
+    "id": "c7f881d",
+    "version": "v1.8 - C7F881D",
+    "date": "Aug 7, 2026",
+    "title": "feat: implement admin attendance reports page with PDF export and add billing, orders, and settings modules with AIChatbot component",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785369600,
+      "seconds": 1786060800,
       "nanoseconds": 0
     }
   },
   {
-    "id": "5565e72",
-    "version": "v1.8 - 5565E72",
-    "date": "Jul 30, 2026",
-    "title": "feat: implement order management module with Excel/PDF import and form-based tracking",
+    "id": "0b497c0",
+    "version": "v1.8 - 0B497C0",
+    "date": "Aug 6, 2026",
+    "title": "feat: implement admin dashboard page for employee hours tracking, attendance reporting, and salary statement generation",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785369600,
+      "seconds": 1785974400,
       "nanoseconds": 0
     }
   },
   {
-    "id": "d46a89b",
-    "version": "v1.8 - D46A89B",
-    "date": "Jul 30, 2026",
+    "id": "36a1314",
+    "version": "v1.8 - 36A1314",
+    "date": "Aug 6, 2026",
+    "title": "feat: add admin hours reporting page and database utility functions",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785974400,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "85f9dda",
+    "version": "v1.8 - 85F9DDA",
+    "date": "Aug 5, 2026",
+    "title": "feat: implement new order management page with full CRUD and import capabilities",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785888000,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "a98e6a6",
+    "version": "v1.8 - A98E6A6",
+    "date": "Aug 4, 2026",
+    "title": "feat: implement excel and text parser utilities for processing player order data",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785801600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "cb6ed40",
+    "version": "v1.8 - CB6ED40",
+    "date": "Aug 2, 2026",
+    "title": "feat: implement comprehensive order management system with file-based processing, dynamic pricing, and role-based access control",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785628800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "8986fed",
+    "version": "v1.8 - 8986FED",
+    "date": "Aug 1, 2026",
+    "title": "feat: implement main application navigation, billing, orders, and price settings modules",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785542400,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "74c751f",
+    "version": "v1.8 - 74C751F",
+    "date": "Aug 1, 2026",
+    "title": "feat: add pricing configuration page and backend utilities for managing fabric, sleeve, and neck rates",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785542400,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "5422778",
+    "version": "v1.8 - 5422778",
+    "date": "Aug 1, 2026",
+    "title": "feat: implement employee attendance tracking, payroll calculation, and management utilities",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785542400,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "1b8e6b2",
+    "version": "v1.8 - 1B8E6B2",
+    "date": "Aug 1, 2026",
+    "title": "feat: implement modular architecture including navigation, database, pricing, and order management utilities",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1785542400,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "3c5b222",
+    "version": "v1.8 - 3C5B222",
+    "date": "Jul 31, 2026",
     "title": "feat: add InfoSheetSlip component for printing and PDF generation of order details",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
@@ -55,127 +175,7 @@
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785369600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "639be16",
-    "version": "v1.8 - 639BE16",
-    "date": "Jul 29, 2026",
-    "title": "feat: initialize project git history tracking with release v1.8 summary data",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "f440c32",
-    "version": "v1.8 - F440C32",
-    "date": "Jul 29, 2026",
-    "title": "fix: prevent sizes text breakdown overflow inside order card container",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "f4ff240",
-    "version": "v1.8 - F4FF240",
-    "date": "Jul 29, 2026",
-    "title": "style: reduce order card size and grid layout for a compact sleek UI",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "e29322a",
-    "version": "v1.8 - E29322A",
-    "date": "Jul 29, 2026",
-    "title": "feat: add Tesseract OCR fallback for scanned PDF and photo PDF roster import",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "ac5a471",
-    "version": "v1.8 - AC5A471",
-    "date": "Jul 29, 2026",
-    "title": "fix: sanitize PDF binary stream noise and filter out gibberish symbols",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "c2468cd",
-    "version": "v1.8 - C2468CD",
-    "date": "Jul 29, 2026",
-    "title": "fix: add dual-layer robust PDF parser with raw text decoder fallback",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "99f819b",
-    "version": "v1.8 - 99F819B",
-    "date": "Jul 29, 2026",
-    "title": "feat: add PDF document parser for player roster import",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "40e9718",
-    "version": "v1.8 - 40E9718",
-    "date": "Jul 29, 2026",
-    "title": "feat: add Auto-Fetch & Pre-fill order data by existing INFO NO.",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1785283200,
+      "seconds": 1785456000,
       "nanoseconds": 0
     }
   }

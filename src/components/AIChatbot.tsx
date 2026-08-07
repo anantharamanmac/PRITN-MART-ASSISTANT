@@ -124,7 +124,7 @@ What would you like me to check?`
             workMode: user.workMode || 'office',
             salaryStartDay: user.salaryStartDay || 1
           },
-          logs: activeLogs || [],
+          logs: (activeLogs || []).slice(0, 60),
           messages: chatHistory,
         }),
       });

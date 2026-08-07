@@ -960,6 +960,7 @@ export interface OrderRecord {
   hasShorts?: boolean;
   bottomType?: 'shorts' | 'track_pant';
   ratePerPiece?: number;
+  taxRate?: number;
   totalAmount?: number;
   discountAmount?: number;
   advanceAmount?: number;
