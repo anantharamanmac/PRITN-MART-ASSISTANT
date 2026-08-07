@@ -770,8 +770,8 @@ function BillingContent() {
 
       {/* ── PRINTABLE A4 INVOICE MODAL ── */}
       {showInvoiceModal && currentInvoiceData && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}>
-          <div className="card-glass" style={{ width: '100%', maxWidth: '900px', maxHeight: '94vh', overflowY: 'auto', overflowX: 'auto', borderRadius: '20px', padding: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+        <div className="modal-overlay-container" style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}>
+          <div className="card-glass modal-responsive-card" style={{ width: '100%', maxWidth: '900px', maxHeight: '94vh', overflowY: 'auto', overflowX: 'auto', borderRadius: '20px', padding: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
             <InvoiceSlip
               invoice={currentInvoiceData}
               order={selectedOrder}

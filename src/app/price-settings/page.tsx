@@ -313,7 +313,7 @@ export default function PriceSettingsPage() {
         </div>
 
         {/* ── PRICING GRID SECTIONS ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
 
           {activeTab === 'sublimation' ? (
             <>

@@ -2607,3 +2607,261 @@ select.input-field option {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px var(--danger-glow);
 }
+
+/* =============================================
+   QUICK DATE PRESET BUTTONS
+   ============================================= */
+.quick-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.quick-preset-btn:hover {
+  transform: translateY(-1.5px);
+}
+
+.quick-preset-btn:active {
+  transform: scale(0.96);
+}
+
+/* Indigo Variant (This Month) */
+.quick-preset-btn-indigo {
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.quick-preset-btn-indigo:hover {
+  background: rgba(99, 102, 241, 0.22);
+  color: #ffffff;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+}
+
+.quick-preset-btn-indigo.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  border-color: #818cf8;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
+}
+
+/* Purple Variant (Last Month) */
+.quick-preset-btn-purple {
+  background: rgba(168, 85, 247, 0.12);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.quick-preset-btn-purple:hover {
+  background: rgba(168, 85, 247, 0.22);
+  color: #ffffff;
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.25);
+}
+
+.quick-preset-btn-purple.active {
+  background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+  color: #ffffff;
+  border-color: #c084fc;
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.45);
+}
+
+/* Teal Variant (Last 30 Days) */
+.quick-preset-btn-teal {
+  background: rgba(20, 184, 166, 0.12);
+  color: #5eead4;
+  border-color: rgba(20, 184, 166, 0.3);
+}
+
+.quick-preset-btn-teal:hover {
+  background: rgba(20, 184, 166, 0.22);
+  color: #ffffff;
+  border-color: rgba(20, 184, 166, 0.5);
+  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.25);
+}
+
+.quick-preset-btn-teal.active {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  color: #ffffff;
+  border-color: #2dd4bf;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.45);
+}
+
+/* =============================================
+   MOBILE RESPONSIVE SYSTEM (SCOPED TO MAX-WIDTH: 768PX)
+   DESKTOP VIEW (> 768PX) REMAINS 100% UNTOUCHED
+   ============================================= */
+
+/* Table horizontal scroll container */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 4px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  /* Container spacing to clear fixed bottom navigation bar */
+  .container {
+    padding: 1.25rem 0.85rem 6rem 0.85rem !important;
+  }
+
+  /* Typography adjustments */
+  .title {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .subtitle {
+    font-size: 0.88rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  /* Glass cards touch optimization */
+  .glass-card {
+    padding: 1.2rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Mobile Top Navbar brand spacing */
+  .navbar {
+    padding: 0.75rem 1rem !important;
+  }
+  .nav-brand {
+    font-size: 1.15rem !important;
+  }
+
+  /* Chatbot position adjustment above mobile tab bar */
+  .chatbot-floating-wrapper {
+    bottom: 5.25rem !important;
+    right: 0.85rem !important;
+  }
+  .chatbot-window {
+    bottom: 4.8rem !important;
+    right: 0.5rem !important;
+    left: 0.5rem !important;
+    width: calc(100vw - 1rem) !important;
+    max-height: 82vh !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Modals on mobile */
+  .welcome-modal-card {
+    width: 95% !important;
+    max-width: 95% !important;
+    padding: 1.25rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem 0.75rem 6rem 0.75rem !important;
+  }
+
+  .title {
+    font-size: 1.5rem !important;
+  }
+
+  /* Quick presets scroll on mobile */
+  .quick-preset-btn {
+    font-size: 0.72rem !important;
+    padding: 0.4rem 0.75rem !important;
+  }
+
+  /* Sidebar stacked navigation on mobile */
+  .sidebar-link {
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+/* =============================================
+   RESPONSIVE FORM GRIDS FOR MODALS & PANELS
+   ============================================= */
+.modal-form-grid-3 {
+  display: grid;
+  grid-template-columns: 1.5fr 1.5fr 1fr;
+  gap: 0.75rem;
+}
+
+.modal-form-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.6rem;
+}
+
+.modal-form-grid-5-auto {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1.1fr 1.1fr 1.1fr;
+  gap: 0.75rem;
+}
+
+.modal-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.player-input-grid {
+  display: grid;
+  grid-template-columns: 2fr auto 1fr 1fr 1fr auto;
+  gap: 0.4rem;
+}
+
+.player-input-grid-shorts {
+  display: grid;
+  grid-template-columns: 2fr auto 1fr 1fr 1fr 1fr auto;
+  gap: 0.4rem;
+}
+
+/* Mobile Responsive Grids Overrides (< 640px) */
+@media (max-width: 640px) {
+  .modal-form-grid-3,
+  .modal-form-grid-5,
+  .modal-form-grid-5-auto {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .modal-form-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .player-input-grid,
+  .player-input-grid-shorts {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.4rem !important;
+  }
+
+  .modal-responsive-card {
+    padding: 0.85rem !important;
+    width: 98% !important;
+    max-width: 98% !important;
+    border-radius: 14px !important;
+  }
+
+  .modal-overlay-container {
+    padding: 0.35rem !important;
+  }
+}
+
+

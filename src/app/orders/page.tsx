@@ -1402,8 +1402,8 @@ export default function OrdersPage() {
 
       {/* ── CREATE / EDIT ORDER MODAL (2-SECTION TABS) ── */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div className="card-glass" style={{ width: '100%', maxWidth: '680px', maxHeight: '92vh', overflowY: 'auto', borderRadius: '20px', padding: '1.25rem', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+        <div className="modal-overlay-container" style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="card-glass modal-responsive-card" style={{ width: '100%', maxWidth: '680px', maxHeight: '92vh', overflowY: 'auto', borderRadius: '20px', padding: '1.25rem', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.6rem' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -1489,7 +1489,7 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Customer Name, Mobile Number, Order Title */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr', gap: '0.75rem' }}>
+                  <div className="modal-form-grid-3">
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>Customer Name *</label>
                       <input
@@ -1527,7 +1527,7 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Pieces, Delivery Date, Cloth, Neck Type & DTF Option */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 1.1fr 1.1fr 1.1fr', gap: '0.75rem' }}>
+                  <div className="modal-form-grid-5-auto">
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>Total Pieces *</label>
                       <input
@@ -1679,7 +1679,7 @@ export default function OrdersPage() {
                     </div>
 
                     {/* 5-Field Financial Inputs Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '0.6rem' }}>
+                    <div className="modal-form-grid-5">
                       <div>
                         <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Rate / Pc (₹)</label>
                         <input
@@ -1836,7 +1836,7 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Print Specs Checkboxes */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                  <div className="modal-form-grid-3" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>PRINT METHOD</label>
                       <select value={printMethod} onChange={(e) => setPrintMethod(e.target.value as any)} style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
@@ -1958,7 +1958,7 @@ export default function OrdersPage() {
                     )}
 
                     {/* Add Manual Player Inputs */}
-                    <div style={{ display: 'grid', gridTemplateColumns: hasShorts ? '2fr auto 1fr 1fr 1fr 1fr auto' : '2fr auto 1fr 1fr 1fr auto', gap: '0.4rem', marginBottom: '0.65rem' }}>
+                    <div className={hasShorts ? "player-input-grid-shorts" : "player-input-grid"} style={{ marginBottom: '0.65rem' }}>
                       <input type="text" placeholder="Player Name (e.g. JAGAN)" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: isNewPlayerGK ? '1px solid #ef4444' : '1px solid var(--border)', background: isNewPlayerGK ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-main)', color: isNewPlayerGK ? '#ef4444' : 'var(--text-primary)', fontSize: '0.8rem', fontWeight: isNewPlayerGK ? 800 : 400 }} />
                       <button
                         type="button"
@@ -2173,8 +2173,8 @@ export default function OrdersPage() {
 
       {/* ── PRINT INFO SHEET MODAL ── */}
       {infoSheetOrder && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div className="card-glass" style={{ width: '100%', maxWidth: '940px', maxHeight: '92vh', overflowY: 'auto', borderRadius: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+        <div className="modal-overlay-container" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="card-glass modal-responsive-card" style={{ width: '100%', maxWidth: '940px', maxHeight: '92vh', overflowY: 'auto', borderRadius: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
             <InfoSheetSlip order={infoSheetOrder} onClose={() => setInfoSheetOrder(null)} />
           </div>
         </div>

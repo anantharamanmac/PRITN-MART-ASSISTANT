@@ -182,6 +182,19 @@ What would you like me to check?`
             bottom: calc(72px + env(safe-area-inset-bottom));
             right: 16px;
           }
+          .chatbot-window {
+            width: calc(100vw - 32px);
+            max-width: 340px;
+            height: 75vh;
+            max-height: 480px;
+            right: 0;
+          }
+          .chatbot-tooltip {
+            right: 0px;
+            bottom: 64px;
+            width: calc(100vw - 48px);
+            max-width: 280px;
+          }
         }
 
         /* 1. Chat Toggle Button */
