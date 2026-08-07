@@ -17,7 +17,10 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   const players = order.players || [];
   const { summaryArray, totalPieces } = calculateSizeBreakdown(players);
   const { summaryArray: shortsSummaryArray } = calculateShortsBreakdown(players);
-  const hasShorts = Boolean(order.hasShorts || players.some(p => p.shortsSize && p.shortsSize !== '' && p.shortsSize !== '-'));
+  const hasShorts = order.hasShorts !== undefined ? Boolean(order.hasShorts) : players.some(p => p.shortsSize && p.shortsSize !== '' && p.shortsSize !== '-');
+  const bottomType = order.bottomType || 'shorts';
+  const bottomLabel = bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS';
+  const bottomHeaderCode = bottomType === 'track_pant' ? 'PT' : 'SH';
   const displayPieces = players.length > 0 ? totalPieces : order.pieces;
 
   // Format delivery date as DD / MM / YY
@@ -357,7 +360,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                     NECK <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: '13px', textTransform: 'uppercase' }}>{order.neckType || 'ROUND NECK'}</span>
                   </div>
                   <div style={{ fontSize: '13px', fontWeight: 900, color: '#000', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    SHORTS <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
+                    {bottomLabel} <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
                   </div>
                 </div>
               </div>
@@ -407,11 +410,11 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   )}
                 </div>
 
-                {/* Shorts Summary Breakdown (if enabled) */}
+                {/* Shorts / Track Pant Summary Breakdown (if enabled) */}
                 {hasShorts && (
                   <div style={{ marginTop: '10px', borderTop: '1.5px dashed #888', paddingTop: '6px' }}>
                     <div style={{ fontSize: '14px', fontWeight: 900, color: '#d92525', textDecoration: 'underline', marginBottom: '4px' }}>
-                      SHORTS SUMMARY
+                      {bottomLabel} SUMMARY
                     </div>
                     <div style={{
                       display: 'grid',
@@ -426,7 +429,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                           <div key={idx}>{sumStr}</div>
                         ))
                       ) : (
-                        <div>ALL SHORTS : {displayPieces}</div>
+                        <div>ALL {bottomLabel}S : {displayPieces}</div>
                       )}
                     </div>
                   </div>
@@ -468,7 +471,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                         <th style={{ textAlign: 'center', padding: tablePadding, width: hasShorts ? '32px' : '36px', borderRight: '1.5px solid #000' }}>SIZE</th>
                         <th style={{ textAlign: 'center', padding: tablePadding, width: '26px', borderRight: '1.5px solid #000', color: '#004c80' }}>SLV</th>
                         {hasShorts && (
-                          <th style={{ textAlign: 'center', padding: tablePadding, width: '32px', borderRight: '1.5px solid #000', color: '#b91c1c' }}>SH</th>
+                          <th style={{ textAlign: 'center', padding: tablePadding, width: '32px', borderRight: '1.5px solid #000', color: '#b91c1c' }}>{bottomHeaderCode}</th>
                         )}
                         <th style={{ textAlign: 'center', padding: tablePadding, width: '30px' }}>NO.</th>
                       </tr>

@@ -958,6 +958,7 @@ export interface OrderRecord {
   printArea?: 'front_only' | 'front_back' | 'full';
   sleeveType?: 'sleeveless' | 'half' | 'full';
   hasShorts?: boolean;
+  bottomType?: 'shorts' | 'track_pant';
   ratePerPiece?: number;
   totalAmount?: number;
   discountAmount?: number;

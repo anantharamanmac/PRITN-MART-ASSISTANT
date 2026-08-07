@@ -142,6 +142,7 @@ export default function OrdersPage() {
   const [printArea, setPrintArea] = useState<'front_only' | 'front_back' | 'full'>('full');
   const [sleeveType, setSleeveType] = useState<'sleeveless' | 'half' | 'full'>('full');
   const [hasShorts, setHasShorts] = useState(false);
+  const [bottomType, setBottomType] = useState<'shorts' | 'track_pant'>('shorts');
   const [dtfOption, setDtfOption] = useState<string>('none');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -260,7 +261,8 @@ export default function OrdersPage() {
       setPrintMethod(found.printMethod || 'sublimation');
       setPrintArea(found.printArea || 'full');
       setSleeveType(found.sleeveType || 'full');
-      setHasShorts(Boolean(found.hasShorts || found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+      setHasShorts(found.hasShorts !== undefined ? Boolean(found.hasShorts) : Boolean(found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+      setBottomType(found.bottomType || 'shorts');
       setNotes(found.notes || '');
       if (found.players && found.players.length > 0) {
         setPlayers([...found.players]);
@@ -408,6 +410,7 @@ export default function OrdersPage() {
     setPrintArea('full');
     setSleeveType('full');
     setHasShorts(false);
+    setBottomType('shorts');
     setDtfOption('none');
     setPlayers([]);
     setExcelInputText('');
@@ -460,7 +463,8 @@ export default function OrdersPage() {
     setPrintMethod(ord.printMethod || 'sublimation');
     setPrintArea(ord.printArea || 'full');
     setSleeveType(ord.sleeveType || 'full');
-    setHasShorts(Boolean(ord.hasShorts || ord.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+    setHasShorts(ord.hasShorts !== undefined ? Boolean(ord.hasShorts) : Boolean(ord.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+    setBottomType(ord.bottomType || 'shorts');
     setDtfOption(ord.dtfOption || 'none');
     setNotes(ord.notes || '');
     setPlayers(ord.players ? [...ord.players] : []);
@@ -648,7 +652,7 @@ export default function OrdersPage() {
           number: p.number || '',
           isGK: Boolean(p.isGK),
         };
-        if (p.shortsSize) item.shortsSize = convertLetterSizeToNumber(p.shortsSize);
+        if (hasShorts && p.shortsSize) item.shortsSize = convertLetterSizeToNumber(p.shortsSize);
         if (p.sleeve) item.sleeve = p.sleeve;
         return item;
       });
@@ -670,6 +674,7 @@ export default function OrdersPage() {
         printArea,
         sleeveType,
         hasShorts,
+        bottomType: hasShorts ? bottomType : 'shorts',
         dtfOption,
         ratePerPiece: Number(ratePerPiece) || 0,
         totalAmount: Number(totalAmount) || 0,
@@ -1871,7 +1876,13 @@ export default function OrdersPage() {
                       <input
                         type="checkbox"
                         checked={hasShorts}
-                        onChange={(e) => setHasShorts(e.target.checked)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setHasShorts(checked);
+                          if (!checked) {
+                            setPlayers((prev) => prev.map(({ shortsSize, ...rest }) => rest));
+                          }
+                        }}
                         style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
                       />
                       <div>
@@ -1879,10 +1890,50 @@ export default function OrdersPage() {
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v18h16V2H4zm2 2h4v12H6V4zm12 12h-4V4h4v12z" /></svg> Include Shorts / Pant Specifications
                         </span>
                         <span style={{ display: 'block', fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
-                          Check this option to enable Shorts Size selection for each player in the roster
+                          Check this option to enable Shorts / Pant Size selection for each player in the roster
                         </span>
                       </div>
                     </label>
+
+                    {hasShorts && (
+                      <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981' }}>Select Bottom Wear Type:</span>
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setBottomType('shorts')}
+                            style={{
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              border: bottomType === 'shorts' ? '1.5px solid #10b981' : '1px solid var(--border)',
+                              background: bottomType === 'shorts' ? '#10b981' : 'rgba(255,255,255,0.05)',
+                              color: bottomType === 'shorts' ? '#ffffff' : 'var(--text-secondary)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            🩳 Shorts
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBottomType('track_pant')}
+                            style={{
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              border: bottomType === 'track_pant' ? '1.5px solid #10b981' : '1px solid var(--border)',
+                              background: bottomType === 'track_pant' ? '#10b981' : 'rgba(255,255,255,0.05)',
+                              color: bottomType === 'track_pant' ? '#ffffff' : 'var(--text-secondary)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            👖 Track Pant
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* ── PLAYERS ROSTER SECTION (EXCEL IMPORT + TABLE) ── */}
@@ -1900,7 +1951,7 @@ export default function OrdersPage() {
                           )}
                           {hasShorts && calculateShortsBreakdown(players).summaryString && (
                             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>
-                              Shorts Summary: {calculateShortsBreakdown(players).summaryString}
+                              {bottomType === 'track_pant' ? 'Track Pant' : 'Shorts'} Summary: {calculateShortsBreakdown(players).summaryString}
                             </span>
                           )}
                         </div>
@@ -1985,7 +2036,7 @@ export default function OrdersPage() {
                         <option value="SL" style={{ background: '#161e31', color: '#fff' }}>SL (Sleeveless)</option>
                       </select>
                       {hasShorts && (
-                        <input type="text" placeholder="Shorts (32)" value={newPlayerShortsSize} onChange={(e) => setNewPlayerShortsSize(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }} />
+                        <input type="text" placeholder={bottomType === 'track_pant' ? "Pant (32)" : "Shorts (32)"} value={newPlayerShortsSize} onChange={(e) => setNewPlayerShortsSize(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }} />
                       )}
                       <input type="text" placeholder="No. (9)" value={newPlayerNumber} onChange={(e) => setNewPlayerNumber(e.target.value)} style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }} />
                       <button type="button" onClick={handleAddPlayer} style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: 'none', background: '#10b981', color: '#fff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
@@ -2002,7 +2053,7 @@ export default function OrdersPage() {
                               <th style={{ padding: '6px 4px', width: '42px', color: '#ef4444', textAlign: 'center' }}>GK</th>
                               <th style={{ padding: '6px 6px', width: '75px' }}>Shirt Size</th>
                               <th style={{ padding: '6px 6px', width: '65px', color: '#3b82f6' }}>Sleeve</th>
-                              {hasShorts && <th style={{ padding: '6px 6px', width: '75px', color: '#10b981' }}>Shorts</th>}
+                              {hasShorts && <th style={{ padding: '6px 6px', width: '75px', color: '#10b981' }}>{bottomType === 'track_pant' ? 'Track Pant' : 'Shorts'}</th>}
                               <th style={{ padding: '6px 6px', width: '60px' }}>No.</th>
                               <th style={{ padding: '6px 6px', textAlign: 'right', width: '32px' }}>Action</th>
                             </tr>

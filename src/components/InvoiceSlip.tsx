@@ -17,6 +17,7 @@ export interface InvoiceData {
   sleeveType: string;
   neckType: string;
   hasShorts: boolean;
+  bottomType?: 'shorts' | 'track_pant';
   pieces: number;
   ratePerPiece: number;
   subtotal: number;
@@ -384,7 +385,7 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
                 {invoice.hasShorts && (
                   <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
                     <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
-                      INCLUDES SHORTS / PANTS ADD-ON
+                      INCLUDES {invoice.bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS / PANTS'} ADD-ON
                     </td>
                     <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
                       -

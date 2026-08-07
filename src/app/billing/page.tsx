@@ -62,6 +62,7 @@ function BillingContent() {
   const [sleeveType, setSleeveType] = useState<'full' | 'half' | 'sleeveless'>('full');
   const [neckType, setNeckType] = useState(NECK_TYPES[0]);
   const [hasShorts, setHasShorts] = useState(false);
+  const [bottomType, setBottomType] = useState<'shorts' | 'track_pant'>('shorts');
   const [pieces, setPieces] = useState<number>(10);
   const [dtfOption, setDtfOption] = useState<string>('none');
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -183,7 +184,8 @@ function BillingContent() {
       setClothType(found.clothType || CLOTH_TYPES[0]);
       setSleeveType((found.sleeveType as any) || 'full');
       setNeckType(found.neckType || NECK_TYPES[0]);
-      setHasShorts(Boolean(found.hasShorts || found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+      setHasShorts(found.hasShorts !== undefined ? Boolean(found.hasShorts) : Boolean(found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
+      setBottomType(found.bottomType || 'shorts');
       setPieces(found.players && found.players.length > 0 ? found.players.length : (found.pieces || 10));
       setDtfOption(found.dtfOption || 'none');
       setDeliveryDate(found.deliveryDate || '');
@@ -236,6 +238,7 @@ function BillingContent() {
       sleeveType,
       neckType,
       hasShorts,
+      bottomType: hasShorts ? bottomType : 'shorts',
       pieces,
       ratePerPiece,
       subtotal,
@@ -586,8 +589,48 @@ function BillingContent() {
                     }}
                     style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
                   />
-                  <span>Includes Shorts / Pants (+₹{pricingRates.shortsMaterials?.[clothType] ?? pricingRates.shortsRate ?? 120}/pc)</span>
+                  <span>Includes {bottomType === 'track_pant' ? 'Track Pant' : 'Shorts'} / Pants (+₹{pricingRates.shortsMaterials?.[clothType] ?? pricingRates.shortsRate ?? 120}/pc)</span>
                 </label>
+
+                {hasShorts && (
+                  <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px dashed rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>Type:</span>
+                    <div style={{ display: 'flex', gap: '0.3rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setBottomType('shorts')}
+                        style={{
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '5px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          border: bottomType === 'shorts' ? '1.5px solid #10b981' : '1px solid var(--border)',
+                          background: bottomType === 'shorts' ? '#10b981' : 'rgba(255,255,255,0.05)',
+                          color: bottomType === 'shorts' ? '#ffffff' : 'var(--text-secondary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🩳 Shorts
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBottomType('track_pant')}
+                        style={{
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '5px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          border: bottomType === 'track_pant' ? '1.5px solid #10b981' : '1px solid var(--border)',
+                          background: bottomType === 'track_pant' ? '#10b981' : 'rgba(255,255,255,0.05)',
+                          color: bottomType === 'track_pant' ? '#ffffff' : 'var(--text-secondary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        👖 Track Pant
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Notes */}
