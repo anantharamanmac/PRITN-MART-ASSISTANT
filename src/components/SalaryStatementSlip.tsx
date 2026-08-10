@@ -75,6 +75,34 @@ export default function SalaryStatementSlip({
   const totalOtPay = totalOtHrs * 100;
   const startDay = user.salaryStartDay || 1;
 
+  // Monthly Base Salary & Day-Wise Leave Deduction Calculation
+  const [customMonthlySalary, setCustomMonthlySalary] = useState<number>(user.monthlySalary || 24000);
+
+  useEffect(() => {
+    if (user.monthlySalary && user.monthlySalary > 0) {
+      setCustomMonthlySalary(user.monthlySalary);
+    }
+  }, [user.monthlySalary]);
+
+  // Total calendar days in statement range (e.g. 30 days)
+  const totalCycleDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const dailySalaryRate = customMonthlySalary > 0 ? customMonthlySalary / totalCycleDays : 0;
+
+  // Attendance & Leaves Breakdown from logged records
+  const presentDays = cycleRecords.filter(r => r.status === 'present').length;
+  const halfDays = cycleRecords.filter(r => r.status === 'half-day').length;
+  const explicitLeaveDays = cycleRecords.filter(r => r.status === 'leave').length;
+
+  // Calculated Leaves = 1 leave per Full Leave + 0.5 leave per Half Day
+  const calculatedLeaves = explicitLeaveDays + (halfDays * 0.5);
+
+  const [customLeavesCount, setCustomLeavesCount] = useState<number | null>(null);
+  const leavesCount = customLeavesCount !== null ? customLeavesCount : calculatedLeaves;
+
+  // Day-wise Leave Deduction Amount & Balance Net Payable Salary
+  const leaveDeductionAmount = leavesCount * dailySalaryRate;
+  const netPayableSalary = Math.max(0, customMonthlySalary - leaveDeductionAmount + totalOtPay);
+
   const periodStartStr = startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const periodEndStr = endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -135,7 +163,31 @@ export default function SalaryStatementSlip({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Base Salary Input Control */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Monthly Salary (₹):</span>
+            <input
+              type="number"
+              value={customMonthlySalary || ''}
+              onChange={(e) => setCustomMonthlySalary(parseFloat(e.target.value) || 0)}
+              placeholder="e.g. 24000"
+              style={{ width: '95px', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 800, fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Leaves Count Adjustment Control */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Leaves Count:</span>
+            <input
+              type="number"
+              step="0.5"
+              value={leavesCount}
+              onChange={(e) => setCustomLeavesCount(parseFloat(e.target.value) || 0)}
+              style={{ width: '65px', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#ef4444', fontWeight: 800, fontSize: '0.85rem' }}
+            />
+          </div>
+
           {/* Download PDF Button */}
           <button
             type="button"
@@ -343,6 +395,60 @@ export default function SalaryStatementSlip({
                 <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>Designation & Department</span>
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', textTransform: 'capitalize' }}>{user.designation || "Apparel Specialist"}</span>
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Apparel Production Dept. | Cycle Day: {formatOrdinal(startDay)}</span>
+              </div>
+            </div>
+
+            {/* ── FINANCIAL PAYROLL & DAY-WISE LEAVE DEDUCTION SUMMARY BLOCK ── */}
+            <div style={{
+              background: '#f8fafc',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '25px',
+              position: 'relative',
+              zIndex: 10
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#1e1b4b', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💳 Monthly Base Salary & Day-Wise Leave Calculation
+                </h3>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#4f46e5', background: '#e0e7ff', padding: '2px 8px', borderRadius: '12px' }}>
+                  Daily Rate: ₹{dailySalaryRate.toFixed(2)}/day ({totalCycleDays} days cycle)
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px' }}>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#64748b', display: 'block' }}>Base Monthly Salary</span>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1b4b', marginTop: '2px' }}>
+                    ₹{Math.round(customMonthlySalary).toLocaleString('en-IN')}
+                  </div>
+                  <span style={{ fontSize: '8.5px', color: '#94a3b8' }}>Configured by Admin</span>
+                </div>
+
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px' }}>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#64748b', display: 'block' }}>Leaves / Absent Days</span>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: leavesCount > 0 ? '#ef4444' : '#10b981', marginTop: '2px' }}>
+                    {leavesCount} Day{leavesCount !== 1 ? 's' : ''}
+                  </div>
+                  <span style={{ fontSize: '8.5px', color: '#94a3b8' }}>{explicitLeaveDays} Full Leave{explicitLeaveDays !== 1 ? 's' : ''} + {halfDays} Half Day{halfDays !== 1 ? 's' : ''}</span>
+                </div>
+
+                <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 12px' }}>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#dc2626', display: 'block' }}>Leave Salary Deduction</span>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626', marginTop: '2px' }}>
+                    -₹{Math.round(leaveDeductionAmount).toLocaleString('en-IN')}
+                  </div>
+                  <span style={{ fontSize: '8.5px', color: '#ef4444' }}>{leavesCount} leaves × ₹{Math.round(dailySalaryRate)}</span>
+                </div>
+
+                <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '8px', padding: '10px 12px' }}>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#16a34a', display: 'block' }}>Balance Net Payable</span>
+                  <div style={{ fontSize: '18px', fontWeight: 900, color: '#15803d', marginTop: '2px' }}>
+                    ₹{Math.round(netPayableSalary).toLocaleString('en-IN')}
+                  </div>
+                  <span style={{ fontSize: '8.5px', color: '#16a34a', fontWeight: 700 }}>Base - Leave Ded. + OT</span>
+                </div>
               </div>
             </div>
 

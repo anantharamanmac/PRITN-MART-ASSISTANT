@@ -14,6 +14,7 @@ export interface AppUser {
   workMode?: 'office' | 'remote';
   createdAt: Timestamp;
   salaryStartDay?: number;
+  monthlySalary?: number;
 }
 
 export const signInWithGoogle = async () => {

@@ -46,6 +46,7 @@ export default function AdminDashboard() {
   const [editNameValue, setEditNameValue] = useState('');
   const [editDesignationValue, setEditDesignationValue] = useState('');
   const [editWorkModeValue, setEditWorkModeValue] = useState<'office' | 'remote'>('office');
+  const [editSalaryValue, setEditSalaryValue] = useState<string>('');
 
   // Office Location configuration state
   const [officeLat, setOfficeLat] = useState('12.9716');
@@ -150,11 +151,13 @@ export default function AdminDashboard() {
 
   const handleUpdateProfile = async (userId: string) => {
     if (!editNameValue.trim()) return;
+    const parsedSalary = editSalaryValue !== '' ? parseFloat(editSalaryValue) : undefined;
     try {
       await updateUserProfile(userId, {
         displayName: editNameValue.trim(),
         designation: editDesignationValue.trim(),
-        workMode: editWorkModeValue
+        workMode: editWorkModeValue,
+        monthlySalary: parsedSalary !== undefined && !isNaN(parsedSalary) ? parsedSalary : 0
       });
       setEditingUserId(null);
       await loadData(); // Reload to update UI
@@ -1023,6 +1026,16 @@ export default function AdminDashboard() {
                                 <option value="remote">Remote</option>
                               </select>
                             </div>
+                            <div className="w-32">
+                              <label className="text-[10px] text-emerald-400 font-semibold uppercase block mb-1">Monthly Salary (₹)</label>
+                              <input
+                                type="number"
+                                className="input-field !p-1.5 !text-xs w-full font-bold text-emerald-400 border-emerald-500/30"
+                                value={editSalaryValue}
+                                onChange={(e) => setEditSalaryValue(e.target.value)}
+                                placeholder="e.g. 24000"
+                              />
+                            </div>
                           </div>
                         ) : (
                           <div className="min-w-0 flex-1">
@@ -1043,6 +1056,15 @@ export default function AdminDashboard() {
                                 }`}>
                                 {user.workMode || 'office'}
                               </span>
+                              {user.monthlySalary ? (
+                                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full">
+                                  💰 ₹{user.monthlySalary.toLocaleString('en-IN')}/mo
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold text-secondary bg-white/5 border border-white/10 px-2 py-0.5 rounded-full opacity-60">
+                                  Salary Not Set
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-secondary truncate">{user.email}</div>
                           </div>
@@ -1067,6 +1089,7 @@ export default function AdminDashboard() {
                                 setEditNameValue(user.displayName);
                                 setEditDesignationValue(user.designation || '');
                                 setEditWorkModeValue(user.workMode || 'office');
+                                setEditSalaryValue(user.monthlySalary ? user.monthlySalary.toString() : '');
                               }}
                               className="team-edit-btn"
                             >

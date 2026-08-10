@@ -238,10 +238,10 @@ export const getAllUsers = async (): Promise<AppUser[]> => {
   return snap.docs.map(doc => doc.data() as AppUser);
 };
 
-// Admin: Update user profile (name and designation)
+// Admin: Update user profile (name, designation, work mode, and monthly salary)
 export const updateUserProfile = async (
   userId: string,
-  data: { displayName?: string; designation?: string; workMode?: 'office' | 'remote' }
+  data: { displayName?: string; designation?: string; workMode?: 'office' | 'remote'; monthlySalary?: number }
 ) => {
   const userRef = doc(db, 'users', userId);
   await updateDoc(userRef, data);
