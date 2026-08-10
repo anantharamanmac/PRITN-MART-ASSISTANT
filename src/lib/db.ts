@@ -959,6 +959,7 @@ export interface OrderRecord {
   sleeveType?: 'sleeveless' | 'half' | 'full';
   hasShorts?: boolean;
   bottomType?: 'shorts' | 'track_pant';
+  labelType?: 'new' | 'old' | 'none';
   ratePerPiece?: number;
   taxRate?: number;
   totalAmount?: number;

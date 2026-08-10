@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { toast } from 'react-hot-toast';
 
 export interface PlayerDetail {
   name: string;
@@ -408,4 +409,65 @@ export const calculateShortsBreakdown = (players: PlayerDetail[]) => {
   return { summaryString, summaryArray, totalPieces, countsBySize };
 };
 
+/**
+ * Converts a player roster list into an Excel CSV file formatted with:
+ * Column 1: NAME
+ * Column 2: NUMBER
+ * Column 3: SIZE
+ * (and optional extra columns for Sleeve, Shorts Size if present)
+ */
+export const exportPlayersToCSV = (
+  players: PlayerDetail[],
+  filenamePrefix: string = 'Player_Roster',
+  hasShorts?: boolean
+) => {
+  if (!players || players.length === 0) {
+    toast.error('No players in the roster list to export!');
+    return;
+  }
 
+  const escapeCsv = (val: any) => {
+    if (val === undefined || val === null) return '""';
+    const str = String(val).trim();
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const headers = ['NAME', 'NUMBER', 'SIZE'];
+  const hasShortsData = hasShorts || players.some(p => p.shortsSize && p.shortsSize.trim() !== '');
+
+  if (hasShortsData) {
+    headers.push('SHORTS_SIZE');
+  }
+
+  const rows = players.map((p) => {
+    const nameVal = p.isGK ? `${p.name} (GK)` : p.name;
+    const row = [
+      escapeCsv(nameVal),
+      escapeCsv(p.number || ''),
+      escapeCsv(p.size || '')
+    ];
+    if (hasShortsData) {
+      row.push(escapeCsv(p.shortsSize || ''));
+    }
+    return row.join(',');
+  });
+
+  // Adding UTF-8 BOM (\uFEFF) so Microsoft Excel opens character formatting correctly
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  const cleanPrefix = filenamePrefix.replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const fileName = `${cleanPrefix}_Roster.csv`;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  toast.success(`Exported ${players.length} players to Excel CSV (${fileName})!`);
+};

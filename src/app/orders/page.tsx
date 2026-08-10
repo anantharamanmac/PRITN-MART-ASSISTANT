@@ -19,7 +19,7 @@ import {
   findOrderByInfoNumber,
   formatLocalDate
 } from '@/lib/db';
-import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown, convertLetterSizeToNumber } from '@/lib/excelParser';
+import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown, convertLetterSizeToNumber, exportPlayersToCSV } from '@/lib/excelParser';
 import { getPricingRates, calculateOrderPrice, PricingRates, DEFAULT_PRICING_RATES } from '@/lib/pricing';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
@@ -141,6 +141,7 @@ export default function OrdersPage() {
   const [printMethod, setPrintMethod] = useState<'sublimation' | 'dft' | 'normal'>('sublimation');
   const [printArea, setPrintArea] = useState<'front_only' | 'front_back' | 'full'>('full');
   const [sleeveType, setSleeveType] = useState<'sleeveless' | 'half' | 'full'>('full');
+  const [labelType, setLabelType] = useState<'new' | 'old' | 'none'>('new');
   const [hasShorts, setHasShorts] = useState(false);
   const [bottomType, setBottomType] = useState<'shorts' | 'track_pant'>('shorts');
   const [dtfOption, setDtfOption] = useState<string>('none');
@@ -409,6 +410,7 @@ export default function OrdersPage() {
     setPrintMethod('sublimation');
     setPrintArea('full');
     setSleeveType('full');
+    setLabelType('new');
     setHasShorts(false);
     setBottomType('shorts');
     setDtfOption('none');
@@ -463,6 +465,7 @@ export default function OrdersPage() {
     setPrintMethod(ord.printMethod || 'sublimation');
     setPrintArea(ord.printArea || 'full');
     setSleeveType(ord.sleeveType || 'full');
+    setLabelType(ord.labelType || 'new');
     setHasShorts(ord.hasShorts !== undefined ? Boolean(ord.hasShorts) : Boolean(ord.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
     setBottomType(ord.bottomType || 'shorts');
     setDtfOption(ord.dtfOption || 'none');
@@ -673,6 +676,7 @@ export default function OrdersPage() {
         printMethod,
         printArea,
         sleeveType,
+        labelType,
         hasShorts,
         bottomType: hasShorts ? bottomType : 'shorts',
         dtfOption,
@@ -1840,8 +1844,8 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Print Specs Checkboxes */}
-                  <div className="modal-form-grid-3" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                  {/* Print Specs & Label Checkboxes */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.65rem', background: 'rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>PRINT METHOD</label>
                       <select value={printMethod} onChange={(e) => setPrintMethod(e.target.value as any)} style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
@@ -1861,11 +1865,20 @@ export default function OrdersPage() {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>SLEEVE TYPE (Master Default)</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>SLEEVE TYPE</label>
                       <select value={sleeveType} onChange={(e) => handleSleeveTypeChange(e.target.value as any)} style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
                         <option value="full" style={{ background: '#161e31', color: '#fff' }}>Full Sleeve (F)</option>
                         <option value="half" style={{ background: '#161e31', color: '#fff' }}>Half Sleeve (H)</option>
                         <option value="sleeveless" style={{ background: '#161e31', color: '#fff' }}>Sleeveless (SL)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b', marginBottom: '0.2rem' }}>STITCHING LABEL *</label>
+                      <select value={labelType} onChange={(e) => setLabelType(e.target.value as any)} style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid #f59e0b', background: 'var(--bg-main)', color: labelType === 'old' ? '#f59e0b' : labelType === 'none' ? 'var(--text-secondary)' : '#10b981', fontSize: '0.8rem', fontWeight: 800 }}>
+                        <option value="new" style={{ background: '#161e31', color: '#fff' }}>🏷️ New Label</option>
+                        <option value="old" style={{ background: '#161e31', color: '#fff' }}>🏷️ Old Label</option>
+                        <option value="none" style={{ background: '#161e31', color: '#fff' }}>🚫 No Label</option>
                       </select>
                     </div>
                   </div>
@@ -1979,6 +1992,29 @@ export default function OrdersPage() {
                           style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg> {showExcelBox ? 'Hide Paste Box' : 'Paste Text'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => exportPlayersToCSV(players, infoNumber ? `INFO-${infoNumber}` : orderNumber || 'Designer', hasShorts)}
+                          disabled={players.length === 0}
+                          title="Export list into Excel CSV file (Name first, Number second, Size third)"
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid #eab308',
+                            background: 'rgba(234, 179, 8, 0.15)',
+                            color: '#eab308',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: players.length === 0 ? 'not-allowed' : 'pointer',
+                            opacity: players.length === 0 ? 0.5 : 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg> Export Excel CSV
                         </button>
                       </div>
                     </div>

@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { OrderRecord } from '@/lib/db';
-import { calculateSizeBreakdown, calculateShortsBreakdown } from '@/lib/excelParser';
+import { calculateSizeBreakdown, calculateShortsBreakdown, exportPlayersToCSV } from '@/lib/excelParser';
 
 interface InfoSheetSlipProps {
   order: OrderRecord;
@@ -179,6 +179,32 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
             <span>{downloadingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
           </button>
 
+          {/* Export Excel CSV Button */}
+          <button
+            type="button"
+            onClick={() => exportPlayersToCSV(players, `INFO-${order.infoNumber || 2412}`, hasShorts)}
+            disabled={players.length === 0}
+            title="Export roster list into Excel CSV file (Name, Number, Size)"
+            style={{
+              padding: '0.55rem 1.1rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#eab308',
+              color: '#000000',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              cursor: players.length === 0 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)',
+              opacity: players.length === 0 ? 0.6 : 1
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            <span>Export Excel CSV</span>
+          </button>
+
           {/* Print Button */}
           <button
             type="button"
@@ -351,6 +377,22 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   </div>
                 </div>
 
+                {/* LABEL Section (Stitching Master Notice) */}
+                <div style={{ marginBottom: '6px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 900, marginBottom: '2px' }}>STITCHING LABEL</div>
+                  <div style={{ display: 'flex', gap: '6px', fontSize: '10.5px', fontWeight: 900 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      NEW LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'new' || !order.labelType ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      OLD LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'old' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      NO LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'none' ? '#d92525' : '#fff' }}></span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* CLOTH & NECK & SHORTS Specifications */}
                 <div style={{ marginTop: '6px' }}>
                   <div style={{ fontSize: '14px', fontWeight: 900, color: '#000' }}>
@@ -362,6 +404,30 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   <div style={{ fontSize: '13px', fontWeight: 900, color: '#000', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {bottomLabel} <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
                   </div>
+                </div>
+
+                {/* STITCHING MASTER NOTICE BOX */}
+                <div style={{
+                  marginTop: '6px',
+                  padding: '3px 6px',
+                  border: '1.5px solid #000',
+                  background: order.labelType === 'old' ? '#fef3c7' : order.labelType === 'none' ? '#f3f4f6' : '#dcfce7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontWeight: 900,
+                  fontSize: '11px',
+                  color: '#000'
+                }}>
+                  <span>STITCHING MASTER NOTE:</span>
+                  <span style={{
+                    fontSize: '11.5px',
+                    fontWeight: 900,
+                    color: order.labelType === 'old' ? '#b45309' : order.labelType === 'none' ? '#4b5563' : '#15803d',
+                    textTransform: 'uppercase'
+                  }}>
+                    {order.labelType === 'old' ? '⚠️ USE OLD LABEL' : order.labelType === 'none' ? '🚫 NO LABEL' : '✓ USE NEW LABEL'}
+                  </span>
                 </div>
               </div>
 
