@@ -29,6 +29,10 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
   const [order, setOrder] = useState<OrderRecord | null>(null);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
+  // Animated Tutorial Modal State
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   // Form states
   const [players, setPlayers] = useState<PlayerItem[]>([]);
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -212,6 +216,40 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
   const { summaryString } = calculateSizeBreakdown(players);
   const { summaryString: shortsSummaryString } = calculateShortsBreakdown(players);
 
+  // Tutorial Slides Definition
+  const tutorialSlides = [
+    {
+      icon: '👕',
+      badge: 'Step 1 of 4: Order Overview',
+      title: 'Welcome to Print Mart Roster Entry!',
+      description: 'Check your team order specifications (Customer Name, Info No, Item Type, Fabric, Master Neck/Collar & Sleeve defaults) before adding player details.',
+      highlightText: `INFO #${order?.infoNumber || 2412} — ${order?.customerName || 'Customer'} (${order?.orderTitle || order?.itemType || 'JERSEY'})`,
+      tip: 'Everything is saved safely as a draft until you submit.'
+    },
+    {
+      icon: '✍️',
+      badge: 'Step 2 of 4: Add Team Members',
+      title: 'Fill Name, Jersey No, Size & Sleeve',
+      description: 'Add players 1-by-1 by filling Name, Jersey Number, Shirt Size (34-50), Sleeve Option (Full/Half/Sleeveless), and Collar Style.',
+      demoItem: { name: 'JAGAN', number: '9', size: '42', sleeve: 'Full (F)', collar: 'Round Neck' },
+      tip: 'Toggle Goal Keeper (+ GK) for Goal Keepers to mark them in red!'
+    },
+    {
+      icon: '📋',
+      badge: 'Step 3 of 4: Fast Bulk Import',
+      title: 'Copy-Paste from Excel or WhatsApp',
+      description: 'Already have a player list? Click "Paste Excel" or "Excel Upload" to import all team members at once with 1 click!',
+      tip: 'Supports Excel columns: Name, Size, Number, Sleeve, Collar.'
+    },
+    {
+      icon: '🚀',
+      badge: 'Step 4 of 4: Send to Print Mart',
+      title: 'Review & Submit to Production',
+      description: 'Once all players are added, tap "Submit Roster". Our admin team will verify and approve your specs for production setup!',
+      tip: 'You can return and edit your submission anytime using this link.'
+    }
+  ];
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#0d1117', color: '#f0f6fc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -285,16 +323,40 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
   }
 
   const bottomLabel = order.bottomType === 'track_pant' ? 'Track Pant' : 'Shorts';
+  const activeSlideData = tutorialSlides[currentSlide];
 
   return (
     <div style={{ minHeight: '100vh', background: '#0d1117', color: '#f0f6fc', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '0.75rem', paddingBottom: '5.5rem' }}>
       <Toaster position="top-right" />
 
-      {/* Embedded Mobile CSS Overrides */}
+      {/* Animations & Mobile CSS Overrides */}
       <style jsx global>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @keyframes popupScaleIn {
+          0% { opacity: 0; transform: scale(0.88) translateY(20px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes slideContentFade {
+          0% { opacity: 0; transform: translateX(16px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes floatPulse {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+
+        .popup-modal-container {
+          animation: popupScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .slide-animated-content {
+          animation: slideContentFade 0.3s ease-out forwards;
         }
         
         .roster-input {
@@ -330,6 +392,126 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
         }
       `}</style>
 
+      {/* ── ANIMATED POPUP TUTORIAL MODAL SLIDES ── */}
+      {showTutorial && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0, 0, 0, 0.88)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="popup-modal-container" style={{ width: '100%', maxWidth: '500px', background: '#161b22', borderRadius: '24px', border: '1.5px solid #3b82f6', boxShadow: '0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(59, 130, 246, 0.25)', padding: '1.75rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
+            
+            {/* Top Bar with Skip Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '0.73rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.15)', padding: '0.25rem 0.65rem', borderRadius: '20px', border: '1px solid rgba(59, 130, 246, 0.3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {activeSlideData.badge}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setShowTutorial(false)}
+                style={{ background: 'transparent', border: 'none', color: '#8b949e', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: '6px' }}
+              >
+                Skip ✕
+              </button>
+            </div>
+
+            {/* Slide Content */}
+            <div key={currentSlide} className="slide-animated-content" style={{ minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              {/* Icon Banner */}
+              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.15)', border: '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '2.5rem', animation: 'floatPulse 3s ease-in-out infinite' }}>
+                  {activeSlideData.icon}
+                </div>
+                <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.35rem', fontWeight: 900, color: '#ffffff' }}>
+                  {activeSlideData.title}
+                </h2>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#c9d1d9', lineHeight: 1.5 }}>
+                  {activeSlideData.description}
+                </p>
+              </div>
+
+              {/* Slide Custom Preview Boxes */}
+              {activeSlideData.highlightText && (
+                <div style={{ background: '#0d1117', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #30363d', fontSize: '0.825rem', color: '#3b82f6', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem' }}>
+                  📌 Order Info: {activeSlideData.highlightText}
+                </div>
+              )}
+
+              {activeSlideData.demoItem && (
+                <div style={{ background: '#0d1117', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #30363d', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 700, marginBottom: '0.3rem', textTransform: 'uppercase' }}>Sample Entry Preview:</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 800, color: '#ffffff' }}>
+                    <span>👤 {activeSlideData.demoItem.name}</span>
+                    <span style={{ color: '#10b981' }}>No. {activeSlideData.demoItem.number}</span>
+                    <span style={{ color: '#3b82f6' }}>Size {activeSlideData.demoItem.size}</span>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.6rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.78rem', color: '#10b981', fontWeight: 700, textAlign: 'center' }}>
+                💡 {activeSlideData.tip}
+              </div>
+            </div>
+
+            {/* Slide Dots Progress Indicator */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '1.25rem 0 1.25rem' }}>
+              {tutorialSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  style={{
+                    width: currentSlide === idx ? '24px' : '8px',
+                    height: '8px',
+                    borderRadius: '4px',
+                    background: currentSlide === idx ? '#3b82f6' : '#30363d',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Action Buttons */}
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              {currentSlide > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
+                  style={{ flex: 1, minHeight: '46px', borderRadius: '12px', border: '1px solid #30363d', background: '#21262d', color: '#f0f6fc', fontWeight: 800, fontSize: '0.875rem', cursor: 'pointer' }}
+                >
+                  ⬅ Previous
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTutorial(false)}
+                  style={{ flex: 1, minHeight: '46px', borderRadius: '12px', border: '1px solid #30363d', background: '#0d1117', color: '#8b949e', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  Skip Guide
+                </button>
+              )}
+
+              {currentSlide < tutorialSlides.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentSlide((prev) => Math.min(tutorialSlides.length - 1, prev + 1))}
+                  style={{ flex: 2, minHeight: '46px', borderRadius: '12px', border: 'none', background: '#3b82f6', color: '#ffffff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)' }}
+                >
+                  Next Step ➔
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTutorial(false)}
+                  style={{ flex: 2, minHeight: '46px', borderRadius: '12px', border: 'none', background: '#10b981', color: '#ffffff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }}
+                >
+                  🚀 Got It! Start Filling Roster
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ maxWidth: '880px', margin: '0 auto' }}>
         {/* Mobile-Friendly Header */}
         <header className="mobile-stack-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid #30363d', marginBottom: '1rem' }}>
@@ -342,9 +524,22 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
             </h1>
           </div>
 
-          <div>
-            <span style={{ fontSize: '0.72rem', color: '#8b949e' }}>Order Reference: </span>
-            <strong style={{ fontSize: '1.1rem', color: '#ef4444', fontWeight: 900 }}>INFO #{order.infoNumber}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentSlide(0);
+                setShowTutorial(true);
+              }}
+              style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+            >
+              ❓ Guide Tutorial
+            </button>
+
+            <div>
+              <span style={{ fontSize: '0.72rem', color: '#8b949e' }}>Ref: </span>
+              <strong style={{ fontSize: '1.05rem', color: '#ef4444', fontWeight: 900 }}>INFO #{order.infoNumber}</strong>
+            </div>
           </div>
         </header>
 
