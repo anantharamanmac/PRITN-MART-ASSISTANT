@@ -142,6 +142,9 @@ export default function OrdersPage() {
   const [printArea, setPrintArea] = useState<'front_only' | 'front_back' | 'full'>('full');
   const [sleeveType, setSleeveType] = useState<'sleeveless' | 'half' | 'full'>('full');
   const [labelType, setLabelType] = useState<'new' | 'old' | 'none'>('new');
+  const [rosterStatus, setRosterStatus] = useState<'draft' | 'pending_admin_approval' | 'approved'>('draft');
+  const [customerRosterDraft, setCustomerRosterDraft] = useState<PlayerItem[]>([]);
+  const [customerNotes, setCustomerNotes] = useState('');
   const [hasShorts, setHasShorts] = useState(false);
   const [bottomType, setBottomType] = useState<'shorts' | 'track_pant'>('shorts');
   const [dtfOption, setDtfOption] = useState<string>('none');
@@ -274,6 +277,28 @@ export default function OrdersPage() {
       toast.dismiss('fetch-info');
       console.error('Error fetching order info:', err);
       toast.error('Failed to fetch order details');
+    }
+  };
+
+  // Share Customer Intake Portal Link Handler
+  const handleShareCustomerLink = (ord: Partial<OrderRecord>) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const link = `${origin}/roster-intake/${ord.infoNumber || ord.id}`;
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link);
+      toast.success(`Copied Customer Link to Clipboard!`, { id: 'copy-link' });
+    }
+
+    const cleanPhone = (ord.customerPhone || '').replace(/[^0-9]/g, '');
+    const msg = encodeURIComponent(
+      `Hi ${ord.customerName || 'Customer'}, please fill out your team jersey details (Name, Number, Size, Sleeve & Collar) using our official Print Mart link: ${link}`
+    );
+    
+    if (cleanPhone) {
+      window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
     }
   };
 
@@ -411,6 +436,9 @@ export default function OrdersPage() {
     setPrintArea('full');
     setSleeveType('full');
     setLabelType('new');
+    setRosterStatus('draft');
+    setCustomerRosterDraft([]);
+    setCustomerNotes('');
     setHasShorts(false);
     setBottomType('shorts');
     setDtfOption('none');
@@ -466,6 +494,9 @@ export default function OrdersPage() {
     setPrintArea(ord.printArea || 'full');
     setSleeveType(ord.sleeveType || 'full');
     setLabelType(ord.labelType || 'new');
+    setRosterStatus(ord.rosterStatus || 'draft');
+    setCustomerRosterDraft(ord.customerRosterDraft || []);
+    setCustomerNotes(ord.customerNotes || '');
     setHasShorts(ord.hasShorts !== undefined ? Boolean(ord.hasShorts) : Boolean(ord.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
     setBottomType(ord.bottomType || 'shorts');
     setDtfOption(ord.dtfOption || 'none');
@@ -677,6 +708,9 @@ export default function OrdersPage() {
         printArea,
         sleeveType,
         labelType,
+        rosterStatus,
+        customerRosterDraft,
+        customerNotes,
         hasShorts,
         bottomType: hasShorts ? bottomType : 'shorts',
         dtfOption,
@@ -1182,7 +1216,12 @@ export default function OrdersPage() {
                     </div>
 
                     {/* Section Status Badge Indicator */}
-                    <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ marginBottom: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      {ord.rosterStatus === 'pending_admin_approval' && (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.2)', padding: '0.15rem 0.5rem', borderRadius: '4px', border: '1px solid #f59e0b', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          📩 Customer Roster Submitted ({ord.customerRosterDraft?.length || 0} Players - Needs Approval)
+                        </span>
+                      )}
                       {hasDesignerSpecs ? (
                         <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                           ✓ Specs Complete ({ord.players?.length || 0} Players)
@@ -1353,6 +1392,28 @@ export default function OrdersPage() {
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="9.8" y1="8.2" x2="20" y2="18" /><line x1="9.8" y1="15.8" x2="20" y2="6" /></svg>
                         Section 2 (Specs)
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleShareCustomerLink(ord)}
+                        style={{
+                          padding: '0.38rem',
+                          borderRadius: '6px',
+                          border: '1px solid #3b82f6',
+                          background: 'rgba(59, 130, 246, 0.15)',
+                          color: '#3b82f6',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.2rem'
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                        Share Link
+                      </button>
                     </div>
 
                     {/* View / Print Cutting & Fusing Info Slip & Generate Bill Buttons */}
@@ -1486,6 +1547,27 @@ export default function OrdersPage() {
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="9.8" y1="8.2" x2="20" y2="18" /><line x1="9.8" y1="15.8" x2="20" y2="6" /></svg>
                 Section 2: Designer Specs
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleShareCustomerLink({ infoNumber, customerName, customerPhone })}
+                style={{
+                  padding: '0.5rem 0.85rem',
+                  borderRadius: '8px',
+                  border: '1px solid #3b82f6',
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  color: '#3b82f6',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  marginLeft: 'auto'
+                }}
+              >
+                🔗 Share Customer Link
               </button>
             </div>
 
@@ -1777,6 +1859,77 @@ export default function OrdersPage() {
               {/* ── SECTION 2: DESIGNER PRODUCTION SPECS & EXCEL ROSTER TAB ── */}
               {activeFormTab === 'designer' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {/* Customer Roster Submission Review Callout Banner */}
+                  {(rosterStatus === 'pending_admin_approval' || (customerRosterDraft && customerRosterDraft.length > 0)) && (
+                    <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1.5px solid #f59e0b', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            📩 Customer Submitted Roster ({customerRosterDraft.length} Players)
+                          </span>
+                          {customerNotes && (
+                            <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              <strong>Customer Request:</strong> "{customerNotes}"
+                            </p>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPlayers([...customerRosterDraft]);
+                              setPieces(customerRosterDraft.length);
+                              setRosterStatus('approved');
+                              toast.success(`Imported ${customerRosterDraft.length} customer submitted players into Designer Roster!`);
+                            }}
+                            style={{ padding: '0.4rem 0.85rem', borderRadius: '6px', border: 'none', background: '#10b981', color: '#fff', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                          >
+                            ✅ Approve & Import to Designer
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleShareCustomerLink({ infoNumber, customerName, customerPhone })}
+                            style={{ padding: '0.4rem 0.85rem', borderRadius: '6px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            🔗 Re-share Link
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Quick Preview Table of Draft */}
+                      <div style={{ maxHeight: '140px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-main)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'left' }}>
+                          <thead style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', position: 'sticky', top: 0, zIndex: 1 }}>
+                            <tr>
+                              <th style={{ padding: '4px 6px' }}>#</th>
+                              <th style={{ padding: '4px 6px' }}>Name</th>
+                              <th style={{ padding: '4px 6px' }}>No.</th>
+                              <th style={{ padding: '4px 6px' }}>Size</th>
+                              <th style={{ padding: '4px 6px' }}>Sleeve</th>
+                              <th style={{ padding: '4px 6px' }}>Collar</th>
+                              {hasShorts && <th style={{ padding: '4px 6px' }}>Shorts</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {customerRosterDraft.map((p, i) => (
+                              <tr key={i} style={{ borderTop: '1px solid var(--border)', background: p.isGK ? 'rgba(239, 68, 68, 0.12)' : 'transparent' }}>
+                                <td style={{ padding: '3px 6px' }}>{i + 1}</td>
+                                <td style={{ padding: '3px 6px', fontWeight: 700, color: p.isGK ? '#ef4444' : 'var(--text-primary)' }}>{p.name} {p.isGK && '(GK)'}</td>
+                                <td style={{ padding: '3px 6px' }}>{p.number}</td>
+                                <td style={{ padding: '3px 6px' }}>{p.size}</td>
+                                <td style={{ padding: '3px 6px', color: '#3b82f6', fontWeight: 700 }}>{p.sleeve || 'F'}</td>
+                                <td style={{ padding: '3px 6px' }}>{p.collar || neckType || '-'}</td>
+                                {hasShorts && <td style={{ padding: '3px 6px', color: '#10b981' }}>{p.shortsSize || '-'}</td>}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ background: 'rgba(217, 37, 37, 0.1)', padding: '0.6rem 0.8rem', borderRadius: '8px', borderLeft: '4px solid #d92525', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                     <strong>Designer & Production Note:</strong> Upload front/back proof mockups, select printing method, and paste Excel player roster data (`Name Size Number`) for the Cutting & Fusing Master Slip.
                   </div>
@@ -2089,6 +2242,7 @@ export default function OrdersPage() {
                               <th style={{ padding: '6px 4px', width: '42px', color: '#ef4444', textAlign: 'center' }}>GK</th>
                               <th style={{ padding: '6px 6px', width: '75px' }}>Shirt Size</th>
                               <th style={{ padding: '6px 6px', width: '65px', color: '#3b82f6' }}>Sleeve</th>
+                              <th style={{ padding: '6px 6px', width: '90px' }}>Collar</th>
                               {hasShorts && <th style={{ padding: '6px 6px', width: '75px', color: '#10b981' }}>{bottomType === 'track_pant' ? 'Track Pant' : 'Shorts'}</th>}
                               <th style={{ padding: '6px 6px', width: '60px' }}>No.</th>
                               <th style={{ padding: '6px 6px', textAlign: 'right', width: '32px' }}>Action</th>
@@ -2176,6 +2330,24 @@ export default function OrdersPage() {
                                       <option value="H" style={{ background: '#161e31', color: '#fff' }}>H (Half)</option>
                                       <option value="SL" style={{ background: '#161e31', color: '#fff' }}>SL (Sleeveless)</option>
                                     </select>
+                                  </td>
+                                  <td style={{ padding: '3px 3px' }}>
+                                    <input
+                                      type="text"
+                                      value={p.collar || ''}
+                                      onChange={(e) => handleUpdatePlayerField(idx, 'collar', e.target.value)}
+                                      placeholder={neckType || 'Collar...'}
+                                      style={{
+                                        width: '100%',
+                                        padding: '0.25rem 0.35rem',
+                                        borderRadius: '4px',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--bg-main)',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '0.75rem',
+                                        outline: 'none'
+                                      }}
+                                    />
                                   </td>
                                   {hasShorts && (
                                     <td style={{ padding: '3px 3px' }}>

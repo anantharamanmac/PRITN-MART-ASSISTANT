@@ -937,6 +937,7 @@ export interface PlayerItem {
   number: string;
   shortsSize?: string;
   sleeve?: string; // 'F' for Full, 'H' for Half, 'SL' for Sleeveless
+  collar?: string; // Collar/Neck style preference per player
   isGK?: boolean; // Goal Keeper marker flag
 }
 
@@ -969,6 +970,10 @@ export interface OrderRecord {
   invoiceNumber?: string;
   quotationNumber?: string;
   players?: PlayerItem[];
+  rosterStatus?: 'draft' | 'pending_admin_approval' | 'approved';
+  customerRosterDraft?: PlayerItem[];
+  customerSubmittedAt?: Timestamp;
+  customerNotes?: string;
   status: OrderStatus;
   notes?: string;
   dtfOption?: string;

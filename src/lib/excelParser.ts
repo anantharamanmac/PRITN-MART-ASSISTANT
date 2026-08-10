@@ -7,6 +7,7 @@ export interface PlayerDetail {
   number: string;
   shortsSize?: string;
   sleeve?: string;
+  collar?: string;
   isGK?: boolean;
 }
 
