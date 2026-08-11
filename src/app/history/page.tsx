@@ -26,11 +26,11 @@ export default function HistoryPage() {
   useEffect(() => {
     if (user) {
       const startDay = user.salaryStartDay || 1;
-      const { startDate, endDate } = getCurrentSalaryPeriod(startDay);
+      const { startDate, endDate } = getCurrentSalaryPeriod(startDay, new Date(), user.salaryType || 'monthly', user, attendances);
       setStartDateFilter(startDate);
       setEndDateFilter(endDate);
     }
-  }, [user]);
+  }, [user, attendances]);
 
   // Pagination States
   const [attendancePage, setAttendancePage] = useState(1);
@@ -53,28 +53,28 @@ export default function HistoryPage() {
   const getSalaryMonthsForDate = (dateStr: string, startDay: number): string[] => {
     const [year, monthVal, day] = dateStr.split('-').map(Number);
     const month = monthVal - 1; // 0-indexed
-    
+
     const months: string[] = [];
     const d = new Date(year, month, day);
-    
+
     // 1. Current month's cycle (e.g. starts 4th, ends next month 4th)
     const currentMonthStart = new Date(year, month, startDay);
     const currentMonthEnd = new Date(year, month + 1, startDay);
-    
+
     if (d >= currentMonthStart && d <= currentMonthEnd) {
       months.push(`${year}-${String(monthVal).padStart(2, '0')}`);
     }
-    
+
     // 2. Previous month's cycle
     const prevMonthYear = month === 0 ? year - 1 : year;
     const prevMonth = month === 0 ? 11 : month - 1;
     const prevMonthStart = new Date(prevMonthYear, prevMonth, startDay);
     const prevMonthEnd = new Date(year, month, startDay);
-    
+
     if (d >= prevMonthStart && d <= prevMonthEnd) {
       months.push(`${prevMonthYear}-${String(prevMonth + 1).padStart(2, '0')}`);
     }
-    
+
     return Array.from(new Set(months));
   };
 
@@ -145,16 +145,16 @@ export default function HistoryPage() {
   // We group by custom salary month
   filteredAttendances.forEach(a => {
     const salMonths = getSalaryMonthsForDate(a.date, user.salaryStartDay || 1);
-    
+
     salMonths.forEach(salMonth => {
       if (!monthlyGroupsMap.has(salMonth)) {
         const startDay = user.salaryStartDay || 1;
         const [y, mVal] = salMonth.split('-').map(Number);
         const m = mVal - 1; // 0-indexed
-        
+
         const sDate = new Date(y, m, startDay);
         const eDate = new Date(y, m + 1, startDay);
-        
+
         const formatOption: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
 
         monthlyGroupsMap.set(salMonth, {
@@ -176,7 +176,7 @@ export default function HistoryPage() {
       group.totalHours += a.totalHours || 0;
       group.overtimeHours += a.overtimeHours || 0;
       group.overtimePay += (a.overtimeHours || 0) * 100;
-      
+
       if (a.status === 'present') group.presentCount++;
       else if (a.status === 'half-day') group.halfDayCount++;
       else if (a.status === 'leave') group.leaveCount++;
@@ -324,9 +324,9 @@ export default function HistoryPage() {
                         <div className="flex justify-between mb-2">
                           <div className="font-semibold text-sm">{a.date}</div>
                           <span className={`badge ${a.status === 'present' ? 'badge-worker' :
-                              a.status === 'half-day' ? 'badge-half-day' :
-                                a.status === 'leave' ? 'badge-leave' :
-                                  'badge-pending'
+                            a.status === 'half-day' ? 'badge-half-day' :
+                              a.status === 'leave' ? 'badge-leave' :
+                                'badge-pending'
                             }`}>
                             {a.status}
                           </span>

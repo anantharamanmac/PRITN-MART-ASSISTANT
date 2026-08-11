@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getAllUsers, getAttendanceForDateRange, AttendanceRecord, getBreakTimeMs, getTodayDateString, getUserAttendanceHistory } from '@/lib/db';
+import { getAllUsers, getAttendanceForDateRange, AttendanceRecord, getBreakTimeMs, getTodayDateString, getUserAttendanceHistory, get30WorkingDaysSalaryPeriod } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -17,24 +17,48 @@ interface SalaryCycleOption {
   key: string;
 }
 
-const getRecentSalaryCycles = (startDay: number): SalaryCycleOption[] => {
+const getRecentSalaryCycles = (user: AppUser, attendanceRecords: AttendanceRecord[] = []): SalaryCycleOption[] => {
   const options: SalaryCycleOption[] = [];
   const today = new Date();
-  
-  for (let i = 0; i < 6; i++) {
-    const tempDate = new Date(today.getFullYear(), today.getMonth() - i, startDay);
-    const startDate = new Date(tempDate.getFullYear(), tempDate.getMonth() - 1, startDay);
-    const endDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), startDay);
-    
-    const label = `${startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`;
-    const key = `${startDate.getFullYear()}-${String(startDate.getMonth()).padStart(2, '0')}`;
-    
-    options.push({
-      label,
-      startDate,
-      endDate,
-      key
-    });
+
+  if (user.salaryType === 'weekly') {
+    const currentCycle = get30WorkingDaysSalaryPeriod(user, attendanceRecords, today);
+    const startDate = new Date(currentCycle.startDate);
+    const endDate = new Date(currentCycle.endDate);
+
+    const label = `${startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} (30 Work Days Cycle)`;
+    const key = `w30-${currentCycle.startDate}`;
+    options.push({ label, startDate, endDate, key });
+
+    let prevRef = new Date(startDate);
+    prevRef.setDate(prevRef.getDate() - 1);
+    for (let i = 1; i <= 5; i++) {
+      const prevCycle = get30WorkingDaysSalaryPeriod(user, attendanceRecords, prevRef);
+      const pStart = new Date(prevCycle.startDate);
+      const pEnd = new Date(prevCycle.endDate);
+      const pLabel = `${pStart.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} - ${pEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} (30 Work Days Cycle)`;
+      const pKey = `w30-${prevCycle.startDate}`;
+      options.push({ label: pLabel, startDate: pStart, endDate: pEnd, key: pKey });
+      prevRef = new Date(pStart);
+      prevRef.setDate(prevRef.getDate() - 1);
+    }
+  } else {
+    const startDay = user.salaryStartDay || 1;
+    for (let i = 0; i < 6; i++) {
+      const tempDate = new Date(today.getFullYear(), today.getMonth() - i, startDay);
+      const startDate = new Date(tempDate.getFullYear(), tempDate.getMonth() - 1, startDay);
+      const endDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), startDay);
+
+      const label = `${startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+      const key = `${startDate.getFullYear()}-${String(startDate.getMonth()).padStart(2, '0')}`;
+
+      options.push({
+        label,
+        startDate,
+        endDate,
+        key
+      });
+    }
   }
   return options;
 };
@@ -78,8 +102,7 @@ export default function AdminHours() {
     try {
       const history = await getUserAttendanceHistory(user.uid);
 
-      const startDay = user.salaryStartDay || 1;
-      const cycles = getRecentSalaryCycles(startDay);
+      const cycles = getRecentSalaryCycles(user, history);
       const selectedCycle = cycles[cycleIdx];
       const startDate = selectedCycle.startDate;
       const endDate = selectedCycle.endDate;
@@ -270,7 +293,7 @@ export default function AdminHours() {
     const totalHours = records.reduce((sum, r) => {
       if (r.punchOut) return sum + (r.totalHours || 0);
       if (!r.punchIn) return sum;
-      
+
       // Past unclosed sessions do not calculate live active hours
       if (r.date !== getTodayDateString()) return sum;
 
@@ -283,7 +306,7 @@ export default function AdminHours() {
     const overtimeHours = records.reduce((sum, r) => {
       if (r.punchOut) return sum + (r.overtimeHours || 0);
       if (!r.punchIn) return sum;
-      
+
       // Past unclosed sessions do not calculate live overtime hours
       if (r.date !== getTodayDateString()) return sum;
 
@@ -688,8 +711,8 @@ export default function AdminHours() {
             <div className="welcome-modal-accent" style={{ background: 'linear-gradient(90deg, var(--sapphire), var(--sapphire-light))' }} />
 
             {/* Close Button */}
-            <button 
-              onClick={() => setShowExportModal(false)} 
+            <button
+              onClick={() => setShowExportModal(false)}
               className="welcome-modal-close"
               aria-label="Close export dialog"
             >
@@ -726,7 +749,7 @@ export default function AdminHours() {
                 value={selectedCycleIndex}
                 onChange={(e) => setSelectedCycleIndex(Number(e.target.value))}
               >
-                {getRecentSalaryCycles(selectedUserForExport.salaryStartDay || 1).map((cycle, idx) => (
+                {getRecentSalaryCycles(selectedUserForExport, allAttendance).map((cycle, idx) => (
                   <option key={cycle.key} value={idx}>
                     {cycle.label}
                   </option>
@@ -736,7 +759,7 @@ export default function AdminHours() {
 
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: '0.75rem', width: '100%' }}>
-              <button 
+              <button
                 onClick={() => handleExportSalaryPDF(selectedUserForExport, selectedCycleIndex)}
                 className="btn btn-primary flex-grow"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
@@ -744,7 +767,7 @@ export default function AdminHours() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                 Generate & Export
               </button>
-              <button 
+              <button
                 onClick={() => setShowExportModal(false)}
                 className="btn btn-outline"
               >

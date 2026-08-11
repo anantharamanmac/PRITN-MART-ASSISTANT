@@ -74,19 +74,25 @@ export default function SalaryStatementSlip({
   const totalOtHrs = cycleRecords.reduce((sum, r) => sum + (r.overtimeHours || 0), 0);
   const totalOtPay = totalOtHrs * 100;
   const startDay = user.salaryStartDay || 1;
+  const isWeekly = user.salaryType === 'weekly';
 
-  // Monthly Base Salary & Day-Wise Leave Deduction Calculation
-  const [customMonthlySalary, setCustomMonthlySalary] = useState<number>(user.monthlySalary || 24000);
+  const initialSalary = isWeekly ? (user.weeklySalary || 5000) : (user.monthlySalary || 24000);
+  const [customBaseSalary, setCustomBaseSalary] = useState<number>(initialSalary);
 
   useEffect(() => {
-    if (user.monthlySalary && user.monthlySalary > 0) {
-      setCustomMonthlySalary(user.monthlySalary);
+    const amt = isWeekly ? user.weeklySalary : user.monthlySalary;
+    if (amt && amt > 0) {
+      setCustomBaseSalary(amt);
+    } else {
+      setCustomBaseSalary(isWeekly ? 5000 : 24000);
     }
-  }, [user.monthlySalary]);
+  }, [user.monthlySalary, user.weeklySalary, isWeekly]);
 
-  // Total calendar days in statement range (e.g. 30 days)
+  // Total calendar days in statement range
   const totalCycleDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-  const dailySalaryRate = customMonthlySalary > 0 ? customMonthlySalary / totalCycleDays : 0;
+  const dailySalaryRate = isWeekly
+    ? (customBaseSalary > 0 ? customBaseSalary / 30 : 0)
+    : (customBaseSalary > 0 ? customBaseSalary / totalCycleDays : 0);
 
   // Attendance & Leaves Breakdown from logged records
   const presentDays = cycleRecords.filter(r => r.status === 'present').length;
@@ -101,7 +107,7 @@ export default function SalaryStatementSlip({
 
   // Day-wise Leave Deduction Amount & Balance Net Payable Salary
   const leaveDeductionAmount = leavesCount * dailySalaryRate;
-  const netPayableSalary = Math.max(0, customMonthlySalary - leaveDeductionAmount + totalOtPay);
+  const netPayableSalary = Math.max(0, customBaseSalary - leaveDeductionAmount + totalOtPay);
 
   const periodStartStr = startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const periodEndStr = endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -166,12 +172,14 @@ export default function SalaryStatementSlip({
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Base Salary Input Control */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Monthly Salary (₹):</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+              {isWeekly ? 'Weekly Salary Rate (₹):' : 'Monthly Salary (₹):'}
+            </span>
             <input
               type="number"
-              value={customMonthlySalary || ''}
-              onChange={(e) => setCustomMonthlySalary(parseFloat(e.target.value) || 0)}
-              placeholder="e.g. 24000"
+              value={customBaseSalary || ''}
+              onChange={(e) => setCustomBaseSalary(parseFloat(e.target.value) || 0)}
+              placeholder={isWeekly ? 'e.g. 5000' : 'e.g. 24000'}
               style={{ width: '95px', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 800, fontSize: '0.85rem' }}
             />
           </div>
@@ -345,7 +353,7 @@ export default function SalaryStatementSlip({
                   </div>
                 </div>
               </div>
-              
+
               <div style={{ textAlign: 'right', fontSize: '11px', color: '#475569', lineHeight: '1.6', maxWidth: '320px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#1e1b4b', marginBottom: '4px', letterSpacing: '-0.01em' }}>Print Mart Apparel Private Ltd.</div>
                 <div>Thattarkonam</div>
@@ -394,7 +402,9 @@ export default function SalaryStatementSlip({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '8px' }}>
                 <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>Designation & Department</span>
                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', textTransform: 'capitalize' }}>{user.designation || "Apparel Specialist"}</span>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Apparel Production Dept. | Cycle Day: {formatOrdinal(startDay)}</span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+                  Apparel Production Dept. | {isWeekly ? 'Cycle: 30 Working Days (Excludes Sundays & Leaves)' : `Cycle Day: ${formatOrdinal(startDay)}`}
+                </span>
               </div>
             </div>
 
@@ -410,18 +420,20 @@ export default function SalaryStatementSlip({
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
                 <h3 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#1e1b4b', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  💳 Monthly Base Salary & Day-Wise Leave Calculation
+                  💳 {isWeekly ? '30 Working Days Salary & Exclusions Calculation' : 'Monthly Base Salary & Day-Wise Leave Calculation'}
                 </h3>
                 <span style={{ fontSize: '10px', fontWeight: 700, color: '#4f46e5', background: '#e0e7ff', padding: '2px 8px', borderRadius: '12px' }}>
-                  Daily Rate: ₹{dailySalaryRate.toFixed(2)}/day ({totalCycleDays} days cycle)
+                  {isWeekly ? `Daily Rate: ₹${dailySalaryRate.toFixed(2)}/day (30 Work Days Basis)` : `Daily Rate: ₹${dailySalaryRate.toFixed(2)}/day (${totalCycleDays} days cycle)`}
                 </span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                 <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px' }}>
-                  <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#64748b', display: 'block' }}>Base Monthly Salary</span>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 800, color: '#64748b', display: 'block' }}>
+                    {isWeekly ? 'Base Salary (30 Work Days)' : 'Base Monthly Salary'}
+                  </span>
                   <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1b4b', marginTop: '2px' }}>
-                    ₹{Math.round(customMonthlySalary).toLocaleString('en-IN')}
+                    ₹{Math.round(customBaseSalary).toLocaleString('en-IN')}
                   </div>
                   <span style={{ fontSize: '8.5px', color: '#94a3b8' }}>Configured by Admin</span>
                 </div>

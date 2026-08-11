@@ -47,6 +47,9 @@ export default function AdminDashboard() {
   const [editDesignationValue, setEditDesignationValue] = useState('');
   const [editWorkModeValue, setEditWorkModeValue] = useState<'office' | 'remote'>('office');
   const [editSalaryValue, setEditSalaryValue] = useState<string>('');
+  const [editSalaryTypeValue, setEditSalaryTypeValue] = useState<'monthly' | 'weekly'>('monthly');
+  const [editSalaryStartDayValue, setEditSalaryStartDayValue] = useState<number>(1);
+  const [editSalaryStartDateValue, setEditSalaryStartDateValue] = useState<string>('');
 
   // Office Location configuration state
   const [officeLat, setOfficeLat] = useState('12.9716');
@@ -152,12 +155,17 @@ export default function AdminDashboard() {
   const handleUpdateProfile = async (userId: string) => {
     if (!editNameValue.trim()) return;
     const parsedSalary = editSalaryValue !== '' ? parseFloat(editSalaryValue) : undefined;
+    const salaryAmt = parsedSalary !== undefined && !isNaN(parsedSalary) ? parsedSalary : 0;
     try {
       await updateUserProfile(userId, {
         displayName: editNameValue.trim(),
         designation: editDesignationValue.trim(),
         workMode: editWorkModeValue,
-        monthlySalary: parsedSalary !== undefined && !isNaN(parsedSalary) ? parsedSalary : 0
+        salaryType: editSalaryTypeValue,
+        monthlySalary: editSalaryTypeValue === 'monthly' ? salaryAmt : 0,
+        weeklySalary: editSalaryTypeValue === 'weekly' ? salaryAmt : 0,
+        salaryStartDay: editSalaryStartDayValue,
+        salaryStartDate: editSalaryStartDateValue || undefined
       });
       setEditingUserId(null);
       await loadData(); // Reload to update UI
@@ -553,7 +561,7 @@ export default function AdminDashboard() {
     // Slice file into 900KB chunks
     const CHUNK_SIZE = 900 * 1024; // 900 KB
     const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
-    
+
     setUploadingFileName(file.name);
     setUploadProgress(0);
 
@@ -587,10 +595,10 @@ export default function AdminDashboard() {
       for (let i = 0; i < chunkCount; i++) {
         const start = i * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, file.size);
-        
+
         const arrayBuffer = await readChunk(start, end);
         const chunkData = new Uint8Array(arrayBuffer);
-        
+
         await saveAdminFileChunk(fileId, i, chunkData);
 
         // Update progress
@@ -601,7 +609,7 @@ export default function AdminDashboard() {
       toast.success("File uploaded successfully!");
       setUploadProgress(null);
       setUploadingFileName(null);
-      
+
       // Refresh list
       const updatedFiles = await getAdminFiles();
       setFiles(updatedFiles);
@@ -642,11 +650,11 @@ export default function AdminDashboard() {
     try {
       // 1. Fetch combined file bytes
       const fileBytes = await getAdminFileChunks(fileRecord.id);
-      
+
       // 2. Create Blob and trigger download
       const fileBlob = new Blob([fileBytes.buffer as ArrayBuffer], { type: fileRecord.fileType });
       const downloadUrl = URL.createObjectURL(fileBlob);
-      
+
       const a = document.createElement('a');
       a.href = downloadUrl;
       a.download = fileRecord.fileName;
@@ -672,7 +680,7 @@ export default function AdminDashboard() {
       await deleteAdminFile(confirmDeleteFile.id);
       toast.success("File deleted successfully!", { id: toastId });
       setConfirmDeleteFile(null);
-      
+
       // Refresh list
       const updatedFiles = await getAdminFiles();
       setFiles(updatedFiles);
@@ -688,7 +696,7 @@ export default function AdminDashboard() {
     try {
       await deleteAdminFile(fileRecord.id);
       toast.success("File deleted successfully!", { id: toastId });
-      
+
       // Refresh list
       const updatedFiles = await getAdminFiles();
       setFiles(updatedFiles);
@@ -704,7 +712,7 @@ export default function AdminDashboard() {
       <div className="modal-backdrop" onClick={() => setConfirmDeleteFile(null)}>
         <div className="glass-card modal-content-wrapper text-center max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
           <div className="modal-accent-bar !bg-danger" />
-          
+
           <button className="close-modal-btn" onClick={() => setConfirmDeleteFile(null)} title="Close Modal">
             ✕
           </button>
@@ -712,19 +720,19 @@ export default function AdminDashboard() {
           <h3 className="text-xl font-bold text-white mb-4 flex items-center justify-center gap-2">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg> Confirm File Deletion
           </h3>
-          
+
           <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-left mb-6">
             <div className="text-[10px] text-secondary uppercase font-bold mb-1">Downloaded File</div>
             <div className="text-sm font-semibold text-gradient truncate mb-1" title={confirmDeleteFile.fileName}>
               {confirmDeleteFile.fileName}
             </div>
             <div className="text-xs text-secondary">
-              Size: {confirmDeleteFile.fileSize >= 1024 * 1024 
-                ? `${(confirmDeleteFile.fileSize / (1024 * 1024)).toFixed(1)} MB` 
+              Size: {confirmDeleteFile.fileSize >= 1024 * 1024
+                ? `${(confirmDeleteFile.fileSize / (1024 * 1024)).toFixed(1)} MB`
                 : `${(confirmDeleteFile.fileSize / 1024).toFixed(1)} KB`}
             </div>
           </div>
-          
+
           <p className="text-sm text-secondary mb-6 leading-relaxed">
             Your download has been triggered in a new window/tab.
             <br />
@@ -732,7 +740,7 @@ export default function AdminDashboard() {
             <br />
             Confirming deletion will permanently erase this file from storage.
           </p>
-          
+
           <div className="flex flex-col gap-2.5">
             <button
               onClick={handleConfirmDelete}
@@ -994,8 +1002,8 @@ export default function AdminDashboard() {
                           {user.displayName?.charAt(0).toUpperCase() || 'U'}
                         </div>
                         {editingUserId === user.uid ? (
-                          <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                            <div className="flex-1">
+                          <div className="flex flex-col sm:flex-row gap-2.5 flex-1 flex-wrap">
+                            <div className="flex-1 min-w-[120px]">
                               <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Name</label>
                               <input
                                 className="input-field !p-1.5 !text-xs w-full"
@@ -1006,7 +1014,7 @@ export default function AdminDashboard() {
                                 required
                               />
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-[120px]">
                               <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Designation</label>
                               <input
                                 className="input-field !p-1.5 !text-xs w-full"
@@ -1015,7 +1023,7 @@ export default function AdminDashboard() {
                                 placeholder="Designation (e.g. Designer)"
                               />
                             </div>
-                            <div className="w-28">
+                            <div className="w-24">
                               <label className="text-[10px] text-secondary font-semibold uppercase block mb-1">Work Mode</label>
                               <select
                                 className="input-field !p-1.5 !text-xs w-full"
@@ -1026,15 +1034,53 @@ export default function AdminDashboard() {
                                 <option value="remote">Remote</option>
                               </select>
                             </div>
-                            <div className="w-32">
-                              <label className="text-[10px] text-emerald-400 font-semibold uppercase block mb-1">Monthly Salary (₹)</label>
+                            <div className="w-36">
+                              <label className="text-[10px] text-indigo-400 font-semibold uppercase block mb-1">Salary Type</label>
+                              <select
+                                className="input-field !p-1.5 !text-xs w-full font-bold text-indigo-300"
+                                value={editSalaryTypeValue}
+                                onChange={(e) => setEditSalaryTypeValue(e.target.value as 'monthly' | 'weekly')}
+                              >
+                                <option value="monthly">Monthly</option>
+                                <option value="weekly">Weekly (30 Work Days)</option>
+                              </select>
+                            </div>
+                            <div className="w-28">
+                              <label className="text-[10px] text-emerald-400 font-semibold uppercase block mb-1">
+                                {editSalaryTypeValue === 'weekly' ? 'Weekly Rate (₹)' : 'Monthly Rate (₹)'}
+                              </label>
                               <input
                                 type="number"
                                 className="input-field !p-1.5 !text-xs w-full font-bold text-emerald-400 border-emerald-500/30"
                                 value={editSalaryValue}
                                 onChange={(e) => setEditSalaryValue(e.target.value)}
-                                placeholder="e.g. 24000"
+                                placeholder={editSalaryTypeValue === 'weekly' ? 'e.g. 5000' : 'e.g. 24000'}
                               />
+                            </div>
+                            <div className="w-36">
+                              <label className="text-[10px] text-teal-400 font-semibold uppercase block mb-1">
+                                {editSalaryTypeValue === 'weekly' ? 'Cycle Start Date' : 'Cycle Start Day'}
+                              </label>
+                              {editSalaryTypeValue === 'weekly' ? (
+                                <input
+                                  type="date"
+                                  className="input-field !p-1.5 !text-xs w-full text-teal-300 font-semibold"
+                                  value={editSalaryStartDateValue}
+                                  onChange={(e) => setEditSalaryStartDateValue(e.target.value)}
+                                />
+                              ) : (
+                                <select
+                                  className="input-field !p-1.5 !text-xs w-full text-teal-300 font-semibold"
+                                  value={editSalaryStartDayValue}
+                                  onChange={(e) => setEditSalaryStartDayValue(parseInt(e.target.value))}
+                                >
+                                  {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                                    <option key={d} value={d}>
+                                      Day {d} of month
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -1056,9 +1102,13 @@ export default function AdminDashboard() {
                                 }`}>
                                 {user.workMode || 'office'}
                               </span>
-                              {user.monthlySalary ? (
+                              {user.salaryType === 'weekly' && user.weeklySalary ? (
+                                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full" title="30 Working Days Cycle (Excluding Sundays & Leaves)">
+                                  💰 ₹{user.weeklySalary.toLocaleString('en-IN')}/wk (30 Work Days)
+                                </span>
+                              ) : user.monthlySalary ? (
                                 <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full">
-                                  💰 ₹{user.monthlySalary.toLocaleString('en-IN')}/mo
+                                  💰 ₹{user.monthlySalary.toLocaleString('en-IN')}/mo (Day {user.salaryStartDay || 1})
                                 </span>
                               ) : (
                                 <span className="text-[10px] font-semibold text-secondary bg-white/5 border border-white/10 px-2 py-0.5 rounded-full opacity-60">
@@ -1089,7 +1139,12 @@ export default function AdminDashboard() {
                                 setEditNameValue(user.displayName);
                                 setEditDesignationValue(user.designation || '');
                                 setEditWorkModeValue(user.workMode || 'office');
-                                setEditSalaryValue(user.monthlySalary ? user.monthlySalary.toString() : '');
+                                const type = user.salaryType || 'monthly';
+                                setEditSalaryTypeValue(type);
+                                const salary = type === 'weekly' ? user.weeklySalary : user.monthlySalary;
+                                setEditSalaryValue(salary ? salary.toString() : '');
+                                setEditSalaryStartDayValue(user.salaryStartDay !== undefined ? user.salaryStartDay : 1);
+                                setEditSalaryStartDateValue(user.salaryStartDate || new Date().toISOString().substring(0, 10));
                               }}
                               className="team-edit-btn"
                             >
@@ -1182,7 +1237,7 @@ export default function AdminDashboard() {
               <h2 className="subtitle !text-xl !text-white !mb-6 flex items-center gap-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> File Storage & Shared Designs
               </h2>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Upload Zone (1 Col) */}
                 <div className="lg:col-span-1 flex flex-col gap-4">
@@ -1239,7 +1294,7 @@ export default function AdminDashboard() {
                 {/* File List (2 Cols) */}
                 <div className="lg:col-span-2 flex flex-col min-w-0">
                   <h3 className="text-xs font-bold text-secondary uppercase tracking-wider mb-4">Uploaded Files ({files.length})</h3>
-                  
+
                   {files.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl text-center min-h-[200px]">
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-secondary mb-2">
@@ -1326,7 +1381,7 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 justify-end flex-shrink-0">
                               <button
                                 onClick={() => handleDownloadClick(file)}

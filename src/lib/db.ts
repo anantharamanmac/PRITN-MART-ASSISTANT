@@ -238,19 +238,36 @@ export const getAllUsers = async (): Promise<AppUser[]> => {
   return snap.docs.map(doc => doc.data() as AppUser);
 };
 
-// Admin: Update user profile (name, designation, work mode, and monthly salary)
+// Admin: Update user profile (name, designation, work mode, monthly/weekly salary, salary start date/day/type)
 export const updateUserProfile = async (
   userId: string,
-  data: { displayName?: string; designation?: string; workMode?: 'office' | 'remote'; monthlySalary?: number }
+  data: {
+    displayName?: string;
+    designation?: string;
+    workMode?: 'office' | 'remote';
+    monthlySalary?: number;
+    salaryType?: 'monthly' | 'weekly';
+    weeklySalary?: number;
+    salaryStartDay?: number;
+    salaryStartDate?: string;
+  }
 ) => {
   const userRef = doc(db, 'users', userId);
   await updateDoc(userRef, data);
 };
 
-// Worker: Update own salary start day
-export const updateSalaryStartDay = async (userId: string, startDay: number) => {
+// Worker/Admin: Update own salary start day/date and type
+export const updateSalaryStartDay = async (
+  userId: string,
+  startDay: number,
+  salaryType?: 'monthly' | 'weekly',
+  salaryStartDate?: string
+) => {
   const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, { salaryStartDay: startDay });
+  const updateData: Record<string, any> = { salaryStartDay: startDay };
+  if (salaryType) updateData.salaryType = salaryType;
+  if (salaryStartDate) updateData.salaryStartDate = salaryStartDate;
+  await updateDoc(userRef, updateData);
 };
 
 // Admin: Approve User
@@ -311,7 +328,7 @@ export const getAttendanceForSalaryRange = async (monthStr: string): Promise<Att
 // Admin: Get attendance records in a date range (YYYY-MM-DD to YYYY-MM-DD)
 export const getAttendanceForDateRange = async (startDate: string, endDate: string): Promise<AttendanceRecord[]> => {
   if (!startDate || !endDate) return [];
-  
+
   let start = startDate;
   let end = endDate;
   if (start > end) {
@@ -328,8 +345,127 @@ export const getAttendanceForDateRange = async (startDate: string, endDate: stri
 };
 
 
-// Calculate starting and ending date of active salary cycle for a given start day
-export const getCurrentSalaryPeriod = (startDay: number, refDate: Date = new Date()) => {
+export interface WorkingDaysCycle {
+  startDate: string;
+  endDate: string;
+  workedDaysCount: number;
+  targetDays: number;
+  remainingDays: number;
+  excludedSundaysCount: number;
+  excludedLeavesCount: number;
+}
+
+// Calculate 30-working-day salary period excluding Sundays & Leaves
+export const get30WorkingDaysSalaryPeriod = (
+  user?: AppUser | null,
+  attendanceRecords: AttendanceRecord[] = [],
+  refDate: Date = new Date()
+): WorkingDaysCycle => {
+  const formatYYYYMMDD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dayStr}`;
+  };
+
+  const attMap = new Map<string, AttendanceRecord>();
+  if (attendanceRecords) {
+    attendanceRecords.forEach(r => {
+      if (r.date) attMap.set(r.date, r);
+    });
+  }
+
+  let baseStart: Date;
+  if (user?.salaryStartDate) {
+    const [y, m, d] = user.salaryStartDate.split('-').map(Number);
+    baseStart = new Date(y, m - 1, d);
+  } else {
+    const startDay = user?.salaryStartDay || 1;
+    baseStart = new Date(refDate.getFullYear(), refDate.getMonth(), startDay);
+    if (refDate < baseStart) {
+      baseStart = new Date(refDate.getFullYear(), refDate.getMonth() - 1, startDay);
+    }
+  }
+
+  let cycleStart = new Date(baseStart);
+  let cycleEnd = new Date(cycleStart);
+  let workedDays = 0;
+  let sundaysExcluded = 0;
+  let leavesExcluded = 0;
+
+  const targetDateStr = formatYYYYMMDD(refDate);
+  let curr = new Date(cycleStart);
+  const maxSafetyLoop = 365 * 2;
+  let loops = 0;
+
+  workedDays = 0;
+  sundaysExcluded = 0;
+  leavesExcluded = 0;
+
+  while (loops < maxSafetyLoop) {
+    loops++;
+    const currStr = formatYYYYMMDD(curr);
+
+    if (curr.getDay() === 0) {
+      sundaysExcluded++;
+    } else {
+      const att = attMap.get(currStr);
+      if (att && att.status === 'leave') {
+        leavesExcluded++;
+      } else if (att && att.status === 'half-day') {
+        workedDays += 0.5;
+        leavesExcluded += 0.5;
+      } else {
+        workedDays += 1;
+      }
+    }
+
+    if (workedDays >= 30) {
+      cycleEnd = new Date(curr);
+      if (currStr < targetDateStr) {
+        curr.setDate(curr.getDate() + 1);
+        cycleStart = new Date(curr);
+        workedDays = 0;
+        sundaysExcluded = 0;
+        leavesExcluded = 0;
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    curr.setDate(curr.getDate() + 1);
+  }
+
+  cycleEnd = new Date(curr);
+
+  return {
+    startDate: formatYYYYMMDD(cycleStart),
+    endDate: formatYYYYMMDD(cycleEnd),
+    workedDaysCount: Math.min(30, workedDays),
+    targetDays: 30,
+    remainingDays: Math.max(0, 30 - workedDays),
+    excludedSundaysCount: sundaysExcluded,
+    excludedLeavesCount: leavesExcluded
+  };
+};
+
+// Calculate starting and ending date of active salary cycle
+export const getCurrentSalaryPeriod = (
+  startDay: number,
+  refDate: Date = new Date(),
+  salaryType: 'monthly' | 'weekly' = 'monthly',
+  user?: AppUser | null,
+  attendanceRecords: AttendanceRecord[] = []
+) => {
+  if (salaryType === 'weekly' && user) {
+    const cycle = get30WorkingDaysSalaryPeriod(user, attendanceRecords, refDate);
+    return {
+      startDate: cycle.startDate,
+      endDate: cycle.endDate
+    };
+  }
+
   const year = refDate.getFullYear();
   const month = refDate.getMonth();
   const day = refDate.getDate();
@@ -843,7 +979,7 @@ export const getAdminFiles = async (): Promise<AdminFileRecord[]> => {
       chunkCount: data.chunkCount || 0
     } as AdminFileRecord;
   });
-  
+
   return files.sort((a, b) => {
     const timeA = a.uploadedAt?.toMillis ? a.uploadedAt.toMillis() : 0;
     const timeB = b.uploadedAt?.toMillis ? b.uploadedAt.toMillis() : 0;
@@ -887,7 +1023,7 @@ export const saveAdminFileChunk = async (
 export const getAdminFileChunks = async (fileId: string): Promise<Uint8Array> => {
   const chunksColRef = collection(db, 'admin_files', fileId, 'chunks');
   const snap = await getDocs(chunksColRef);
-  
+
   const chunkDocs = snap.docs.map(doc => ({
     index: parseInt(doc.id),
     data: doc.data().data as Bytes
@@ -1034,7 +1170,7 @@ export function sanitizeForFirestore<T>(obj: T): T {
 export const createOrder = async (orderData: Omit<OrderRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
   const colRef = collection(db, 'orders');
   const newDocRef = doc(colRef);
-  
+
   const record: OrderRecord = {
     ...orderData,
     id: newDocRef.id,
@@ -1060,7 +1196,7 @@ export const updateOrder = async (orderId: string, orderData: Partial<OrderRecor
 // Subscribe to real-time orders list
 export const listenToOrders = (callback: (orders: OrderRecord[]) => void) => {
   const colRef = collection(db, 'orders');
-  
+
   return onSnapshot(colRef, (snapshot) => {
     const list: OrderRecord[] = [];
     snapshot.forEach((docSnap) => {

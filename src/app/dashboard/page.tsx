@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings, pauseWork, resumeWork, getBreakTimeMs, getUserAttendanceHistory } from '@/lib/db';
+import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings, pauseWork, resumeWork, getBreakTimeMs, getUserAttendanceHistory, get30WorkingDaysSalaryPeriod } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import WelcomeModal from '@/components/WelcomeModal';
@@ -161,14 +161,22 @@ export default function WorkerDashboard() {
 
     try {
       const history = await getUserAttendanceHistory(user.uid);
+      let startDate: Date;
+      let endDate: Date;
 
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth();
-      const startDay = user.salaryStartDay || 1;
+      if (user.salaryType === 'weekly') {
+        const period = get30WorkingDaysSalaryPeriod(user, history, new Date());
+        startDate = new Date(period.startDate);
+        endDate = new Date(period.endDate);
+      } else {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const startDay = user.salaryStartDay || 1;
 
-      const startDate = new Date(currentYear, currentMonth - 1, startDay);
-      const endDate = new Date(currentYear, currentMonth, startDay);
+        startDate = new Date(currentYear, currentMonth - 1, startDay);
+        endDate = new Date(currentYear, currentMonth, startDay);
+      }
 
       const cycleRecords = history.filter(rec => {
         const recDate = new Date(rec.date);

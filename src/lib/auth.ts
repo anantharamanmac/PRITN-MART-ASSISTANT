@@ -15,6 +15,9 @@ export interface AppUser {
   createdAt: Timestamp;
   salaryStartDay?: number;
   monthlySalary?: number;
+  salaryType?: 'monthly' | 'weekly';
+  weeklySalary?: number;
+  salaryStartDate?: string;
 }
 
 export const signInWithGoogle = async () => {
