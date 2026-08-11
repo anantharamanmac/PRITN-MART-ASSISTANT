@@ -21,6 +21,7 @@ const CLOTH_TYPES = [
   'LYCRA 2 WAY',
   'LYCRA 4 WAY',
   'PP',
+  'POPNIT',
   'DOTKNIT 140',
   'DOTKNIT 180',
   'HONEYCOMB',
