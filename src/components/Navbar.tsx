@@ -8,6 +8,8 @@ import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
+import { listenToPunchNotifications, markNotificationAsRead, markAllNotificationsAsRead, PunchNotification } from '@/lib/db';
+
 // Tab bar icon components
 const DashboardIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -91,12 +93,64 @@ const MoonIcon = ({ size = 14 }: { size?: number }) => (
   </svg>
 );
 
+const BellIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+const playNotificationSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, now); // D5 tone
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5 tone
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } catch (err) {
+    console.error("Audio chime playback error:", err);
+  }
+};
+
+const formatNotificationTime = (timestamp: any) => {
+  if (!timestamp) return '';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const now = new Date();
+  const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffSec < 60) return 'Just now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 export default function Navbar({ user }: { user: AppUser }) {
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [punchNotifications, setPunchNotifications] = useState<PunchNotification[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Request desktop notification permission on mount for admin
+  useEffect(() => {
+    if (user.role === 'admin' && typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, [user]);
 
   // Theme initialization
   useEffect(() => {
@@ -115,17 +169,21 @@ export default function Navbar({ user }: { user: AppUser }) {
     localStorage.setItem('theme', newTheme);
   };
 
-  // Close dropdown on click outside
+  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifDropdown(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Listen to bug reports
   useEffect(() => {
     if (user.role !== 'admin') return;
 
@@ -159,6 +217,78 @@ export default function Navbar({ user }: { user: AppUser }) {
             ), {
               duration: 6000,
             });
+          }
+        }
+      });
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Real-time Punch Notifications listener for Admin
+  useEffect(() => {
+    if (user.role !== 'admin') return;
+
+    const sessionStartTime = Date.now();
+    let isFirstLoad = true;
+
+    const unsubscribe = listenToPunchNotifications((notifs) => {
+      setPunchNotifications(notifs);
+
+      if (isFirstLoad) {
+        isFirstLoad = false;
+        return;
+      }
+
+      // Check for new notifications added after session start
+      notifs.forEach((n) => {
+        if (n.userId === user.uid) return;
+
+        const createdAtMs = n.timestamp?.toMillis ? n.timestamp.toMillis() : Date.now();
+        if (createdAtMs > sessionStartTime) {
+          const isPunchIn = n.type === 'punch_in';
+
+          // Toast alert
+          toast((t) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: isPunchIn ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                border: isPunchIn ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.9rem',
+                flexShrink: 0
+              }}>
+                {isPunchIn ? '🟢' : '🔴'}
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#ffffff' }}>
+                  {isPunchIn ? 'Employee Punched In' : 'Employee Punched Out'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>{n.userName}</strong> {isPunchIn ? `punched in (${n.workMode || 'office'})` : 'punched out'}
+                </div>
+              </div>
+            </div>
+          ), { duration: 6000 });
+
+          // Audio chime sound
+          playNotificationSound();
+
+          // Native Desktop Notification
+          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification(isPunchIn ? '🟢 Employee Punched In' : '🔴 Employee Punched Out', {
+                body: `${n.userName} has ${isPunchIn ? 'punched in' : 'punched out'}.`,
+                icon: n.userPhoto || '/apple-icon.png',
+              });
+            } catch (e) {
+              console.error("Desktop notification error:", e);
+            }
           }
         }
       });
@@ -212,6 +342,8 @@ export default function Navbar({ user }: { user: AppUser }) {
     ...(user.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: AdminIcon }] : []),
   ];
 
+  const unreadNotifCount = punchNotifications.filter(n => !n.read).length;
+
   return (
     <>
       {/* ── DESKTOP TOP NAVBAR ── */}
@@ -239,8 +371,95 @@ export default function Navbar({ user }: { user: AppUser }) {
           ))}
         </div>
 
-        {/* User + Sign Out */}
+        {/* User + Notifications + Sign Out */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {user.role === 'admin' && (
+            <div className="nav-notif-container" ref={notifRef} style={{ position: 'relative' }}>
+              <button
+                className={`nav-notif-bell-btn ${showNotifDropdown ? 'active' : ''}`}
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                title="Punch Notifications"
+                aria-label="Punch Notifications"
+              >
+                <BellIcon size={18} />
+                {unreadNotifCount > 0 && (
+                  <span className="nav-badge-count animate-pulse nav-notif-badge">
+                    {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifDropdown && (
+                <div className="nav-notif-dropdown">
+                  <div className="nav-notif-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Punch Notifications</span>
+                      {unreadNotifCount > 0 && (
+                        <span className="notif-badge-pill">{unreadNotifCount} new</span>
+                      )}
+                    </div>
+                    {unreadNotifCount > 0 && (
+                      <button
+                        className="notif-mark-all-btn"
+                        onClick={() => markAllNotificationsAsRead(punchNotifications)}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="nav-notif-divider" />
+
+                  <div className="nav-notif-list">
+                    {punchNotifications.length === 0 ? (
+                      <div className="nav-notif-empty">
+                        <span style={{ fontSize: '1.2rem' }}>🔔</span>
+                        <span>No punch notifications yet</span>
+                      </div>
+                    ) : (
+                      punchNotifications.map((n) => {
+                        const isPunchIn = n.type === 'punch_in';
+                        const timeStr = formatNotificationTime(n.timestamp);
+                        return (
+                          <div
+                            key={n.id}
+                            className={`nav-notif-item ${!n.read ? 'unread' : ''}`}
+                            onClick={() => n.id && markNotificationAsRead(n.id)}
+                          >
+                            <div className="notif-item-avatar">
+                              {n.userPhoto ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={n.userPhoto} alt={n.userName} />
+                              ) : (
+                                <span>{n.userName ? n.userName.charAt(0).toUpperCase() : 'U'}</span>
+                              )}
+                              <span className={`notif-status-dot ${isPunchIn ? 'in' : 'out'}`} />
+                            </div>
+                            <div className="notif-item-content">
+                              <div className="notif-item-title">
+                                <strong>{n.userName}</strong>
+                                <span className={`notif-action-tag ${isPunchIn ? 'in' : 'out'}`}>
+                                  {isPunchIn ? 'Punched In' : 'Punched Out'}
+                                </span>
+                              </div>
+                              <div className="notif-item-sub">
+                                {isPunchIn && n.workMode && (
+                                  <span className="notif-mode-tag">{n.workMode}</span>
+                                )}
+                                <span className="notif-item-time">{timeStr}</span>
+                              </div>
+                            </div>
+                            {!n.read && <div className="notif-unread-dot" />}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="nav-user-container" ref={dropdownRef}>
             <div 
               className={`nav-user-chip ${showDropdown ? 'active' : ''}`}

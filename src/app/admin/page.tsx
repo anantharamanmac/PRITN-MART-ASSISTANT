@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile, listenToPunchNotifications, PunchNotification } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [pendingUsers, setPendingUsers] = useState<AppUser[]>([]);
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
+  const [liveNotifications, setLiveNotifications] = useState<PunchNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
 
@@ -51,10 +52,12 @@ export default function AdminDashboard() {
   const [editSalaryStartDayValue, setEditSalaryStartDayValue] = useState<number>(1);
   const [editSalaryStartDateValue, setEditSalaryStartDateValue] = useState<string>('');
 
-  // Office Location configuration state
+  // Office Location & System Settings state
   const [officeLat, setOfficeLat] = useState('12.9716');
   const [officeLng, setOfficeLng] = useState('77.5946');
   const [officeRadius, setOfficeRadius] = useState('200');
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [testingDiscord, setTestingDiscord] = useState(false);
   const [officeSettings, setOfficeSettings] = useState<OfficeSettings | null>(null);
   const [savingOffice, setSavingOffice] = useState(false);
   const [fetchingAdminLocation, setFetchingAdminLocation] = useState(false);
@@ -111,6 +114,16 @@ export default function AdminDashboard() {
     });
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    if (!currentUser || currentUser.role !== 'admin') return;
+
+    const unsubscribe = listenToPunchNotifications((notifs) => {
+      setLiveNotifications(notifs);
+    }, 24);
+
+    return () => unsubscribe();
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -187,13 +200,45 @@ export default function AdminDashboard() {
         setSavingOffice(false);
         return;
       }
-      await updateOfficeSettings({ latitude: lat, longitude: lng, radius: rad });
-      setOfficeSettings({ latitude: lat, longitude: lng, radius: rad });
-      toast.success("Office settings updated successfully!");
+      const newSettings: OfficeSettings = {
+        latitude: lat,
+        longitude: lng,
+        radius: rad,
+        discordWebhookUrl: discordWebhookUrl.trim()
+      };
+      await updateOfficeSettings(newSettings);
+      setOfficeSettings(newSettings);
+      toast.success("Office & System settings updated successfully!");
     } catch {
       toast.error("Failed to update office settings.");
     } finally {
       setSavingOffice(false);
+    }
+  };
+
+  const handleTestDiscordWebhook = async () => {
+    if (!discordWebhookUrl.trim()) {
+      toast.error("Please enter a Discord Webhook URL to test.");
+      return;
+    }
+    setTestingDiscord(true);
+    const toastId = toast.loading("Sending test alert to Discord...");
+    try {
+      const res = await fetch('/api/notifications/discord-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ webhookUrl: discordWebhookUrl.trim(), isTest: true })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || "Test message sent successfully to Discord!", { id: toastId });
+      } else {
+        toast.error(data.message || "Discord test failed.", { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(`Error testing Discord: ${err.message}`, { id: toastId });
+    } finally {
+      setTestingDiscord(false);
     }
   };
 
@@ -818,6 +863,111 @@ export default function AdminDashboard() {
 
           {/* Main Content Pane */}
           <div className="flex-1 min-w-0">
+            {/* Live Employee Punch Notifications Feed */}
+            <div className="glass-card mb-8">
+              <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <div>
+                  <h2 className="subtitle !text-xl !text-white !mb-0 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    Live Punch Activity & Notifications
+                  </h2>
+                  <p className="text-xs text-secondary mt-0.5">Real-time punch in and punch out updates from company employees</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="badge badge-worker">
+                    {liveNotifications.filter(n => n.type === 'punch_in' && n.date === getTodayDateString()).length} In Today
+                  </span>
+                  <span className="badge badge-leave">
+                    {liveNotifications.filter(n => n.type === 'punch_out' && n.date === getTodayDateString()).length} Out Today
+                  </span>
+                </div>
+              </div>
+
+              {liveNotifications.length === 0 ? (
+                <div className="text-center py-6 text-secondary text-sm">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2 opacity-50"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+                  No employee punch notifications recorded yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[280px] overflow-y-auto pr-1">
+                  {liveNotifications.slice(0, 12).map((n) => {
+                    const isPunchIn = n.type === 'punch_in';
+                    const formattedTime = n.timestamp?.toDate
+                      ? new Date(n.timestamp.toDate()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                      : (n.date || '');
+
+                    return (
+                      <div
+                        key={n.id}
+                        className={`p-3 rounded-xl border flex items-center gap-3 transition-all ${
+                          isPunchIn
+                            ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40'
+                            : 'bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40'
+                        }`}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center font-bold text-white overflow-hidden">
+                            {n.userPhoto ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={n.userPhoto} alt={n.userName} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{n.userName ? n.userName.charAt(0).toUpperCase() : 'E'}</span>
+                            )}
+                          </div>
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#070b14] ${
+                              isPunchIn ? 'bg-emerald-500' : 'bg-rose-500'
+                            }`}
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-semibold text-sm text-white truncate" title={n.userName}>
+                              {n.userName}
+                            </span>
+                            <span
+                              className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                                isPunchIn
+                                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                                  : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
+                              }`}
+                            >
+                              {isPunchIn ? 'Punch In' : 'Punch Out'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs text-secondary mt-1">
+                            <span className="capitalize text-[11px]">
+                              {n.workMode ? `${n.workMode} mode` : 'Office'}
+                            </span>
+                            <span className="font-mono text-[10px] text-white/60">{formattedTime}</span>
+                          </div>
+
+                          {n.location && (
+                            <div className="text-[10px] text-teal-400 mt-1 flex items-center gap-1 truncate">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                              <a
+                                href={`https://maps.google.com/?q=${n.location.latitude},${n.location.longitude}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:underline"
+                              >
+                                View Map Location
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Pending Users Column */}
               <div className="glass-card">
@@ -1169,66 +1319,107 @@ export default function AdminDashboard() {
               </>
             </div>
 
-            {/* Office Location Settings */}
+            {/* Office Location & Discord Webhook Settings */}
             <div className="glass-card mt-8">
-              <h2 className="subtitle !text-xl !text-white !mb-4 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg> Office Location Settings
+              <h2 className="subtitle !text-xl !text-white !mb-4 flex items-center justify-between flex-wrap gap-2">
+                <span className="flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg> Office Location & Discord Webhook Settings
+                </span>
               </h2>
-              <form onSubmit={handleSaveOfficeSettings} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div className="input-group !mb-0">
-                  <label className="input-label">Latitude</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="e.g. 12.9716"
-                    value={officeLat}
-                    onChange={(e) => setOfficeLat(e.target.value)}
-                    required
-                  />
+
+              <form onSubmit={handleSaveOfficeSettings} className="flex flex-col gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="input-group !mb-0">
+                    <label className="input-label">Latitude</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="e.g. 12.9716"
+                      value={officeLat}
+                      onChange={(e) => setOfficeLat(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="input-group !mb-0">
+                    <label className="input-label">Longitude</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="e.g. 77.5946"
+                      value={officeLng}
+                      onChange={(e) => setOfficeLng(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="input-group !mb-0">
+                    <label className="input-label">Radius (meters)</label>
+                    <input
+                      type="number"
+                      className="input-field"
+                      placeholder="e.g. 200"
+                      value={officeRadius}
+                      onChange={(e) => setOfficeRadius(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleFetchAdminLocation}
+                      disabled={fetchingAdminLocation}
+                      className="btn btn-outline flex-grow h-[46px] text-xs !px-3"
+                      title="Detect current coordinates via GPS"
+                    >
+                      {fetchingAdminLocation ? 'GPS...' : 'Detect GPS'}
+                    </button>
+                  </div>
                 </div>
-                <div className="input-group !mb-0">
-                  <label className="input-label">Longitude</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="e.g. 77.5946"
-                    value={officeLng}
-                    onChange={(e) => setOfficeLng(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="input-group !mb-0">
-                  <label className="input-label">Radius (meters)</label>
-                  <input
-                    type="number"
-                    className="input-field"
-                    placeholder="e.g. 200"
-                    value={officeRadius}
-                    onChange={(e) => setOfficeRadius(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleFetchAdminLocation}
-                    disabled={fetchingAdminLocation}
-                    className="btn btn-outline flex-grow h-[46px] text-xs !px-3"
-                    title="Detect current coordinates via GPS"
-                  >
-                    {fetchingAdminLocation ? 'GPS...' : 'Detect'}
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={savingOffice}
-                    className="btn btn-primary flex-grow h-[46px] text-xs !px-4"
-                  >
-                    {savingOffice ? 'Saving...' : 'Save'}
-                  </button>
+
+                {/* Discord Channel Webhook Integration */}
+                <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <label className="input-label !mb-0 flex items-center gap-1.5 font-bold text-white">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418"/></svg>
+                        Discord Channel Webhook Push Notifications
+                      </label>
+                      <span className="text-xs text-secondary">
+                        Automatically posts employee punch in and punch out notifications with rich embed details directly to your Discord channel.
+                      </span>
+                    </div>
+
+                    {discordWebhookUrl.trim() && (
+                      <button
+                        type="button"
+                        onClick={handleTestDiscordWebhook}
+                        disabled={testingDiscord}
+                        className="btn btn-outline text-xs !py-1.5 !px-3 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10"
+                      >
+                        {testingDiscord ? 'Testing...' : '🔔 Test Discord Webhook'}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      className="input-field flex-1"
+                      placeholder="https://discord.com/api/webhooks/123456789/abcdef..."
+                      value={discordWebhookUrl}
+                      onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      disabled={savingOffice}
+                      className="btn btn-primary h-[46px] text-xs !px-5"
+                    >
+                      {savingOffice ? 'Saving...' : 'Save Settings'}
+                    </button>
+                  </div>
                 </div>
               </form>
-              <p className="text-xs text-secondary mt-4">
-                Configure the geographical center coordinates and validation radius of your workspace. Employees with an **Office** shift mode will only be allowed to punch in when within this proximity.
+              <p className="text-xs text-secondary mt-3">
+                Geofencing rules enforce punch-in location boundaries for office workers. Setting a Discord Webhook enables live channel alerts for company admins & owners.
               </p>
             </div>
 

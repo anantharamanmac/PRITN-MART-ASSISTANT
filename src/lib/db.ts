@@ -2,9 +2,23 @@ import { db } from './firebase';
 import {
   collection, doc, getDoc, getDocs, setDoc, updateDoc,
   query, where, serverTimestamp, addDoc, Timestamp,
-  deleteDoc, Bytes, onSnapshot
+  deleteDoc, Bytes, onSnapshot, orderBy, limit
 } from 'firebase/firestore';
 import { AppUser } from './auth';
+
+export interface PunchNotification {
+  id?: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  type: 'punch_in' | 'punch_out';
+  workMode?: 'office' | 'remote';
+  location?: { latitude: number; longitude: number; accuracy?: number } | null;
+  timestamp: Timestamp;
+  date: string;
+  read: boolean;
+  message: string;
+}
 
 export interface BreakInterval {
   start: Timestamp;
@@ -73,6 +87,9 @@ export const punchIn = async (
   };
 
   await setDoc(docRef, record);
+
+  // Send punch in notification to admin/owner
+  await createPunchNotification(userId, 'punch_in', workMode, location);
 };
 
 // Helper to calculate total break time in milliseconds
@@ -200,6 +217,9 @@ export const punchOut = async (
     punchOutLocation: location || null,
     ...(hasActiveBreak ? { breaks: updatedBreaks } : {})
   });
+
+  // Send punch out notification to admin/owner
+  await createPunchNotification(userId, 'punch_out', data.workMode, location);
 };
 
 // Apply for leave
@@ -628,6 +648,7 @@ export interface OfficeSettings {
   latitude: number;
   longitude: number;
   radius: number; // in meters
+  discordWebhookUrl?: string;
 }
 
 export const getOfficeSettings = async (): Promise<OfficeSettings> => {
@@ -1245,6 +1266,116 @@ export const findOrderByInfoNumber = async (infoNum: number): Promise<OrderRecor
   }
   return null;
 };
+
+// Create a punch notification for admin/owner
+export const createPunchNotification = async (
+  userId: string,
+  type: 'punch_in' | 'punch_out',
+  workMode?: 'office' | 'remote',
+  location?: { latitude: number; longitude: number; accuracy?: number } | null
+) => {
+  try {
+    let userName = 'Employee';
+    let userPhoto = '';
+    const userDocRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userDocRef);
+    if (userSnap.exists()) {
+      const uData = userSnap.data() as AppUser;
+      userName = uData.displayName || uData.email || 'Employee';
+      userPhoto = uData.photoURL || '';
+    }
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = getTodayDateString();
+    const modeLabel = workMode ? workMode.charAt(0).toUpperCase() + workMode.slice(1) : 'Office';
+
+    const message = type === 'punch_in'
+      ? `${userName} punched in (${modeLabel} mode) at ${timeStr}`
+      : `${userName} punched out at ${timeStr}`;
+
+    const colRef = collection(db, 'notifications');
+    await addDoc(colRef, {
+      userId,
+      userName,
+      userPhoto,
+      type,
+      workMode: workMode || 'office',
+      location: location || null,
+      timestamp: serverTimestamp(),
+      date: dateStr,
+      read: false,
+      message
+    });
+
+    // Trigger Discord Webhook Notification if URL is configured
+    try {
+      const settings = await getOfficeSettings();
+      const webhookUrl = settings.discordWebhookUrl;
+      if (webhookUrl) {
+        fetch('/api/notifications/discord-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userName,
+            userPhoto,
+            type,
+            workMode: workMode || 'office',
+            location: location || null,
+            timeStr,
+            dateStr,
+            webhookUrl
+          })
+        }).catch((e) => console.error("Discord push fetch error:", e));
+      }
+    } catch (discordErr) {
+      console.error("Error triggering Discord Webhook push:", discordErr);
+    }
+  } catch (err) {
+    console.error("Error creating punch notification:", err);
+  }
+};
+
+// Listen to real-time Punch Notifications (for Admins / Owners)
+export const listenToPunchNotifications = (
+  callback: (notifications: PunchNotification[]) => void,
+  limitCount: number = 50
+) => {
+  const colRef = collection(db, 'notifications');
+  const q = query(colRef, orderBy('timestamp', 'desc'), limit(limitCount));
+  return onSnapshot(q, (snap) => {
+    const notifications = snap.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    })) as PunchNotification[];
+    callback(notifications);
+  }, (error) => {
+    console.error("Error listening to punch notifications:", error);
+  });
+};
+
+// Mark single notification as read
+export const markNotificationAsRead = async (notificationId: string) => {
+  try {
+    const docRef = doc(db, 'notifications', notificationId);
+    await updateDoc(docRef, { read: true });
+  } catch (err) {
+    console.error("Error marking notification as read:", err);
+  }
+};
+
+// Mark all notifications as read
+export const markAllNotificationsAsRead = async (notifications: PunchNotification[]) => {
+  try {
+    const unread = notifications.filter(n => !n.read && n.id);
+    await Promise.all(
+      unread.map(n => updateDoc(doc(db, 'notifications', n.id!), { read: true }))
+    );
+  } catch (err) {
+    console.error("Error marking all notifications as read:", err);
+  }
+};
+
 
 
 

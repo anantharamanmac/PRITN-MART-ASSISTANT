@@ -142,7 +142,7 @@ export default function OrdersPage() {
   const [printMethod, setPrintMethod] = useState<'sublimation' | 'dft' | 'normal'>('sublimation');
   const [printArea, setPrintArea] = useState<'front_only' | 'front_back' | 'full'>('full');
   const [sleeveType, setSleeveType] = useState<'sleeveless' | 'half' | 'full'>('full');
-  const [labelType, setLabelType] = useState<'new' | 'old' | 'none'>('new');
+  const [labelType, setLabelType] = useState<'new' | 'old' | 'none'>('old');
   const [rosterStatus, setRosterStatus] = useState<'draft' | 'pending_admin_approval' | 'approved'>('draft');
   const [customerRosterDraft, setCustomerRosterDraft] = useState<PlayerItem[]>([]);
   const [customerNotes, setCustomerNotes] = useState('');
@@ -436,7 +436,7 @@ export default function OrdersPage() {
     setPrintMethod('sublimation');
     setPrintArea('full');
     setSleeveType('full');
-    setLabelType('new');
+    setLabelType('old');
     setRosterStatus('draft');
     setCustomerRosterDraft([]);
     setCustomerNotes('');
@@ -494,7 +494,7 @@ export default function OrdersPage() {
     setPrintMethod(ord.printMethod || 'sublimation');
     setPrintArea(ord.printArea || 'full');
     setSleeveType(ord.sleeveType || 'full');
-    setLabelType(ord.labelType || 'new');
+    setLabelType(ord.labelType || 'old');
     setRosterStatus(ord.rosterStatus || 'draft');
     setCustomerRosterDraft(ord.customerRosterDraft || []);
     setCustomerNotes(ord.customerNotes || '');

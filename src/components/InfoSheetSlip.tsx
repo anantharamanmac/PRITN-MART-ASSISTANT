@@ -382,10 +382,10 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   <div style={{ fontSize: '13px', fontWeight: 900, marginBottom: '2px' }}>STITCHING LABEL</div>
                   <div style={{ display: 'flex', gap: '6px', fontSize: '10.5px', fontWeight: 900 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      NEW LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'new' || !order.labelType ? '#d92525' : '#fff' }}></span>
+                      NEW LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'new' ? '#d92525' : '#fff' }}></span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      OLD LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'old' ? '#d92525' : '#fff' }}></span>
+                      OLD LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'old' || !order.labelType ? '#d92525' : '#fff' }}></span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                       NO LABEL <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: order.labelType === 'none' ? '#d92525' : '#fff' }}></span>
@@ -411,7 +411,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   marginTop: '6px',
                   padding: '3px 6px',
                   border: '1.5px solid #000',
-                  background: order.labelType === 'old' ? '#fef3c7' : order.labelType === 'none' ? '#f3f4f6' : '#dcfce7',
+                  background: order.labelType === 'new' ? '#dcfce7' : order.labelType === 'none' ? '#f3f4f6' : '#fef3c7',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -423,10 +423,10 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                   <span style={{
                     fontSize: '11.5px',
                     fontWeight: 900,
-                    color: order.labelType === 'old' ? '#b45309' : order.labelType === 'none' ? '#4b5563' : '#15803d',
+                    color: order.labelType === 'new' ? '#15803d' : order.labelType === 'none' ? '#4b5563' : '#b45309',
                     textTransform: 'uppercase'
                   }}>
-                    {order.labelType === 'old' ? '⚠️ USE OLD LABEL' : order.labelType === 'none' ? '🚫 NO LABEL' : '✓ USE NEW LABEL'}
+                    {order.labelType === 'new' ? '✓ USE NEW LABEL' : order.labelType === 'none' ? '🚫 NO LABEL' : '⚠️ USE OLD LABEL'}
                   </span>
                 </div>
               </div>
