@@ -321,6 +321,8 @@ export default function Navbar({ user }: { user: AppUser }) {
     ...(user.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: AdminIcon }] : []),
   ];
 
+  const unreadNotifCount = punchNotifications.filter(n => !n.read).length;
+
   const mobileNavItems = [
     { href: '/dashboard', label: 'Home', icon: DashboardIcon },
     { href: '/orders', label: 'Orders', icon: OrdersIcon },
@@ -341,8 +343,6 @@ export default function Navbar({ user }: { user: AppUser }) {
     },
     ...(user.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: AdminIcon }] : []),
   ];
-
-  const unreadNotifCount = punchNotifications.filter(n => !n.read).length;
 
   return (
     <>
@@ -461,7 +461,7 @@ export default function Navbar({ user }: { user: AppUser }) {
           )}
 
           <div className="nav-user-container" ref={dropdownRef}>
-            <div 
+            <div
               className={`nav-user-chip ${showDropdown ? 'active' : ''}`}
               onClick={() => setShowDropdown(!showDropdown)}
             >
@@ -486,14 +486,14 @@ export default function Navbar({ user }: { user: AppUser }) {
                 <div className="nav-dropdown-theme-section">
                   <div className="nav-dropdown-theme-title">Theme</div>
                   <div className="theme-toggle-group">
-                    <button 
+                    <button
                       className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
                       onClick={() => handleThemeChange('light')}
                     >
                       <SunIcon />
                       <span>Light</span>
                     </button>
-                    <button 
+                    <button
                       className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
                       onClick={() => handleThemeChange('dark')}
                     >

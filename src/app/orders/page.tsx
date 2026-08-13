@@ -24,6 +24,7 @@ import { getPricingRates, calculateOrderPrice, PricingRates, DEFAULT_PRICING_RAT
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import InfoSheetSlip from '@/components/InfoSheetSlip';
+import Pagination from '@/components/Pagination';
 
 const NECK_TYPES = [
   'ROUND NECK',
@@ -114,6 +115,10 @@ export default function OrdersPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthKey());
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Modals & Detail States
   const [showModal, setShowModal] = useState(false);
@@ -356,6 +361,11 @@ export default function OrdersPage() {
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
   }, [showModal]);
+
+  // Reset pagination to page 1 whenever filters or search query change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, selectedMonth, itemsPerPage]);
 
   // Load Pricing Rates on Mount
   useEffect(() => {
@@ -805,6 +815,12 @@ export default function OrdersPage() {
     return matchesMonth && matchesStatus && matchesQuery;
   });
 
+  // Paginated Orders Calculation
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const startIndex = (activePage - 1) * itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+
   // Calculate Order Statistics (for selected month view)
   const todayStr = formatLocalDate(new Date());
   const monthOrders = orders.filter((o) => selectedMonth === 'all' || getOrderMonthKey(o) === selectedMonth);
@@ -1071,27 +1087,55 @@ export default function OrdersPage() {
             ))}
           </div>
 
-          {/* Row 3: Search Box */}
-          <div style={{ position: 'relative', width: '100%' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder={`Search in ${formatMonthLabel(selectedMonth)} (INFO NO, customer, phone, order title, fabric...)`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.55rem 0.75rem 0.55rem 2.3rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-main)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem'
-              }}
-            />
+          {/* Row 3: Search Box & Items Per Page Selector */}
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', width: '100%', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: '1 1 240px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                placeholder={`Search in ${formatMonthLabel(selectedMonth)} (INFO NO, customer, phone, order title, fabric...)`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.75rem 0.55rem 2.3rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.85rem'
+                }}
+              />
+            </div>
+
+            {/* Items Per Page Selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, marginLeft: 'auto' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Show:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                style={{
+                  padding: '0.45rem 0.6rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value={10}>10 / page</option>
+                <option value={12}>12 / page</option>
+                <option value={15}>15 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
           </div>
 
           {/* Search helper notice if search yields no results in selected month but matches exist in other months */}
@@ -1143,7 +1187,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '0.85rem' }}>
-            {filteredOrders.map((ord) => {
+            {paginatedOrders.map((ord) => {
               const isOverdue = ord.deliveryDate < todayStr && ord.status !== 'delivered' && ord.status !== 'cancelled';
               const isDueToday = ord.deliveryDate === todayStr && ord.status !== 'delivered' && ord.status !== 'cancelled';
               const statusInfo = STATUS_CONFIG[ord.status] || STATUS_CONFIG.pending;
@@ -1467,6 +1511,19 @@ export default function OrdersPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {!loadingOrders && filteredOrders.length > 0 && (
+          <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              totalItems={filteredOrders.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={activePage}
+              onPageChange={(page) => setCurrentPage(page)}
+              label="orders"
+            />
           </div>
         )}
       </main>
