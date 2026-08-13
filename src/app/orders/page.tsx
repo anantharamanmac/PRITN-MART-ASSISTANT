@@ -699,6 +699,7 @@ export default function OrdersPage() {
         };
         if (hasShorts && p.shortsSize) item.shortsSize = convertLetterSizeToNumber(p.shortsSize);
         if (p.sleeve) item.sleeve = p.sleeve;
+        if (p.collar) item.collar = p.collar;
         return item;
       });
 

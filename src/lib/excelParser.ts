@@ -89,6 +89,8 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
         let nameIdx = -1;
         let numIdx = -1;
         let sizeIdx = -1;
+        let sleeveIdx = -1;
+        let collarIdx = -1;
         let startRowIdx = 0;
 
         // Scan first 5 rows to locate header indices if present
@@ -101,6 +103,8 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
             if (/^(name|player|player\s*name)$/i.test(cellVal)) nameIdx = c;
             if (/^(no|no\.|number|jersey\s*no|jersey\s*number|chest\s*no)$/i.test(cellVal)) numIdx = c;
             if (/^(size|chest|cloth\s*size)$/i.test(cellVal)) sizeIdx = c;
+            if (/^(sleeve|slv|sleeve\s*type)$/i.test(cellVal)) sleeveIdx = c;
+            if (/^(collar|clr|neck|neck\s*type|collar\s*style)$/i.test(cellVal)) collarIdx = c;
           }
 
           if (nameIdx !== -1 || sizeIdx !== -1 || numIdx !== -1) {
@@ -114,9 +118,13 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
         // Col 2 (Idx 1): Number
         // Col 3 (Idx 2): IGNORED
         // Col 4 (Idx 3): Size
+        // Col 5 (Idx 4): Sleeve (F/H/SL)
+        // Col 6 (Idx 5): Collar (C/Collar/Neck)
         if (nameIdx === -1) nameIdx = 0;
         if (numIdx === -1) numIdx = 1;
         if (sizeIdx === -1) sizeIdx = 3; // 4th column
+        if (sleeveIdx === -1) sleeveIdx = 4; // 5th column
+        if (collarIdx === -1) collarIdx = 5; // 6th column
 
         const players: PlayerDetail[] = [];
 
@@ -127,6 +135,8 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
           const name = String(row[nameIdx] ?? '').trim();
           let number = String(row[numIdx] ?? '').trim();
           let rawSize = String(row[sizeIdx] ?? '').trim();
+          let rawSleeve = String(row[sleeveIdx] ?? '').trim();
+          let rawCollar = String(row[collarIdx] ?? '').trim();
 
           // Fallback if sheet has 3 columns total (Name, Number, Size without empty 3rd column)
           if (!rawSize && row.length >= 3 && isSizeValue(String(row[2] ?? ''))) {
@@ -139,7 +149,33 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
 
           const size = convertLetterSizeToNumber(rawSize);
           const isGK = /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(name);
-          players.push({ name, size, number, isGK: isGK ? true : undefined });
+
+          // Sleeve formatting: F -> Full, H -> Half, SL -> Sleeveless
+          let sleeve: string | undefined = undefined;
+          if (rawSleeve) {
+            const sUpper = rawSleeve.toUpperCase();
+            if (sUpper === 'F' || sUpper === 'FULL') sleeve = 'Full';
+            else if (sUpper === 'H' || sUpper === 'HALF') sleeve = 'Half';
+            else if (sUpper === 'SL' || sUpper === 'SLEEVELESS') sleeve = 'Sleeveless';
+            else sleeve = rawSleeve;
+          }
+
+          // Collar formatting: C / C. / COLLAR -> COLLAR
+          let collar: string | undefined = undefined;
+          if (rawCollar) {
+            const cUpper = rawCollar.toUpperCase();
+            if (cUpper === 'C' || cUpper === 'C.' || cUpper === 'COLLAR' || cUpper === 'YES') collar = 'COLLAR';
+            else collar = rawCollar;
+          }
+
+          players.push({
+            name,
+            size,
+            number,
+            sleeve,
+            collar,
+            isGK: isGK ? true : undefined
+          });
         }
 
         resolve(players);
@@ -183,20 +219,48 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
   const lines = text.split(/\r?\n/);
   const players: PlayerDetail[] = [];
 
-  const addPlayerIfValid = (rawName: string, rawSize: string, rawNumber: string) => {
+  const addPlayerIfValid = (
+    rawName: string,
+    rawSize: string,
+    rawNumber: string,
+    rawSleeve?: string,
+    rawCollar?: string
+  ) => {
     const cName = cleanText(rawName);
     const cSize = convertLetterSizeToNumber(cleanText(rawSize));
     const cNum = cleanText(rawNumber);
+    const cSleeve = cleanText(rawSleeve || '');
+    const cCollar = cleanText(rawCollar || '');
 
     if (!cName || isGibberish(cName)) return;
     if (/^(name|player|sl\s*no|sr\s*no|size|no|number|customer|order|info)$/i.test(cName)) return;
 
     const isGK = /\b(GK|G\.K|GOAL\s*KEEPER|KEEPER)\b/i.test(cName);
 
+    // Sleeve formatting: F -> Full, H -> Half, SL -> Sleeveless
+    let sleeve: string | undefined = undefined;
+    if (cSleeve) {
+      const sUpper = cSleeve.toUpperCase();
+      if (sUpper === 'F' || sUpper === 'FULL') sleeve = 'Full';
+      else if (sUpper === 'H' || sUpper === 'HALF') sleeve = 'Half';
+      else if (sUpper === 'SL' || sUpper === 'SLEEVELESS') sleeve = 'Sleeveless';
+      else sleeve = cSleeve;
+    }
+
+    // Collar formatting: C / C. / COLLAR -> COLLAR
+    let collar: string | undefined = undefined;
+    if (cCollar) {
+      const cUpper = cCollar.toUpperCase();
+      if (cUpper === 'C' || cUpper === 'C.' || cUpper === 'COLLAR' || cUpper === 'YES') collar = 'COLLAR';
+      else collar = cCollar;
+    }
+
     players.push({
       name: cName,
       size: cSize,
       number: cNum,
+      sleeve,
+      collar,
       isGK: isGK ? true : undefined,
     });
   };
@@ -209,7 +273,18 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
 
     const parts = trimmed.split(/[\t,]+/).map((p) => cleanText(p));
 
-    if (parts.length >= 4) {
+    if (parts.length >= 6) {
+      // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size, 5th: Sleeve, 6th: Collar
+      addPlayerIfValid(parts[0], parts[3], parts[1], parts[4], parts[5]);
+    } else if (parts.length === 5) {
+      // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size, 5th: Sleeve or Collar
+      const p4Upper = parts[4].toUpperCase();
+      if (p4Upper === 'C' || p4Upper === 'COLLAR' || p4Upper === 'C.') {
+        addPlayerIfValid(parts[0], parts[3], parts[1], '', parts[4]);
+      } else {
+        addPlayerIfValid(parts[0], parts[3], parts[1], parts[4], '');
+      }
+    } else if (parts.length >= 4) {
       // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size
       addPlayerIfValid(parts[0], parts[3], parts[1]);
     } else if (parts.length === 3) {

@@ -18,7 +18,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   const { summaryArray, totalPieces } = calculateSizeBreakdown(players);
   const { summaryArray: shortsSummaryArray } = calculateShortsBreakdown(players);
   const hasShorts = order.hasShorts !== undefined ? Boolean(order.hasShorts) : players.some(p => p.shortsSize && p.shortsSize !== '' && p.shortsSize !== '-');
-  const hasCustomCollars = players.some(p => p.collar && p.collar.trim() !== '' && p.collar.trim() !== '-');
+  const hasCustomCollars = true; // Always display CLR (Collar) column on Cutting & Fusing Info Slip PDF!
   const bottomType = order.bottomType || 'shorts';
   const bottomLabel = bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS';
   const bottomHeaderCode = bottomType === 'track_pant' ? 'PT' : 'SH';
@@ -563,8 +563,25 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                           const nameDisplay = isGK && !hasGKInName && nameRaw ? `${nameRaw} (GK)` : nameRaw;
                           const sizeDisplay = formatCellValue(p.size);
                           const sleeveRaw = formatCellValue(p.sleeve);
-                          const sleeveCode = (sleeveRaw || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
-                          const collarDisplay = formatCellValue(p.collar) || (order.neckType ? order.neckType.slice(0, 6) : 'ROUND');
+                          let sleeveCode = 'F';
+                          if (sleeveRaw) {
+                            const sUpper = sleeveRaw.toUpperCase();
+                            if (sUpper === 'FULL' || sUpper === 'F') sleeveCode = 'F';
+                            else if (sUpper === 'HALF' || sUpper === 'H') sleeveCode = 'H';
+                            else if (sUpper === 'SLEEVELESS' || sUpper === 'SL') sleeveCode = 'SL';
+                            else sleeveCode = sleeveRaw.slice(0, 2).toUpperCase();
+                          } else {
+                            sleeveCode = order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F';
+                          }
+
+                          const rawCollarVal = formatCellValue(p.collar);
+                          let collarDisplay = '';
+                          if (rawCollarVal && rawCollarVal.trim() !== '' && rawCollarVal.trim() !== '-') {
+                            collarDisplay = 'RMC';
+                          } else {
+                            collarDisplay = '';
+                          }
+
                           const shortsDisplay = formatCellValue(p.shortsSize);
                           const numberDisplay = formatCellValue(p.number);
                           const nameStyle = getPlayerNameStyle(nameDisplay, numColumns);
@@ -622,7 +639,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                                     whiteSpace: 'nowrap',
                                     color: '#d92525',
                                     fontWeight: 900,
-                                    fontSize: rowsPerCol > 14 ? '10px' : '12px'
+                                    fontSize: rowsPerCol > 14 ? '9.5px' : '11px'
                                   }}
                                 >
                                   {collarDisplay}
