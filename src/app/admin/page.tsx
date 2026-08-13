@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile, listenToPunchNotifications, PunchNotification, createPunchNotification } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -29,7 +29,6 @@ export default function AdminDashboard() {
   const [pendingUsers, setPendingUsers] = useState<AppUser[]>([]);
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
-  const [liveNotifications, setLiveNotifications] = useState<PunchNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
 
@@ -114,16 +113,6 @@ export default function AdminDashboard() {
     });
     return () => unsubscribe();
   }, [router]);
-
-  useEffect(() => {
-    if (!currentUser || currentUser.role !== 'admin') return;
-
-    const unsubscribe = listenToPunchNotifications((notifs) => {
-      setLiveNotifications(notifs);
-    }, 24);
-
-    return () => unsubscribe();
-  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -863,111 +852,6 @@ export default function AdminDashboard() {
 
           {/* Main Content Pane */}
           <div className="flex-1 min-w-0">
-            {/* Live Employee Punch Notifications Feed */}
-            <div className="glass-card mb-8">
-              <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <div>
-                  <h2 className="subtitle !text-xl !text-white !mb-0 flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                    Live Punch Activity & Notifications
-                  </h2>
-                  <p className="text-xs text-secondary mt-0.5">Real-time punch in and punch out updates from company employees</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="badge badge-worker">
-                    {liveNotifications.filter(n => n.type === 'punch_in' && n.date === getTodayDateString()).length} In Today
-                  </span>
-                  <span className="badge badge-leave">
-                    {liveNotifications.filter(n => n.type === 'punch_out' && n.date === getTodayDateString()).length} Out Today
-                  </span>
-                </div>
-              </div>
-
-              {liveNotifications.length === 0 ? (
-                <div className="text-center py-6 text-secondary text-sm">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2 opacity-50"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                  No employee punch notifications recorded yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[280px] overflow-y-auto pr-1">
-                  {liveNotifications.slice(0, 12).map((n) => {
-                    const isPunchIn = n.type === 'punch_in';
-                    const formattedTime = n.timestamp?.toDate
-                      ? new Date(n.timestamp.toDate()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                      : (n.date || '');
-
-                    return (
-                      <div
-                        key={n.id}
-                        className={`p-3 rounded-xl border flex items-center gap-3 transition-all ${
-                          isPunchIn
-                            ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40'
-                            : 'bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40'
-                        }`}
-                      >
-                        <div className="relative flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center font-bold text-white overflow-hidden">
-                            {n.userPhoto ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={n.userPhoto} alt={n.userName} className="w-full h-full object-cover" />
-                            ) : (
-                              <span>{n.userName ? n.userName.charAt(0).toUpperCase() : 'E'}</span>
-                            )}
-                          </div>
-                          <span
-                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#070b14] ${
-                              isPunchIn ? 'bg-emerald-500' : 'bg-rose-500'
-                            }`}
-                          />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-semibold text-sm text-white truncate" title={n.userName}>
-                              {n.userName}
-                            </span>
-                            <span
-                              className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
-                                isPunchIn
-                                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                                  : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
-                              }`}
-                            >
-                              {isPunchIn ? 'Punch In' : 'Punch Out'}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs text-secondary mt-1">
-                            <span className="capitalize text-[11px]">
-                              {n.workMode ? `${n.workMode} mode` : 'Office'}
-                            </span>
-                            <span className="font-mono text-[10px] text-white/60">{formattedTime}</span>
-                          </div>
-
-                          {n.location && (
-                            <div className="text-[10px] text-teal-400 mt-1 flex items-center gap-1 truncate">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                              <a
-                                href={`https://maps.google.com/?q=${n.location.latitude},${n.location.longitude}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="hover:underline"
-                              >
-                                View Map Location
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Pending Users Column */}
               <div className="glass-card">
