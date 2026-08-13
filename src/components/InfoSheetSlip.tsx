@@ -18,6 +18,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   const { summaryArray, totalPieces } = calculateSizeBreakdown(players);
   const { summaryArray: shortsSummaryArray } = calculateShortsBreakdown(players);
   const hasShorts = order.hasShorts !== undefined ? Boolean(order.hasShorts) : players.some(p => p.shortsSize && p.shortsSize !== '' && p.shortsSize !== '-');
+  const hasCustomCollars = players.some(p => p.collar && p.collar.trim() !== '' && p.collar.trim() !== '-');
   const bottomType = order.bottomType || 'shorts';
   const bottomLabel = bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS';
   const bottomHeaderCode = bottomType === 'track_pant' ? 'PT' : 'SH';
@@ -399,7 +400,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                     CLOTH : <span style={{ color: '#d92525', textTransform: 'uppercase' }}>{order.clothType || 'SALEENA'}</span>
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: 900, color: '#000', marginTop: '3px' }}>
-                    NECK <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: '13px', textTransform: 'uppercase' }}>{order.neckType || 'ROUND NECK'}</span>
+                    COLLAR / NECK : <span style={{ color: '#d92525', textDecoration: 'underline', marginLeft: '4px', fontSize: '13.5px', textTransform: 'uppercase', fontWeight: 900 }}>{order.neckType || 'ROUND NECK'}</span>
                   </div>
                   <div style={{ fontSize: '13px', fontWeight: 900, color: '#000', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {bottomLabel} <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '1.5px solid #000', background: hasShorts ? '#d92525' : '#fff' }}></span>
@@ -510,6 +511,14 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
           </div>
         </div>
 
+        {/* Special Instructions & Collar Notes Box */}
+        {(order.notes || order.customerNotes) && (
+          <div style={{ marginTop: '4px', marginBottom: '4px', padding: '4px 8px', border: '1.5px solid #d92525', background: '#fff5f5', borderRadius: '4px', fontSize: '11px', fontWeight: 900, color: '#000' }}>
+            <span style={{ color: '#d92525', textTransform: 'uppercase' }}>SPECIAL COLLAR & ORDER INSTRUCTIONS: </span>
+            <span>{order.notes || order.customerNotes}</span>
+          </div>
+        )}
+
         {/* ── BOTTOM SECTION: PLAYERS DETAILS TABLE BELOW ACROSS FULL PAGE WIDTH ── */}
         <div style={{ border: '2.5px solid #000', background: '#ffffff', flex: 1, display: 'flex', flexDirection: 'column', marginTop: '4px' }}>
           {/* Category Bar Header */}
@@ -536,6 +545,9 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                         <th style={{ textAlign: 'left', padding: tablePadding, borderRight: '1.5px solid #000' }}>NAME</th>
                         <th style={{ textAlign: 'center', padding: tablePadding, width: hasShorts ? '32px' : '36px', borderRight: '1.5px solid #000' }}>SIZE</th>
                         <th style={{ textAlign: 'center', padding: tablePadding, width: '26px', borderRight: '1.5px solid #000', color: '#004c80' }}>SLV</th>
+                        {hasCustomCollars && (
+                          <th style={{ textAlign: 'center', padding: tablePadding, width: '38px', borderRight: '1.5px solid #000', color: '#d92525' }}>CLR</th>
+                        )}
                         {hasShorts && (
                           <th style={{ textAlign: 'center', padding: tablePadding, width: '32px', borderRight: '1.5px solid #000', color: '#b91c1c' }}>{bottomHeaderCode}</th>
                         )}
@@ -552,6 +564,7 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                           const sizeDisplay = formatCellValue(p.size);
                           const sleeveRaw = formatCellValue(p.sleeve);
                           const sleeveCode = (sleeveRaw || (order.sleeveType === 'half' ? 'H' : order.sleeveType === 'sleeveless' ? 'SL' : 'F')).toUpperCase();
+                          const collarDisplay = formatCellValue(p.collar) || (order.neckType ? order.neckType.slice(0, 6) : 'ROUND');
                           const shortsDisplay = formatCellValue(p.shortsSize);
                           const numberDisplay = formatCellValue(p.number);
                           const nameStyle = getPlayerNameStyle(nameDisplay, numColumns);
@@ -600,6 +613,21 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                               >
                                 {sleeveCode}
                               </td>
+                              {hasCustomCollars && (
+                                <td
+                                  style={{
+                                    padding: tablePadding,
+                                    textAlign: 'center',
+                                    borderRight: '1.5px solid #000',
+                                    whiteSpace: 'nowrap',
+                                    color: '#d92525',
+                                    fontWeight: 900,
+                                    fontSize: rowsPerCol > 14 ? '10px' : '12px'
+                                  }}
+                                >
+                                  {collarDisplay}
+                                </td>
+                              )}
                               {hasShorts && (
                                 <td
                                   style={{

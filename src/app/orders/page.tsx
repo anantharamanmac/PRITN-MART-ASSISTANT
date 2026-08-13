@@ -756,6 +756,58 @@ export default function OrdersPage() {
     }
   };
 
+  const [sendingDiscordSummary, setSendingDiscordSummary] = useState(false);
+
+  const handleSendDailyDiscordSummary = async () => {
+    const toastId = toast.loading("Generating & sending Daily Order Summary to Discord...");
+    setSendingDiscordSummary(true);
+    try {
+      const todayOrders = orders.filter(o => selectedMonth === 'all' || getOrderMonthKey(o) === selectedMonth);
+
+      const totalOrders = todayOrders.length;
+      const totalPieces = todayOrders.reduce((sum, o) => sum + (o.pieces || 0), 0);
+      const totalAmount = todayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      const totalAdvance = todayOrders.reduce((sum, o) => sum + (o.advanceAmount || 0), 0);
+      const totalBalance = todayOrders.reduce((sum, o) => sum + (o.balanceAmount || 0), 0);
+
+      const pendingCount = todayOrders.filter(o => o.status === 'pending').length;
+      const productionCount = todayOrders.filter(o => o.status === 'in_production').length;
+      const readyCount = todayOrders.filter(o => o.status === 'ready').length;
+      const deliveredCount = todayOrders.filter(o => o.status === 'delivered').length;
+
+      const res = await fetch('/api/notifications/discord-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'daily_summary',
+          dateStr: formatMonthLabel(selectedMonth) !== 'All Months' ? formatMonthLabel(selectedMonth) : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          summaryData: {
+            totalOrders,
+            totalPieces,
+            totalAmount,
+            totalAdvance,
+            totalBalance,
+            pendingCount,
+            productionCount,
+            readyCount,
+            deliveredCount
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("Daily Order Summary posted successfully to Discord channel!", { id: toastId });
+      } else {
+        toast.error(data.message || "Failed to send summary to Discord", { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(`Error sending summary: ${err.message}`, { id: toastId });
+    } finally {
+      setSendingDiscordSummary(false);
+    }
+  };
+
   // Status Change Handler
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
@@ -901,6 +953,31 @@ export default function OrdersPage() {
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="9.8" y1="8.2" x2="20" y2="18" /><line x1="9.8" y1="15.8" x2="20" y2="6" /></svg>
               <span>2. Designer Production</span>
+            </button>
+
+            {/* Send Daily Summary to Discord Button */}
+            <button
+              onClick={handleSendDailyDiscordSummary}
+              disabled={sendingDiscordSummary}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                padding: '0.6rem 1.1rem',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                background: 'rgba(88, 101, 242, 0.18)',
+                border: '1px solid #5865F2',
+                color: '#7289da',
+                cursor: sendingDiscordSummary ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Post current day order summary report to Discord channel"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span>{sendingDiscordSummary ? 'Sending...' : '📊 Discord Summary'}</span>
             </button>
           </div>
         </div>

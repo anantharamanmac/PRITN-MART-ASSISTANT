@@ -665,7 +665,8 @@ export const getOfficeSettings = async (): Promise<OfficeSettings> => {
   return {
     latitude: 12.9716,
     longitude: 77.5946,
-    radius: 200 // 200 meters default
+    radius: 200, // 200 meters default
+    discordWebhookUrl: 'https://discordapp.com/api/webhooks/1537378498052755497/w9jjUvzUdf95EBFVTkqijyrhbqRBdinOWPIANrwePn-hSZF8Gsi0AmdAW3qKgJWug_CF'
   };
 };
 
@@ -1201,6 +1202,22 @@ export const createOrder = async (orderData: Omit<OrderRecord, 'id' | 'createdAt
 
   const sanitized = sanitizeForFirestore(record);
   await setDoc(newDocRef, sanitized);
+
+  // Asynchronously trigger Discord Webhook for New Order Alert
+  if (typeof window !== 'undefined') {
+    fetch('/api/notifications/discord-webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'new_order',
+        orderData: {
+          ...record,
+          createdAt: new Date().toISOString(),
+        }
+      })
+    }).catch(err => console.error("Error sending new order Discord webhook:", err));
+  }
+
   return newDocRef.id;
 };
 
