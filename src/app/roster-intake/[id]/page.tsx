@@ -265,10 +265,85 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0d1117', color: '#f0f6fc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '44px', height: '44px', border: '3px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
-          <p style={{ fontWeight: 600, color: '#8b949e' }}>Loading Order Details...</p>
+      <div style={{ minHeight: '100vh', background: '#18181b', color: '#f4f4f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: '1rem' }}>
+        <style jsx global>{`
+          @keyframes pulseGlow {
+            0%, 100% { opacity: 0.7; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.05); }
+          }
+          @keyframes shimmerWave {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          @keyframes barFill {
+            0% { width: 10%; }
+            50% { width: 68%; }
+            100% { width: 95%; }
+          }
+          .skeleton-shimmer {
+            background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
+            background-size: 200% 100%;
+            animation: shimmerWave 1.8s infinite linear;
+          }
+        `}</style>
+
+        {/* Excel Window Loading Card */}
+        <div style={{ width: '100%', maxWidth: '640px', background: '#1e1e1e', borderRadius: '16px', border: '1.5px solid #107c41', boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 35px rgba(16, 124, 65, 0.25)', overflow: 'hidden' }}>
+          
+          {/* Top Excel Ribbon Bar */}
+          <div style={{ background: '#107c41', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '32px', height: '32px', background: '#ffffff', color: '#107c41', borderRadius: '6px', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', animation: 'pulseGlow 2s infinite ease-in-out' }}>
+              X
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff', letterSpacing: '0.02em' }}>Opening Excel Roster Workbook...</div>
+              <div style={{ fontSize: '11px', color: '#a7f3d0' }}>Print Mart Live Roster Sheet</div>
+            </div>
+          </div>
+
+          {/* Excel Formula Bar Skeleton */}
+          <div style={{ background: '#252526', borderBottom: '1px solid #3c3c3c', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: '#107c41', fontWeight: 900, fontSize: '14px', fontFamily: 'monospace' }}>fx</span>
+            <div style={{ width: '1px', height: '16px', background: '#3c3c3c' }} />
+            <div className="skeleton-shimmer" style={{ height: '14px', borderRadius: '4px', flex: 1 }} />
+          </div>
+
+          {/* Main Skeleton Grid Table */}
+          <div style={{ padding: '16px' }}>
+            {/* Header Columns Skeleton */}
+            <div style={{ display: 'grid', gridTemplateColumns: '40px 2fr 1fr 1fr 1fr 1.2fr', gap: '4px', marginBottom: '8px' }}>
+              <div style={{ background: '#2d2d2d', height: '24px', borderRadius: '3px' }} />
+              <div style={{ background: '#107c41', color: '#fff', height: '24px', borderRadius: '3px', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>A: NAME</div>
+              <div style={{ background: '#2d2d2d', color: '#ccc', height: '24px', borderRadius: '3px', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>B: NO</div>
+              <div style={{ background: '#2d2d2d', color: '#ccc', height: '24px', borderRadius: '3px', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>C: XXX</div>
+              <div style={{ background: '#2d2d2d', color: '#ccc', height: '24px', borderRadius: '3px', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>D: SIZE</div>
+              <div style={{ background: '#2d2d2d', color: '#ccc', height: '24px', borderRadius: '3px', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>E: SLEEVE</div>
+            </div>
+
+            {/* Skeletons Rows */}
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 2fr 1fr 1fr 1fr 1.2fr', gap: '4px', marginBottom: '4px' }}>
+                <div style={{ background: '#2d2d2d', height: '32px', borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#858585', fontWeight: 700 }}>{i + 1}</div>
+                <div className="skeleton-shimmer" style={{ height: '32px', borderRadius: '3px' }} />
+                <div className="skeleton-shimmer" style={{ height: '32px', borderRadius: '3px' }} />
+                <div className="skeleton-shimmer" style={{ height: '32px', borderRadius: '3px' }} />
+                <div className="skeleton-shimmer" style={{ height: '32px', borderRadius: '3px' }} />
+                <div className="skeleton-shimmer" style={{ height: '32px', borderRadius: '3px' }} />
+              </div>
+            ))}
+
+            {/* Animated Loading Bar */}
+            <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10b981', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <span>📊</span>
+                <span>Fetching Print Mart Team Specifications...</span>
+              </div>
+
+              <div style={{ width: '100%', height: '6px', background: '#27272a', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: 'linear-gradient(90deg, #107c41, #10b981)', borderRadius: '3px', animation: 'barFill 2s ease-in-out infinite' }} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
