@@ -4,6 +4,21 @@ import React, { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { OrderRecord } from '@/lib/db';
 
+export interface InvoiceItem {
+  id?: string;
+  itemType: string;
+  clothType: string;
+  sleeveType: string;
+  neckType: string;
+  hasShorts: boolean;
+  bottomType?: 'shorts' | 'track_pant';
+  pieces: number;
+  ratePerPiece: number;
+  subtotal: number;
+  dtfOption?: string;
+  dtfRate?: number;
+}
+
 export interface InvoiceData {
   docType?: 'QUOTATION' | 'INVOICE';
   invoiceNumber: string;
@@ -31,6 +46,7 @@ export interface InvoiceData {
   notes?: string;
   dtfOption?: string;
   dtfRate?: number;
+  items?: InvoiceItem[];
 }
 
 interface InvoiceSlipProps {
@@ -347,60 +363,85 @@ export default function InvoiceSlip({ invoice, order, onClose }: InvoiceSlipProp
                 </tr>
               </thead>
               <tbody>
-                {/* Row 1: Item details (Base Garment) */}
-                <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
-                  <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
-                    {baseDescriptionLine}
-                  </td>
-                  <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                    {baseRate}
-                  </td>
-                  <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                    {invoice.pieces}
-                  </td>
-                  <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
-                    {(baseRate * invoice.pieces).toLocaleString()}
-                  </td>
-                </tr>
+                {invoice.items && invoice.items.length > 0 ? (
+                  invoice.items.map((item, idx) => {
+                    const itemDtfActive = item.dtfOption && item.dtfOption !== 'none';
+                    const desc = `${item.clothType || 'PP'} - CLOTH ${item.itemType || 'JERSEY'} PRINT ${item.neckType || 'ROUND NECK'}${item.sleeveType ? ` (${item.sleeveType.toUpperCase()})` : ''}${itemDtfActive ? ` + DTF (${item.dtfOption?.toUpperCase()})` : ''}${item.hasShorts ? ` + ${item.bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS'}` : ''}`.toUpperCase();
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
+                        <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
+                          {desc}
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                          {item.ratePerPiece}
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                          {item.pieces}
+                        </td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
+                          {(item.subtotal || (item.pieces * item.ratePerPiece)).toLocaleString()}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <>
+                    {/* Row 1: Item details (Base Garment) */}
+                    <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
+                      <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
+                        {baseDescriptionLine}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                        {baseRate}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                        {invoice.pieces}
+                      </td>
+                      <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
+                        {(baseRate * invoice.pieces).toLocaleString()}
+                      </td>
+                    </tr>
 
-                {/* Optional Row 2: DTF Printing details */}
-                {dtfOptionActive && (
-                  <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
-                    <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
-                      {dtfDescriptionLine}
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                      {dtfRate}
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                      {invoice.pieces}
-                    </td>
-                    <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
-                      {(dtfRate * invoice.pieces).toLocaleString()}
-                    </td>
-                  </tr>
-                )}
+                    {/* Optional Row 2: DTF Printing details */}
+                    {dtfOptionActive && (
+                      <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
+                        <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
+                          {dtfDescriptionLine}
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                          {dtfRate}
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                          {invoice.pieces}
+                        </td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
+                          {(dtfRate * invoice.pieces).toLocaleString()}
+                        </td>
+                      </tr>
+                    )}
 
-                {/* Optional Row 3: Shorts Add-on if applicable */}
-                {invoice.hasShorts && (
-                  <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
-                    <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
-                      INCLUDES {invoice.bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS / PANTS'} ADD-ON
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                      -
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
-                      {invoice.pieces}
-                    </td>
-                    <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
-                      INCLUDED
-                    </td>
-                  </tr>
+                    {/* Optional Row 3: Shorts Add-on if applicable */}
+                    {invoice.hasShorts && (
+                      <tr style={{ borderBottom: '1px solid #38d39f', fontSize: '13px', fontWeight: 900, color: '#000000', height: '30px' }}>
+                        <td style={{ padding: '6px 12px', textAlign: 'left', borderRight: '1px solid #38d39f' }}>
+                          INCLUDES {invoice.bottomType === 'track_pant' ? 'TRACK PANT' : 'SHORTS / PANTS'} ADD-ON
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                          -
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #38d39f' }}>
+                          {invoice.pieces}
+                        </td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 900 }}>
+                          INCLUDED
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
 
                 {/* Lined Empty Rows to fill 12 total table rows */}
-                {Array.from({ length: Math.max(0, emptyRowsCount) }).map((_, idx) => (
+                {Array.from({ length: Math.max(0, 12 - (invoice.items && invoice.items.length > 0 ? invoice.items.length : (1 + (dtfOptionActive ? 1 : 0) + (invoice.hasShorts ? 1 : 0)))) }).map((_, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid #38d39f', height: '28px' }}>
                     <td style={{ borderRight: '1px solid #38d39f' }}></td>
                     <td style={{ borderRight: '1px solid #38d39f' }}></td>

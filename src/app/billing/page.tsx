@@ -7,6 +7,7 @@ import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { toast } from 'react-hot-toast';
 import {
   OrderRecord,
+  BillingItem,
   findOrderByInfoNumber,
   updateOrder,
   listenToOrders,
@@ -58,27 +59,34 @@ function BillingContent() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [orderTitle, setOrderTitle] = useState('');
-  const [itemType, setItemType] = useState('JERSEY');
-  const [clothType, setClothType] = useState(CLOTH_TYPES[0]);
-  const [sleeveType, setSleeveType] = useState<'full' | 'half' | 'sleeveless'>('full');
-  const [neckType, setNeckType] = useState(NECK_TYPES[0]);
-  const [hasShorts, setHasShorts] = useState(false);
-  const [bottomType, setBottomType] = useState<'shorts' | 'track_pant'>('shorts');
-  const [pieces, setPieces] = useState<number>(10);
-  const [dtfOption, setDtfOption] = useState<string>('none');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [notes, setNotes] = useState('');
   const [invoiceNum, setInvoiceNum] = useState('');
   const [quotationNum, setQuotationNum] = useState('');
 
+  // Multi-Item State
+  const [items, setItems] = useState<BillingItem[]>([
+    {
+      id: 'item-1',
+      itemType: 'JERSEY',
+      clothType: CLOTH_TYPES[0],
+      sleeveType: 'full',
+      neckType: NECK_TYPES[0],
+      hasShorts: false,
+      bottomType: 'shorts',
+      pieces: 10,
+      dtfOption: 'none',
+      ratePerPiece: 250,
+      isManualOverride: false,
+    }
+  ]);
+
   // Financial & Pricing State
   const [pricingRates, setPricingRates] = useState<PricingRates>(DEFAULT_PRICING_RATES);
-  const [ratePerPiece, setRatePerPiece] = useState<number>(250);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [taxRate, setTaxRate] = useState<number>(0); // 0, 5, or 18
   const [advanceAmount, setAdvanceAmount] = useState<number>(0);
   const [paymentMode, setPaymentMode] = useState<string>('UPI / GPay');
-  const [isManualOverride, setIsManualOverride] = useState(false);
 
   // Modal State
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -86,7 +94,8 @@ function BillingContent() {
   const [savingOrder, setSavingOrder] = useState(false);
 
   // Computed Financial Totals
-  const subtotal = Math.max(0, pieces * ratePerPiece);
+  const subtotal = items.reduce((sum, item) => sum + Math.max(0, item.pieces * item.ratePerPiece), 0);
+  const totalPieces = items.reduce((sum, item) => sum + item.pieces, 0);
   const taxableAmount = Math.max(0, subtotal - discountAmount);
   const taxAmount = taxRate > 0 ? Math.round((taxableAmount * taxRate) / 100) : 0;
   const totalAmount = taxableAmount + taxAmount;
@@ -141,22 +150,97 @@ function BillingContent() {
     }
   }, [infoNumber, invoiceNum]);
 
-  // Auto-Calculate Unit Rate & Total unless manually overridden
+  // Re-calculate non-overridden item prices when rates load
   useEffect(() => {
-    if (isManualOverride) return;
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.isManualOverride) return item;
+        const calc = calculateOrderPrice({
+          clothType: item.clothType,
+          sleeveType: item.sleeveType,
+          neckType: item.neckType,
+          hasShorts: item.hasShorts,
+          pieces: item.pieces,
+          rates: pricingRates,
+          dtfOption: item.dtfOption,
+        });
+        return { ...item, ratePerPiece: calc.unitRate };
+      })
+    );
+  }, [pricingRates]);
 
-    const calc = calculateOrderPrice({
-      clothType,
-      sleeveType,
-      neckType,
-      hasShorts,
-      pieces,
-      rates: pricingRates,
-      dtfOption,
+  // Item Updater
+  const handleUpdateItem = (index: number, updates: Partial<BillingItem>) => {
+    setItems((prev) => {
+      const copy = [...prev];
+      const target = { ...copy[index], ...updates };
+
+      const recalculateRate = !target.isManualOverride && (
+        'clothType' in updates ||
+        'sleeveType' in updates ||
+        'neckType' in updates ||
+        'hasShorts' in updates ||
+        'pieces' in updates ||
+        'dtfOption' in updates ||
+        'isManualOverride' in updates
+      );
+
+      if (recalculateRate) {
+        const calc = calculateOrderPrice({
+          clothType: target.clothType,
+          sleeveType: target.sleeveType,
+          neckType: target.neckType,
+          hasShorts: target.hasShorts,
+          pieces: target.pieces,
+          rates: pricingRates,
+          dtfOption: target.dtfOption,
+        });
+        target.ratePerPiece = calc.unitRate;
+      }
+
+      copy[index] = target;
+      return copy;
     });
+  };
 
-    setRatePerPiece(calc.unitRate);
-  }, [clothType, sleeveType, neckType, hasShorts, pieces, pricingRates, dtfOption, isManualOverride]);
+  // Add Extra Item
+  const handleAddItem = () => {
+    const newItem: BillingItem = {
+      id: `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      itemType: 'JERSEY',
+      clothType: CLOTH_TYPES[0],
+      sleeveType: 'full',
+      neckType: NECK_TYPES[0],
+      hasShorts: false,
+      bottomType: 'shorts',
+      pieces: 10,
+      dtfOption: 'none',
+      ratePerPiece: 250,
+      isManualOverride: false,
+    };
+    const calc = calculateOrderPrice({
+      clothType: newItem.clothType,
+      sleeveType: newItem.sleeveType,
+      neckType: newItem.neckType,
+      hasShorts: newItem.hasShorts,
+      pieces: newItem.pieces,
+      rates: pricingRates,
+      dtfOption: newItem.dtfOption,
+    });
+    newItem.ratePerPiece = calc.unitRate;
+    setItems((prev) => [...prev, newItem]);
+    toast.success('✓ Added extra item line to quotation');
+  };
+
+  // Remove Item
+  const handleRemoveItem = (index: number) => {
+    if (items.length <= 1) {
+      toast.error('At least one item line is required');
+      return;
+    }
+    setItems((prev) => prev.filter((_, i) => i !== index));
+    toast.success('Removed item line');
+  };
 
   // Fetch Order Data by INFO NO.
   const handleFetchOrderByInfo = async (infoStr: string) => {
@@ -181,14 +265,6 @@ function BillingContent() {
       setCustomerName(found.customerName || '');
       setCustomerPhone(found.customerPhone || '');
       setOrderTitle(found.orderTitle || '');
-      setItemType(found.itemType || 'JERSEY');
-      setClothType(found.clothType || CLOTH_TYPES[0]);
-      setSleeveType((found.sleeveType as any) || 'full');
-      setNeckType(found.neckType || NECK_TYPES[0]);
-      setHasShorts(found.hasShorts !== undefined ? Boolean(found.hasShorts) : Boolean(found.players?.some(p => p.shortsSize && p.shortsSize !== '-')));
-      setBottomType(found.bottomType || 'shorts');
-      setPieces(found.players && found.players.length > 0 ? found.players.length : (found.pieces || 10));
-      setDtfOption(found.dtfOption || 'none');
       setDeliveryDate(found.deliveryDate || '');
       setNotes(found.notes || '');
 
@@ -197,11 +273,23 @@ function BillingContent() {
       setInvoiceNum(found.invoiceNumber || `INV-${found.infoNumber}-${rand}`);
       setQuotationNum(found.quotationNumber || `QT-${found.infoNumber}-${rand2}`);
 
-      if (typeof found.ratePerPiece === 'number' && found.ratePerPiece > 0) {
-        setIsManualOverride(true);
-        setRatePerPiece(found.ratePerPiece);
+      if (found.items && found.items.length > 0) {
+        setItems(found.items);
       } else {
-        setIsManualOverride(false);
+        const singleItem: BillingItem = {
+          id: 'item-1',
+          itemType: found.itemType || 'JERSEY',
+          clothType: found.clothType || CLOTH_TYPES[0],
+          sleeveType: (found.sleeveType as any) || 'full',
+          neckType: found.neckType || NECK_TYPES[0],
+          hasShorts: found.hasShorts !== undefined ? Boolean(found.hasShorts) : Boolean(found.players?.some(p => p.shortsSize && p.shortsSize !== '-')),
+          bottomType: found.bottomType || 'shorts',
+          pieces: found.players && found.players.length > 0 ? found.players.length : (found.pieces || 10),
+          dtfOption: found.dtfOption || 'none',
+          ratePerPiece: typeof found.ratePerPiece === 'number' && found.ratePerPiece > 0 ? found.ratePerPiece : 250,
+          isManualOverride: typeof found.ratePerPiece === 'number' && found.ratePerPiece > 0
+        };
+        setItems([singleItem]);
       }
 
       setDiscountAmount(found.discountAmount || 0);
@@ -217,16 +305,6 @@ function BillingContent() {
 
   // Build Invoice Data Object
   const buildInvoiceDataObject = (): InvoiceData => {
-    const calc = calculateOrderPrice({
-      clothType,
-      sleeveType,
-      neckType,
-      hasShorts,
-      pieces,
-      rates: pricingRates,
-      dtfOption,
-    });
-
     return {
       invoiceNumber: invoiceNum || `INV-${infoNumber || 2412}`,
       quotationNumber: quotationNum || `QT-${infoNumber || 2412}`,
@@ -234,14 +312,14 @@ function BillingContent() {
       customerName: customerName.trim() || 'LUCKY',
       customerPhone: customerPhone.trim() || '+91 8848048733',
       orderTitle: orderTitle.trim() || 'Custom Order',
-      itemType: itemType.trim() || 'JERSEY',
-      clothType,
-      sleeveType,
-      neckType,
-      hasShorts,
-      bottomType: hasShorts ? bottomType : 'shorts',
-      pieces,
-      ratePerPiece,
+      itemType: items[0]?.itemType || 'JERSEY',
+      clothType: items[0]?.clothType || CLOTH_TYPES[0],
+      sleeveType: items[0]?.sleeveType || 'full',
+      neckType: items[0]?.neckType || NECK_TYPES[0],
+      hasShorts: items[0]?.hasShorts || false,
+      bottomType: items[0]?.bottomType || 'shorts',
+      pieces: totalPieces,
+      ratePerPiece: items[0]?.ratePerPiece || 250,
       subtotal,
       discountAmount,
       taxRate,
@@ -251,8 +329,20 @@ function BillingContent() {
       balanceAmount,
       paymentMode,
       notes: notes.trim(),
-      dtfOption,
-      dtfRate: dtfOption !== 'none' ? calc.dtfAddon : 0,
+      dtfOption: items[0]?.dtfOption || 'none',
+      items: items.map(i => ({
+        id: i.id,
+        itemType: i.itemType,
+        clothType: i.clothType,
+        sleeveType: i.sleeveType,
+        neckType: i.neckType,
+        hasShorts: i.hasShorts,
+        bottomType: i.bottomType,
+        pieces: i.pieces,
+        ratePerPiece: i.ratePerPiece,
+        subtotal: i.pieces * i.ratePerPiece,
+        dtfOption: i.dtfOption
+      }))
     };
   };
 
@@ -283,11 +373,11 @@ function BillingContent() {
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
           orderTitle: orderTitle.trim(),
-          itemType,
-          clothType,
-          neckType,
-          pieces,
-          ratePerPiece,
+          itemType: items[0]?.itemType || 'JERSEY',
+          clothType: items[0]?.clothType || CLOTH_TYPES[0],
+          neckType: items[0]?.neckType || NECK_TYPES[0],
+          pieces: totalPieces,
+          ratePerPiece: items[0]?.ratePerPiece || 250,
           totalAmount,
           discountAmount,
           advanceAmount,
@@ -295,7 +385,8 @@ function BillingContent() {
           notes: notes.trim(),
           invoiceNumber: invoiceNum,
           quotationNumber: quotationNum,
-          dtfOption,
+          dtfOption: items[0]?.dtfOption || 'none',
+          items: items
         });
         toast.dismiss('save-bill');
         toast.success(`Updated financial record for INFO #${infoNumber}!`);
@@ -438,213 +529,273 @@ function BillingContent() {
         </div>
 
         {/* ── MAIN BILLING EDITOR ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
           
-          {/* LEFT: Customer & Item Specs */}
+          {/* LEFT: Customer & Multi-Item Specs */}
           <div className="card-glass" style={{ padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
             <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-              Customer & Garment Specs
+              Customer & Order Line Items
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {/* Customer Name & Phone */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>Customer Name *</label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="e.g. LUCKY"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 700 }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#10b981', marginBottom: '0.3rem' }}>Mobile Number *</label>
-                  <input
-                    type="text"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="e.g. +91 8848048733"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 700 }}
-                  />
-                </div>
-              </div>
-
-              {/* Order Title & Item Type */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Order Title / Ref</label>
-                  <input
-                    type="text"
-                    value={orderTitle}
-                    onChange={(e) => setOrderTitle(e.target.value)}
-                    placeholder="e.g. SPORTIVATE"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Item Category</label>
-                  <input
-                    type="text"
-                    value={itemType}
-                    onChange={(e) => setItemType(e.target.value)}
-                    placeholder="JERSEY, HOODIE..."
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
-                  />
-                </div>
-              </div>
-
-              {/* Fabric, Sleeve, Neck, Shorts Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', marginBottom: '0.25rem' }}>FABRIC / MATERIAL</label>
-                  <select
-                    value={clothType}
-                    onChange={(e) => {
-                      setClothType(e.target.value);
-                      setIsManualOverride(false);
-                    }}
-                    style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
-                  >
-                    {CLOTH_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#10b981', marginBottom: '0.25rem' }}>SLEEVE TYPE</label>
-                  <select
-                    value={sleeveType}
-                    onChange={(e) => {
-                      setSleeveType(e.target.value as any);
-                      setIsManualOverride(false);
-                    }}
-                    style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
-                  >
-                    <option value="full" style={{ background: '#161e31', color: '#fff' }}>Full Sleeve (F)</option>
-                    <option value="half" style={{ background: '#161e31', color: '#fff' }}>Half Sleeve (H)</option>
-                    <option value="sleeveless" style={{ background: '#161e31', color: '#fff' }}>Sleeveless (SL)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '0.25rem' }}>NECK TYPE</label>
-                  <select
-                    value={neckType}
-                    onChange={(e) => {
-                      setNeckType(e.target.value);
-                      setIsManualOverride(false);
-                    }}
-                    style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
-                  >
-                    {NECK_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>TOTAL PIECES (QTY)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={pieces}
-                    onChange={(e) => {
-                      setPieces(Number(e.target.value) || 1);
-                      setIsManualOverride(false);
-                    }}
-                    style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#3b82f6', fontWeight: 800, fontSize: '0.85rem' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#ec4899', marginBottom: '0.25rem' }}>DTF PRINTING</label>
-                  <select
-                    value={dtfOption}
-                    onChange={(e) => {
-                      setDtfOption(e.target.value);
-                      setIsManualOverride(false);
-                    }}
-                    style={{ width: '100%', padding: '0.45rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
-                  >
-                    <option value="none" style={{ background: '#161e31', color: '#fff' }}>None</option>
-                    <option value="front" style={{ background: '#161e31', color: '#fff' }}>Front</option>
-                    <option value="back" style={{ background: '#161e31', color: '#fff' }}>Back</option>
-                    <option value="front and back" style={{ background: '#161e31', color: '#fff' }}>Front & Back</option>
-                    <option value="a4 size" style={{ background: '#161e31', color: '#fff' }}>A4 Size</option>
-                    <option value="a3 size" style={{ background: '#161e31', color: '#fff' }}>A3 Size</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Shorts Checkbox */}
-              <div style={{ background: hasShorts ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.03)', padding: '0.6rem 0.8rem', borderRadius: '8px', border: hasShorts ? '1px solid #10b981' : '1px solid var(--border)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 800, color: hasShorts ? '#10b981' : 'var(--text-primary)' }}>
-                  <input
-                    type="checkbox"
-                    checked={hasShorts}
-                    onChange={(e) => {
-                      setHasShorts(e.target.checked);
-                      setIsManualOverride(false);
-                    }}
-                    style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
-                  />
-                  <span>Includes {bottomType === 'track_pant' ? 'Track Pant' : 'Shorts'} / Pants (+₹{pricingRates.shortsMaterials?.[clothType] ?? pricingRates.shortsRate ?? 120}/pc)</span>
-                </label>
-
-                {hasShorts && (
-                  <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px dashed rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>Type:</span>
-                    <div style={{ display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setBottomType('shorts')}
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '5px',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          border: bottomType === 'shorts' ? '1.5px solid #10b981' : '1px solid var(--border)',
-                          background: bottomType === 'shorts' ? '#10b981' : 'rgba(255,255,255,0.05)',
-                          color: bottomType === 'shorts' ? '#ffffff' : 'var(--text-secondary)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        🩳 Shorts
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBottomType('track_pant')}
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '5px',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          border: bottomType === 'track_pant' ? '1.5px solid #10b981' : '1px solid var(--border)',
-                          background: bottomType === 'track_pant' ? '#10b981' : 'rgba(255,255,255,0.05)',
-                          color: bottomType === 'track_pant' ? '#ffffff' : 'var(--text-secondary)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        👖 Track Pant
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Notes */}
+            {/* Customer Name, Phone, Title */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Invoice Notes / Terms</label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Urgent order delivery before 3 PM..."
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>Customer Name *</label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="e.g. LUCKY"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 700 }}
                 />
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#10b981', marginBottom: '0.3rem' }}>Mobile Number *</label>
+                <input
+                  type="text"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="e.g. +91 8848048733"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 700 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Order Title / Ref</label>
+                <input
+                  type="text"
+                  value={orderTitle}
+                  onChange={(e) => setOrderTitle(e.target.value)}
+                  placeholder="e.g. SPORTIVATE"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                />
+              </div>
+            </div>
+
+            {/* Line Items Section Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--sapphire-light)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                📦 Order Line Items ({items.length})
+              </span>
+              <button
+                type="button"
+                onClick={handleAddItem}
+                style={{
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: 'var(--sapphire-primary)',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                <span>+ Add Extra Item</span>
+              </button>
+            </div>
+
+            {/* Item Cards List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {items.map((item, idx) => (
+                <div key={item.id || idx} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '12px', border: '1px solid var(--border)', position: 'relative' }}>
+                  {/* Item Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ background: 'var(--sapphire-primary)', color: '#fff', fontSize: '0.72rem', fontWeight: 900, padding: '0.15rem 0.5rem', borderRadius: '5px' }}>
+                        Item #{idx + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={item.itemType}
+                        onChange={(e) => handleUpdateItem(idx, { itemType: e.target.value })}
+                        placeholder="JERSEY, HOODIE, SHORTS..."
+                        style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 800, width: '150px' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981' }}>
+                        ₹{(item.pieces * item.ratePerPiece).toLocaleString()}
+                      </span>
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(idx)}
+                          title="Remove item"
+                          style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', padding: '0.25rem 0.45rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800 }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Garment Options Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#3b82f6', marginBottom: '0.2rem' }}>FABRIC</label>
+                      <select
+                        value={item.clothType}
+                        onChange={(e) => handleUpdateItem(idx, { clothType: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
+                      >
+                        {CLOTH_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#10b981', marginBottom: '0.2rem' }}>SLEEVE</label>
+                      <select
+                        value={item.sleeveType}
+                        onChange={(e) => handleUpdateItem(idx, { sleeveType: e.target.value as any })}
+                        style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
+                      >
+                        <option value="full" style={{ background: '#161e31', color: '#fff' }}>Full Sleeve</option>
+                        <option value="half" style={{ background: '#161e31', color: '#fff' }}>Half Sleeve</option>
+                        <option value="sleeveless" style={{ background: '#161e31', color: '#fff' }}>Sleeveless</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b', marginBottom: '0.2rem' }}>NECK</label>
+                      <select
+                        value={item.neckType}
+                        onChange={(e) => handleUpdateItem(idx, { neckType: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
+                      >
+                        {NECK_TYPES.map((t) => <option key={t} value={t} style={{ background: '#161e31', color: '#fff' }}>{t}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#3b82f6', marginBottom: '0.2rem' }}>QTY (PCS)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.pieces}
+                        onChange={(e) => handleUpdateItem(idx, { pieces: Number(e.target.value) || 1 })}
+                        style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: '#3b82f6', fontWeight: 800, fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#ec4899', marginBottom: '0.2rem' }}>DTF PRINT</label>
+                      <select
+                        value={item.dtfOption}
+                        onChange={(e) => handleUpdateItem(idx, { dtfOption: e.target.value })}
+                        style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
+                      >
+                        <option value="none" style={{ background: '#161e31', color: '#fff' }}>None</option>
+                        <option value="front" style={{ background: '#161e31', color: '#fff' }}>Front</option>
+                        <option value="back" style={{ background: '#161e31', color: '#fff' }}>Back</option>
+                        <option value="front and back" style={{ background: '#161e31', color: '#fff' }}>Front & Back</option>
+                        <option value="a4 size" style={{ background: '#161e31', color: '#fff' }}>A4 Size</option>
+                        <option value="a3 size" style={{ background: '#161e31', color: '#fff' }}>A3 Size</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10b981' }}>RATE (₹/PC)</label>
+                        {item.isManualOverride && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateItem(idx, { isManualOverride: false })}
+                            title="Reset auto rate"
+                            style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '0.68rem', cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            ↺ Auto
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="number"
+                        value={item.ratePerPiece}
+                        onChange={(e) => handleUpdateItem(idx, { ratePerPiece: Number(e.target.value) || 0, isManualOverride: true })}
+                        style={{ width: '100%', padding: '0.4rem', borderRadius: '6px', border: item.isManualOverride ? '1px solid #f59e0b' : '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 900, fontSize: '0.82rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Shorts Checkbox for item */}
+                  <div style={{ background: item.hasShorts ? 'rgba(16, 185, 129, 0.1)' : 'transparent', padding: '0.4rem 0.6rem', borderRadius: '6px', border: item.hasShorts ? '1px solid #10b981' : '1px solid var(--border)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: item.hasShorts ? '#10b981' : 'var(--text-primary)' }}>
+                      <input
+                        type="checkbox"
+                        checked={item.hasShorts}
+                        onChange={(e) => handleUpdateItem(idx, { hasShorts: e.target.checked })}
+                        style={{ width: '14px', height: '14px', accentColor: '#10b981' }}
+                      />
+                      <span>Includes {item.bottomType === 'track_pant' ? 'Track Pant' : 'Shorts'} / Pants</span>
+                    </label>
+
+                    {item.hasShorts && (
+                      <div style={{ marginTop: '0.3rem', paddingTop: '0.3rem', borderTop: '1px dashed rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10b981' }}>Type:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateItem(idx, { bottomType: 'shorts' })}
+                          style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, border: item.bottomType === 'shorts' ? '1px solid #10b981' : '1px solid var(--border)', background: item.bottomType === 'shorts' ? '#10b981' : 'transparent', color: item.bottomType === 'shorts' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer' }}
+                        >
+                          🩳 Shorts
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateItem(idx, { bottomType: 'track_pant' })}
+                          style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, border: item.bottomType === 'track_pant' ? '1px solid #10b981' : '1px solid var(--border)', background: item.bottomType === 'track_pant' ? '#10b981' : 'transparent', color: item.bottomType === 'track_pant' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer' }}
+                        >
+                          👖 Track Pant
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Add Item Button */}
+            <button
+              type="button"
+              onClick={handleAddItem}
+              style={{
+                marginTop: '1rem',
+                width: '100%',
+                padding: '0.65rem',
+                borderRadius: '10px',
+                border: '1px dashed var(--sapphire-light)',
+                background: 'rgba(59, 130, 246, 0.08)',
+                color: 'var(--sapphire-light)',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              <span>+ Add Extra Item to Quotation / Invoice</span>
+            </button>
+
+            {/* Notes */}
+            <div style={{ marginTop: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Invoice Notes / Terms</label>
+              <textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Urgent order delivery before 3 PM..."
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.82rem' }}
+              />
             </div>
           </div>
 
@@ -656,62 +807,28 @@ function BillingContent() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                   Payment Breakdown
                 </h3>
-                {isManualOverride && (
-                  <button
-                    type="button"
-                    onClick={() => setIsManualOverride(false)}
-                    style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-                  >
-                    ↺ Reset Auto Rate
-                  </button>
-                )}
               </div>
 
-              {/* Live Rate Breakdown Chips */}
-              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.85rem' }}>
-                <span style={{ background: 'var(--bg-main)', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                  Fabric: ₹{dtfOption && dtfOption !== 'none'
-                    ? (pricingRates.dtfMaterials?.[clothType] ?? pricingRates.dtfMaterials?.['Custom / Other'] ?? 180)
-                    : (pricingRates.materials[clothType] ?? pricingRates.materials['Custom / Other'] ?? 250)}
-                </span>
-                {dtfOption && dtfOption !== 'none' && (
-                  <span style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid #ec4899' }}>
-                    DTF Print: +₹{pricingRates.dtfRates?.[dtfOption.toLowerCase()] ?? 0} ({dtfOption})
-                  </span>
-                )}
-                <span style={{ background: 'var(--bg-main)', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                  Sleeve: {(pricingRates.sleeves[sleeveType] ?? 0) >= 0 ? `+₹${pricingRates.sleeves[sleeveType] ?? 0}` : `-₹${Math.abs(pricingRates.sleeves[sleeveType] ?? 0)}`}
-                </span>
-                <span style={{ background: 'var(--bg-main)', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                  Neck: +₹{pricingRates.necks[neckType] ?? 0}
-                </span>
-                {hasShorts && (
-                  <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.4rem', borderRadius: '4px', border: '1px solid #10b981' }}>
-                    Shorts: +₹{pricingRates.shortsMaterials?.[clothType] ?? pricingRates.shortsRate ?? 120}
-                  </span>
-                )}
+              {/* Items Breakdown list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.85rem' }}>
+                {items.map((item, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', background: 'var(--bg-main)', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                      #{i + 1} {item.itemType} ({item.clothType}):
+                    </span>
+                    <span style={{ fontWeight: 800, color: '#10b981' }}>
+                      {item.pieces} Pcs × ₹{item.ratePerPiece} = ₹{(item.pieces * item.ratePerPiece).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               {/* Interactive Financial Form */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Rate per piece */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>Unit Rate / Piece (₹):</label>
-                  <input
-                    type="number"
-                    value={ratePerPiece}
-                    onChange={(e) => {
-                      setIsManualOverride(true);
-                      setRatePerPiece(Number(e.target.value) || 0);
-                    }}
-                    style={{ width: '100px', padding: '0.35rem 0.5rem', borderRadius: '6px', border: isManualOverride ? '1px solid #f59e0b' : '1px solid var(--border)', background: 'var(--bg-main)', color: '#10b981', fontWeight: 900, fontSize: '0.9rem', textAlign: 'right' }}
-                  />
-                </div>
-
                 {/* Subtotal Display */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Subtotal ({pieces} Pcs × ₹{ratePerPiece}):</span>
-                  <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>₹{subtotal.toLocaleString()}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Items Subtotal ({totalPieces} Total Pcs):</span>
+                  <span style={{ fontWeight: 900, color: 'var(--text-primary)' }}>₹{subtotal.toLocaleString()}</span>
                 </div>
 
                 {/* Discount */}

@@ -1099,6 +1099,20 @@ export interface PlayerItem {
   isGK?: boolean; // Goal Keeper marker flag
 }
 
+export interface BillingItem {
+  id: string;
+  itemType: string;
+  clothType: string;
+  sleeveType: 'full' | 'half' | 'sleeveless';
+  neckType: string;
+  hasShorts: boolean;
+  bottomType?: 'shorts' | 'track_pant';
+  dtfOption: string;
+  pieces: number;
+  ratePerPiece: number;
+  isManualOverride?: boolean;
+}
+
 export interface OrderRecord {
   id?: string;
   infoNumber: number; // Auto-incrementing INFO NO (e.g. 2412)
@@ -1119,6 +1133,7 @@ export interface OrderRecord {
   hasShorts?: boolean;
   bottomType?: 'shorts' | 'track_pant';
   labelType?: 'new' | 'old' | 'none';
+  items?: BillingItem[];
   ratePerPiece?: number;
   taxRate?: number;
   totalAmount?: number;
@@ -1284,6 +1299,32 @@ export const findOrderByInfoNumber = async (infoNum: number): Promise<OrderRecor
   return null;
 };
 
+// Clean up notifications from previous days in Firestore
+export const cleanupOldNotifications = async () => {
+  try {
+    const todayStr = getTodayDateString();
+    const colRef = collection(db, 'notifications');
+    const snap = await getDocs(colRef);
+    const deletePromises: Promise<void>[] = [];
+    snap.docs.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.date && data.date < todayStr) {
+        deletePromises.push(deleteDoc(doc(db, 'notifications', docSnap.id)));
+      } else if (!data.date && data.timestamp?.toDate) {
+        const notifDate = formatLocalDate(data.timestamp.toDate());
+        if (notifDate < todayStr) {
+          deletePromises.push(deleteDoc(doc(db, 'notifications', docSnap.id)));
+        }
+      }
+    });
+    if (deletePromises.length > 0) {
+      await Promise.all(deletePromises);
+    }
+  } catch (err) {
+    console.error("Error cleaning up old notifications:", err);
+  }
+};
+
 // Create a punch notification for admin/owner
 export const createPunchNotification = async (
   userId: string,
@@ -1292,6 +1333,8 @@ export const createPunchNotification = async (
   location?: { latitude: number; longitude: number; accuracy?: number } | null
 ) => {
   try {
+    cleanupOldNotifications();
+
     let userName = 'Employee';
     let userPhoto = '';
     const userDocRef = doc(db, 'users', userId);
@@ -1353,18 +1396,29 @@ export const createPunchNotification = async (
   }
 };
 
-// Listen to real-time Punch Notifications (for Admins / Owners)
+// Listen to real-time Punch Notifications (for Admins / Owners) - shows only today's notifications
 export const listenToPunchNotifications = (
   callback: (notifications: PunchNotification[]) => void,
   limitCount: number = 50
 ) => {
+  cleanupOldNotifications();
+
   const colRef = collection(db, 'notifications');
   const q = query(colRef, orderBy('timestamp', 'desc'), limit(limitCount));
   return onSnapshot(q, (snap) => {
-    const notifications = snap.docs.map(docSnap => ({
-      id: docSnap.id,
-      ...docSnap.data()
-    })) as PunchNotification[];
+    const todayStr = getTodayDateString();
+    const notifications = snap.docs
+      .map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }) as PunchNotification)
+      .filter(n => {
+        if (n.date) return n.date === todayStr;
+        if (n.timestamp?.toDate) {
+          return formatLocalDate(n.timestamp.toDate()) === todayStr;
+        }
+        return true;
+      });
     callback(notifications);
   }, (error) => {
     console.error("Error listening to punch notifications:", error);

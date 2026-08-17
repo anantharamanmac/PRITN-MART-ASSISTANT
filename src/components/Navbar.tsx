@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
-import { listenToPunchNotifications, markNotificationAsRead, markAllNotificationsAsRead, PunchNotification } from '@/lib/db';
+import { listenToPunchNotifications, markNotificationAsRead, markAllNotificationsAsRead, PunchNotification, getTodayDateString, formatLocalDate } from '@/lib/db';
 
 // Tab bar icon components
 const DashboardIcon = ({ size = 20 }: { size?: number }) => (
@@ -297,6 +297,26 @@ export default function Navbar({ user }: { user: AppUser }) {
     return () => unsubscribe();
   }, [user]);
 
+  // Periodic check to auto-clear previous days' notifications when date changes (e.g. at midnight)
+  useEffect(() => {
+    if (user.role !== 'admin') return;
+
+    const interval = setInterval(() => {
+      const todayStr = getTodayDateString();
+      setPunchNotifications((prev) =>
+        prev.filter((n) => {
+          if (n.date) return n.date === todayStr;
+          if (n.timestamp?.toDate) {
+            return formatLocalDate(n.timestamp.toDate()) === todayStr;
+          }
+          return true;
+        })
+      );
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const handleSignOut = async () => {
     await signOutUser();
   };
@@ -414,7 +434,7 @@ export default function Navbar({ user }: { user: AppUser }) {
                     {punchNotifications.length === 0 ? (
                       <div className="nav-notif-empty">
                         <span style={{ fontSize: '1.2rem' }}>🔔</span>
-                        <span>No punch notifications yet</span>
+                        <span>No punch notifications today</span>
                       </div>
                     ) : (
                       punchNotifications.map((n) => {
