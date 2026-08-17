@@ -5,6 +5,7 @@ export interface PlayerDetail {
   name: string;
   size: string;
   number: string;
+  xxx?: string;
   shortsSize?: string;
   sleeve?: string;
   collar?: string;
@@ -168,10 +169,14 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
             else collar = rawCollar;
           }
 
+          let rawXxx = String(row[2] ?? '').trim();
+          if (!rawXxx || rawXxx === rawSize) rawXxx = 'XXX';
+
           players.push({
             name,
             size,
             number,
+            xxx: rawXxx || 'XXX',
             sleeve,
             collar,
             isGK: isGK ? true : undefined
@@ -224,13 +229,15 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
     rawSize: string,
     rawNumber: string,
     rawSleeve?: string,
-    rawCollar?: string
+    rawCollar?: string,
+    rawXxx?: string
   ) => {
     const cName = cleanText(rawName);
     const cSize = convertLetterSizeToNumber(cleanText(rawSize));
     const cNum = cleanText(rawNumber);
     const cSleeve = cleanText(rawSleeve || '');
     const cCollar = cleanText(rawCollar || '');
+    const cXxx = cleanText(rawXxx || 'XXX');
 
     if (!cName || isGibberish(cName)) return;
     if (/^(name|player|sl\s*no|sr\s*no|size|no|number|customer|order|info)$/i.test(cName)) return;
@@ -259,6 +266,7 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
       name: cName,
       size: cSize,
       number: cNum,
+      xxx: cXxx || 'XXX',
       sleeve,
       collar,
       isGK: isGK ? true : undefined,
@@ -274,19 +282,19 @@ export const parseExcelText = (text: string): PlayerDetail[] => {
     const parts = trimmed.split(/[\t,]+/).map((p) => cleanText(p));
 
     if (parts.length >= 6) {
-      // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size, 5th: Sleeve, 6th: Collar
-      addPlayerIfValid(parts[0], parts[3], parts[1], parts[4], parts[5]);
+      // 1st: Name, 2nd: Number, 3rd: XXX, 4th: Size, 5th: Sleeve, 6th: Collar
+      addPlayerIfValid(parts[0], parts[3], parts[1], parts[4], parts[5], parts[2]);
     } else if (parts.length === 5) {
-      // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size, 5th: Sleeve or Collar
+      // 1st: Name, 2nd: Number, 3rd: XXX, 4th: Size, 5th: Sleeve or Collar
       const p4Upper = parts[4].toUpperCase();
       if (p4Upper === 'C' || p4Upper === 'COLLAR' || p4Upper === 'C.') {
-        addPlayerIfValid(parts[0], parts[3], parts[1], '', parts[4]);
+        addPlayerIfValid(parts[0], parts[3], parts[1], '', parts[4], parts[2]);
       } else {
-        addPlayerIfValid(parts[0], parts[3], parts[1], parts[4], '');
+        addPlayerIfValid(parts[0], parts[3], parts[1], parts[4], '', parts[2]);
       }
     } else if (parts.length >= 4) {
-      // 1st: Name, 2nd: Number, 3rd: Ignore, 4th: Size
-      addPlayerIfValid(parts[0], parts[3], parts[1]);
+      // 1st: Name, 2nd: Number, 3rd: XXX, 4th: Size
+      addPlayerIfValid(parts[0], parts[3], parts[1], '', '', parts[2]);
     } else if (parts.length === 3) {
       // Check if 3rd column is Size
       if (isSizeValue(parts[2])) {

@@ -77,6 +77,19 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
             setPlayers(foundOrder.customerRosterDraft);
           } else if (foundOrder.players && foundOrder.players.length > 0) {
             setPlayers(foundOrder.players);
+          } else {
+            const defaultSleeveCode = foundOrder.sleeveType === 'sleeveless' ? 'SL' : foundOrder.sleeveType === 'half' ? 'H' : 'F';
+            const initialBlankRows: PlayerItem[] = Array.from({ length: 5 }).map(() => ({
+              name: '',
+              number: '',
+              size: '',
+              xxx: 'XXX',
+              sleeve: defaultSleeveCode,
+              collar: foundOrder.neckType || 'Round Neck',
+              isGK: false,
+              ...(foundOrder.hasShorts ? { shortsSize: '' } : {})
+            }));
+            setPlayers(initialBlankRows);
           }
           if (foundOrder.customerNotes) {
             setCustomerNotes(foundOrder.customerNotes);
@@ -322,84 +335,519 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
     );
   }
 
+  const handleAddBlankRow = () => {
+    const defaultSleeveCode = order?.sleeveType === 'sleeveless' ? 'SL' : order?.sleeveType === 'half' ? 'H' : 'F';
+    const item: PlayerItem = {
+      name: '',
+      number: '',
+      size: '42',
+      xxx: 'XXX',
+      sleeve: defaultSleeveCode,
+      collar: order?.neckType || 'Round Neck',
+      isGK: false,
+    };
+    if (order?.hasShorts) {
+      item.shortsSize = '32';
+    }
+    setPlayers((prev) => [...prev, item]);
+  };
+
+  const handleApplySleeveToAll = (sleeveVal: string) => {
+    setPlayers((prev) => prev.map((p) => ({ ...p, sleeve: sleeveVal })));
+    toast.success(`Applied ${sleeveVal === 'F' ? 'Full Sleeve' : sleeveVal === 'H' ? 'Half Sleeve' : 'Sleeveless'} to all players!`);
+  };
+
+  const handleApplyCollarToAll = (collarVal: string) => {
+    setPlayers((prev) => prev.map((p) => ({ ...p, collar: collarVal })));
+    toast.success(`Applied ${collarVal} collar to all players!`);
+  };
+
+  const handleClearAllRows = () => {
+    if (players.length === 0) return;
+    if (window.confirm('Are you sure you want to clear all roster rows?')) {
+      setPlayers([]);
+      toast.success('Cleared all rows');
+    }
+  };
+
   const bottomLabel = order.bottomType === 'track_pant' ? 'Track Pant' : 'Shorts';
   const activeSlideData = tutorialSlides[currentSlide];
 
+
   return (
-    <div style={{ minHeight: '100vh', background: '#0d1117', color: '#f0f6fc', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '0.75rem', paddingBottom: '5.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#1e1e1e', color: '#d4d4d4', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", paddingBottom: '6rem' }}>
       <Toaster position="top-right" />
 
-      {/* Animations & Mobile CSS Overrides */}
+      {/* Excel Sheet CSS & Animation Overrides */}
       <style jsx global>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
 
-        @keyframes popupScaleIn {
-          0% { opacity: 0; transform: scale(0.88) translateY(20px); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
+        .excel-table-grid {
+          border-collapse: collapse;
+          width: 100%;
+          font-size: 13px;
         }
 
-        @keyframes slideContentFade {
-          0% { opacity: 0; transform: translateX(16px); }
-          100% { opacity: 1; transform: translateX(0); }
+        .excel-table-grid th, .excel-table-grid td {
+          border: 1px solid #3c3c3c;
+          padding: 0;
         }
 
-        @keyframes floatPulse {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
+        .excel-header-col {
+          background: #252526;
+          color: #cccccc;
+          font-weight: 700;
+          font-size: 11px;
+          text-align: center;
+          padding: 6px 8px !important;
+          user-select: none;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
         }
 
-        .popup-modal-container {
-          animation: popupScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .excel-row-num {
+          background: #2d2d2d;
+          color: #858585;
+          font-weight: 700;
+          font-size: 11px;
+          text-align: center;
+          width: 38px;
+          user-select: none;
         }
 
-        .slide-animated-content {
-          animation: slideContentFade 0.3s ease-out forwards;
-        }
-        
-        .roster-input {
-          font-size: 16px !important; /* Prevents iOS auto-zoom on input focus */
-          min-height: 44px;
-        }
-
-        @media (max-width: 640px) {
-          .mobile-stack-header {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 0.5rem;
-          }
-          .mobile-full-btn {
-            width: 100% !important;
-            justify-content: center !important;
-          }
-          .mobile-desktop-table {
-            display: none !important;
-          }
-          .mobile-card-list {
-            display: flex !important;
-          }
+        .excel-cell-input {
+          width: 100%;
+          height: 36px;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: #ffffff;
+          font-family: 'Segoe UI', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          padding: 4px 8px;
+          box-sizing: border-box;
         }
 
-        @media (min-width: 641px) {
-          .mobile-card-list {
-            display: none !important;
-          }
-          .mobile-desktop-table {
-            display: block !important;
+        .excel-cell-input:focus {
+          background: rgba(16, 124, 65, 0.15);
+          box-shadow: inset 0 0 0 2px #107c41;
+        }
+
+        .excel-cell-select {
+          width: 100%;
+          height: 36px;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: #10b981;
+          font-weight: 700;
+          font-size: 12px;
+          padding: 4px;
+          cursor: pointer;
+        }
+
+        .excel-cell-select option {
+          background: #1e1e1e;
+          color: #ffffff;
+        }
+
+        .excel-ribbon-btn {
+          height: 32px;
+          padding: 0 10px;
+          border-radius: 4px;
+          border: 1px solid #3c3c3c;
+          background: #2d2d2d;
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          alignItems: center;
+          gap: 5px;
+          transition: all 0.15s ease;
+        }
+
+        .excel-ribbon-btn:hover {
+          background: #107c41;
+          border-color: #107c41;
+          color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+          .excel-sheet-wrapper {
+            overflow-x: auto;
           }
         }
       `}</style>
 
+      {/* ── MS EXCEL BRAND TOP RIBBON HEADER ── */}
+      <div style={{ background: '#107c41', color: '#ffffff', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ background: '#ffffff', color: '#107c41', fontWeight: 900, fontSize: '14px', width: '28px', height: '28px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            X
+          </div>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>PrintMart_Roster_INFO_#{order.infoNumber}.xlsx</span>
+              <span style={{ background: 'rgba(255,255,255,0.2)', padding: '1px 6px', borderRadius: '3px', fontSize: '10px', textTransform: 'uppercase' }}>Spreadsheet Mode</span>
+            </div>
+            <div style={{ fontSize: '11px', opacity: 0.9 }}>
+              Customer: <strong>{order.customerName}</strong> ({order.orderTitle || order.itemType || 'JERSEY'}) — Fabric: {order.clothType || 'SALEENA'}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setCurrentSlide(0);
+              setShowTutorial(true);
+            }}
+            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#ffffff', padding: '5px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            ❓ Help Guide
+          </button>
+        </div>
+      </div>
+
+      {/* ── EXCEL TOOLBAR / RIBBON CONTROLS ── */}
+      <div style={{ background: '#2d2d2d', borderBottom: '1px solid #3c3c3c', padding: '6px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="excel-ribbon-btn"
+        >
+          📁 Upload Excel (.csv / .xlsx)
+        </button>
+        <input type="file" ref={fileInputRef} accept=".xlsx, .xls, .csv" onChange={handleFileUpload} style={{ display: 'none' }} />
+
+        <button
+          type="button"
+          onClick={() => setShowExcelBox(!showExcelBox)}
+          className="excel-ribbon-btn"
+          style={{ background: showExcelBox ? '#107c41' : '#2d2d2d' }}
+        >
+          📋 {showExcelBox ? 'Close Paste Box' : 'Paste Excel Text'}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleAddBlankRow}
+          className="excel-ribbon-btn"
+        >
+          ➕ Add Blank Row
+        </button>
+
+        {/* Quick Sleeve Bulk Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#252526', padding: '2px 6px', borderRadius: '4px', border: '1px solid #3c3c3c' }}>
+          <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>Sleeve All:</span>
+          <button type="button" onClick={() => handleApplySleeveToAll('F')} style={{ background: '#1e1e1e', border: '1px solid #3c3c3c', color: '#fff', fontSize: '10px', padding: '2px 5px', borderRadius: '3px', cursor: 'pointer', fontWeight: 700 }}>Full (F)</button>
+          <button type="button" onClick={() => handleApplySleeveToAll('H')} style={{ background: '#1e1e1e', border: '1px solid #3c3c3c', color: '#fff', fontSize: '10px', padding: '2px 5px', borderRadius: '3px', cursor: 'pointer', fontWeight: 700 }}>Half (H)</button>
+          <button type="button" onClick={() => handleApplySleeveToAll('SL')} style={{ background: '#1e1e1e', border: '1px solid #3c3c3c', color: '#fff', fontSize: '10px', padding: '2px 5px', borderRadius: '3px', cursor: 'pointer', fontWeight: 700 }}>Sleeveless (SL)</button>
+        </div>
+
+        {/* Quick Collar Bulk Action */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#252526', padding: '2px 6px', borderRadius: '4px', border: '1px solid #3c3c3c' }}>
+          <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 700 }}>Collar All:</span>
+          <select
+            onChange={(e) => e.target.value && handleApplyCollarToAll(e.target.value)}
+            defaultValue=""
+            style={{ background: '#1e1e1e', color: '#ffffff', border: '1px solid #3c3c3c', fontSize: '10px', padding: '2px 4px', borderRadius: '3px' }}
+          >
+            <option value="" disabled>Apply Collar Style to All Rows...</option>
+            {COLLAR_OPTIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleClearAllRows}
+          className="excel-ribbon-btn"
+          style={{ marginLeft: 'auto', color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }}
+        >
+          🧹 Clear All
+        </button>
+      </div>
+
+      {/* ── EXCEL FORMULA BAR ── */}
+      <div style={{ background: '#252526', borderBottom: '1px solid #3c3c3c', padding: '4px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#107c41', fontWeight: 900, fontSize: '13px', fontFamily: 'monospace' }}>fx</span>
+        <div style={{ width: '1px', height: '16px', background: '#3c3c3c' }} />
+        <div style={{ flex: 1, color: '#cccccc', fontSize: '12px', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          =ROSTER_DATA(NAME, NUMBER, XXX, SIZE, SLEEVE, COLLAR) — {players.filter(p => p.name || p.number).length} active player rows
+        </div>
+      </div>
+
+      {/* Paste Box Area */}
+      {showExcelBox && (
+        <div style={{ background: '#252526', padding: '12px', borderBottom: '2px solid #107c41', margin: '0 0 10px' }}>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#10b981', marginBottom: '4px' }}>
+            📋 Paste columns directly from Excel / WhatsApp / CSV (Column Format: NAME, NUMBER, XXX, SIZE):
+          </label>
+          <textarea
+            rows={4}
+            placeholder={`NIJU,06,XXX,44\nVISHNU S,5,XXX,40\nVINOD,18,XXX,40\nNISHAD,3,XXX,42\nABHISHEK,7,XXX,38`}
+            value={excelInputText}
+            onChange={(e) => setExcelInputText(e.target.value)}
+            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #3c3c3c', background: '#1e1e1e', color: '#ffffff', fontFamily: 'monospace', fontSize: '12px' }}
+          />
+          <button
+            type="button"
+            onClick={handleParseExcelText}
+            style={{ marginTop: '6px', padding: '8px 16px', borderRadius: '4px', border: 'none', background: '#107c41', color: '#fff', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+          >
+            Import Parsed Rows into Sheet
+          </button>
+        </div>
+      )}
+
+      {/* ── EXCEL SPREADSHEET GRID TABLE ── */}
+      <div style={{ padding: '8px' }}>
+        <div className="excel-sheet-wrapper" style={{ background: '#1e1e1e', border: '1px solid #3c3c3c', borderRadius: '4px', overflowX: 'auto', minHeight: '380px' }}>
+          <table className="excel-table-grid">
+            <thead>
+              <tr>
+                <th className="excel-header-col" style={{ width: '38px' }}></th>
+                <th className="excel-header-col" style={{ minWidth: '150px' }}>A: NAME</th>
+                <th className="excel-header-col" style={{ width: '90px' }}>B: NUMBER</th>
+                <th className="excel-header-col" style={{ width: '80px' }}>C: XXX</th>
+                <th className="excel-header-col" style={{ width: '90px' }}>D: SIZE</th>
+                <th className="excel-header-col" style={{ width: '120px' }}>E: SLEEVE</th>
+                <th className="excel-header-col" style={{ width: '140px' }}>F: COLLAR</th>
+                {order.hasShorts && <th className="excel-header-col" style={{ width: '100px', color: '#10b981' }}>G: {bottomLabel}</th>}
+                <th className="excel-header-col" style={{ width: '50px' }}>GK</th>
+                <th className="excel-header-col" style={{ width: '45px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map((p, idx) => {
+                const isGK = Boolean(p.isGK);
+                return (
+                  <tr key={idx} style={{ background: isGK ? 'rgba(239, 68, 68, 0.15)' : (idx % 2 === 0 ? '#1e1e1e' : '#252526') }}>
+                    {/* Row Number */}
+                    <td className="excel-row-num">{idx + 1}</td>
+
+                    {/* Col A: Name */}
+                    <td>
+                      <input
+                        type="text"
+                        placeholder="Player Name"
+                        value={p.name}
+                        onChange={(e) => handleUpdateField(idx, 'name', e.target.value.toUpperCase())}
+                        className="excel-cell-input"
+                        style={{ color: isGK ? '#ef4444' : '#ffffff' }}
+                      />
+                    </td>
+
+                    {/* Col B: Number */}
+                    <td>
+                      <input
+                        type="text"
+                        placeholder="No."
+                        value={p.number}
+                        onChange={(e) => handleUpdateField(idx, 'number', e.target.value)}
+                        className="excel-cell-input"
+                        style={{ textAlign: 'center', color: '#3b82f6' }}
+                      />
+                    </td>
+
+                    {/* Col C: XXX */}
+                    <td>
+                      <input
+                        type="text"
+                        placeholder="XXX"
+                        value={p.xxx || 'XXX'}
+                        onChange={(e) => handleUpdateField(idx, 'xxx', e.target.value)}
+                        className="excel-cell-input"
+                        style={{ textAlign: 'center', color: '#858585' }}
+                      />
+                    </td>
+
+                    {/* Col D: Size */}
+                    <td>
+                      <input
+                        type="text"
+                        placeholder="42"
+                        value={p.size}
+                        onChange={(e) => handleUpdateField(idx, 'size', e.target.value)}
+                        className="excel-cell-input"
+                        style={{ textAlign: 'center', fontWeight: 800 }}
+                      />
+                    </td>
+
+                    {/* Col E: Sleeve */}
+                    <td>
+                      <select
+                        value={p.sleeve || 'F'}
+                        onChange={(e) => handleUpdateField(idx, 'sleeve', e.target.value)}
+                        className="excel-cell-select"
+                      >
+                        <option value="F">Full (F)</option>
+                        <option value="H">Half (H)</option>
+                        <option value="SL">Sleeveless (SL)</option>
+                      </select>
+                    </td>
+
+                    {/* Col F: Collar */}
+                    <td>
+                      <select
+                        value={p.collar || order.neckType || 'Round Neck'}
+                        onChange={(e) => handleUpdateField(idx, 'collar', e.target.value)}
+                        className="excel-cell-select"
+                        style={{ color: '#ffffff' }}
+                      >
+                        {COLLAR_OPTIONS.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </td>
+
+                    {/* Col G: Shorts Size (Optional) */}
+                    {order.hasShorts && (
+                      <td>
+                        <input
+                          type="text"
+                          placeholder="32"
+                          value={p.shortsSize || ''}
+                          onChange={(e) => handleUpdateField(idx, 'shortsSize', e.target.value)}
+                          className="excel-cell-input"
+                          style={{ textAlign: 'center', color: '#10b981' }}
+                        />
+                      </td>
+                    )}
+
+                    {/* Col H: Goal Keeper Marker */}
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateField(idx, 'isGK', !isGK)}
+                        style={{
+                          width: '28px',
+                          height: '24px',
+                          borderRadius: '3px',
+                          border: isGK ? '1px solid #ef4444' : '1px solid #3c3c3c',
+                          background: isGK ? '#ef4444' : 'transparent',
+                          color: isGK ? '#ffffff' : '#858585',
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isGK ? 'GK' : '-'}
+                      </button>
+                    </td>
+
+                    {/* Col I: Action (Delete) */}
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePlayer(idx)}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '13px', fontWeight: 800 }}
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Add Row Button under table */}
+        <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={handleAddBlankRow}
+            style={{ padding: '6px 14px', borderRadius: '4px', border: '1px dashed #107c41', background: 'rgba(16, 124, 65, 0.1)', color: '#10b981', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+          >
+            + Add Row to Excel Sheet
+          </button>
+        </div>
+      </div>
+
+      {/* ── EXCEL BOTTOM SUMMARY BAR & SHEET TABS ── */}
+      <div style={{ background: '#252526', borderTop: '1px solid #3c3c3c', padding: '6px 12px', margin: '8px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ background: '#1e1e1e', border: '1px solid #107c41', color: '#10b981', padding: '3px 10px', borderRadius: '3px', fontWeight: 800 }}>
+            📄 Sheet1: Player Roster
+          </span>
+          <span style={{ color: '#858585' }}>Total Rows: <strong>{players.filter(p => p.name || p.number).length}</strong></span>
+        </div>
+
+        {summaryString && (
+          <div style={{ color: '#3b82f6', fontWeight: 700 }}>
+            👕 Shirt Sizes: {summaryString}
+          </div>
+        )}
+        {order.hasShorts && shortsSummaryString && (
+          <div style={{ color: '#10b981', fontWeight: 700 }}>
+            🩳 Shorts Sizes: {shortsSummaryString}
+          </div>
+        )}
+      </div>
+
+      {/* Customer Remarks Box */}
+      <div style={{ padding: '0 8px', marginBottom: '1rem' }}>
+        <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#cccccc', marginBottom: '4px' }}>
+          Customer Remarks / Special Instructions (Optional):
+        </label>
+        <textarea
+          rows={2}
+          placeholder="e.g. Please ensure Captain jersey #10 has full sleeve and collar logo..."
+          value={customerNotes}
+          onChange={(e) => setCustomerNotes(e.target.value)}
+          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #3c3c3c', background: '#252526', color: '#ffffff', fontSize: '12px' }}
+        />
+      </div>
+
+      {/* ── FLOATING SUBMIT ROSTER BAR ── */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1e1e1e', borderTop: '2px solid #107c41', padding: '10px 16px', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -10px 25px rgba(0,0,0,0.6)' }}>
+        <div>
+          <span style={{ fontSize: '11px', color: '#858585', display: 'block' }}>INFO #{order.infoNumber} — {order.customerName}</span>
+          <strong style={{ fontSize: '14px', color: '#ffffff' }}>{players.filter(p => p.name || p.number).length} Players Ready in Excel Sheet</strong>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSubmitRoster}
+          disabled={submitting || players.filter(p => p.name || p.number).length === 0}
+          style={{
+            height: '42px',
+            padding: '0 24px',
+            borderRadius: '6px',
+            border: 'none',
+            background: '#107c41',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 900,
+            cursor: submitting || players.filter(p => p.name || p.number).length === 0 ? 'not-allowed' : 'pointer',
+            opacity: submitting || players.filter(p => p.name || p.number).length === 0 ? 0.6 : 1,
+            boxShadow: '0 4px 14px rgba(16, 124, 65, 0.4)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>{submitting ? 'Submitting Excel Sheet...' : '🚀 SUBMIT ROSTER TO PRINT MART'}</span>
+        </button>
+      </div>
+
       {/* ── ANIMATED POPUP TUTORIAL MODAL SLIDES ── */}
       {showTutorial && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0, 0, 0, 0.88)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div className="popup-modal-container" style={{ width: '100%', maxWidth: '500px', background: '#161b22', borderRadius: '24px', border: '1.5px solid #3b82f6', boxShadow: '0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(59, 130, 246, 0.25)', padding: '1.75rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
+          <div className="popup-modal-container" style={{ width: '100%', maxWidth: '500px', background: '#161b22', borderRadius: '24px', border: '1.5px solid #107c41', boxShadow: '0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(16, 124, 65, 0.25)', padding: '1.75rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
             
             {/* Top Bar with Skip Button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.73rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.15)', padding: '0.25rem 0.65rem', borderRadius: '20px', border: '1px solid rgba(59, 130, 246, 0.3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <span style={{ fontSize: '0.73rem', fontWeight: 900, color: '#107c41', background: 'rgba(16, 124, 65, 0.15)', padding: '0.25rem 0.65rem', borderRadius: '20px', border: '1px solid rgba(16, 124, 65, 0.3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {activeSlideData.badge}
               </span>
 
@@ -413,10 +861,10 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
             </div>
 
             {/* Slide Content */}
-            <div key={currentSlide} className="slide-animated-content" style={{ minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div key={currentSlide} className="slide-animated-content" style={{ minHeight: '240px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               {/* Icon Banner */}
               <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.15)', border: '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '2.5rem', animation: 'floatPulse 3s ease-in-out infinite' }}>
+                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(16, 124, 65, 0.15)', border: '2px solid #107c41', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem', fontSize: '2.5rem' }}>
                   {activeSlideData.icon}
                 </div>
                 <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.35rem', fontWeight: 900, color: '#ffffff' }}>
@@ -427,25 +875,7 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
                 </p>
               </div>
 
-              {/* Slide Custom Preview Boxes */}
-              {activeSlideData.highlightText && (
-                <div style={{ background: '#0d1117', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #30363d', fontSize: '0.825rem', color: '#3b82f6', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem' }}>
-                  📌 Order Info: {activeSlideData.highlightText}
-                </div>
-              )}
-
-              {activeSlideData.demoItem && (
-                <div style={{ background: '#0d1117', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #30363d', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 700, marginBottom: '0.3rem', textTransform: 'uppercase' }}>Sample Entry Preview:</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 800, color: '#ffffff' }}>
-                    <span>👤 {activeSlideData.demoItem.name}</span>
-                    <span style={{ color: '#10b981' }}>No. {activeSlideData.demoItem.number}</span>
-                    <span style={{ color: '#3b82f6' }}>Size {activeSlideData.demoItem.size}</span>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.6rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.78rem', color: '#10b981', fontWeight: 700, textAlign: 'center' }}>
+              <div style={{ background: 'rgba(16, 124, 65, 0.1)', padding: '0.6rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(16, 124, 65, 0.3)', fontSize: '0.78rem', color: '#10b981', fontWeight: 700, textAlign: 'center' }}>
                 💡 {activeSlideData.tip}
               </div>
             </div>
@@ -460,11 +890,10 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
                     width: currentSlide === idx ? '24px' : '8px',
                     height: '8px',
                     borderRadius: '4px',
-                    background: currentSlide === idx ? '#3b82f6' : '#30363d',
+                    background: currentSlide === idx ? '#107c41' : '#30363d',
                     border: 'none',
                     padding: 0,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                    cursor: 'pointer'
                   }}
                 />
               ))}
@@ -476,7 +905,7 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
-                  style={{ flex: 1, minHeight: '46px', borderRadius: '12px', border: '1px solid #30363d', background: '#21262d', color: '#f0f6fc', fontWeight: 800, fontSize: '0.875rem', cursor: 'pointer' }}
+                  style={{ flex: 1, minHeight: '44px', borderRadius: '12px', border: '1px solid #30363d', background: '#21262d', color: '#f0f6fc', fontWeight: 800, fontSize: '0.875rem', cursor: 'pointer' }}
                 >
                   ⬅ Previous
                 </button>
@@ -484,7 +913,7 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setShowTutorial(false)}
-                  style={{ flex: 1, minHeight: '46px', borderRadius: '12px', border: '1px solid #30363d', background: '#0d1117', color: '#8b949e', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                  style={{ flex: 1, minHeight: '44px', borderRadius: '12px', border: '1px solid #30363d', background: '#0d1117', color: '#8b949e', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
                 >
                   Skip Guide
                 </button>
@@ -494,7 +923,7 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setCurrentSlide((prev) => Math.min(tutorialSlides.length - 1, prev + 1))}
-                  style={{ flex: 2, minHeight: '46px', borderRadius: '12px', border: 'none', background: '#3b82f6', color: '#ffffff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)' }}
+                  style={{ flex: 2, minHeight: '44px', borderRadius: '12px', border: 'none', background: '#107c41', color: '#ffffff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer' }}
                 >
                   Next Step ➔
                 </button>
@@ -502,526 +931,15 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setShowTutorial(false)}
-                  style={{ flex: 2, minHeight: '46px', borderRadius: '12px', border: 'none', background: '#10b981', color: '#ffffff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }}
+                  style={{ flex: 2, minHeight: '44px', borderRadius: '12px', border: 'none', background: '#107c41', color: '#ffffff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer' }}
                 >
-                  🚀 Got It! Start Filling Roster
+                  🚀 Open Excel Sheet
                 </button>
               )}
             </div>
           </div>
         </div>
       )}
-
-      <div style={{ maxWidth: '880px', margin: '0 auto' }}>
-        {/* Mobile-Friendly Header */}
-        <header className="mobile-stack-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid #30363d', marginBottom: '1rem' }}>
-          <div>
-            <span style={{ background: '#d92525', color: '#fff', fontSize: '0.7rem', fontWeight: 900, padding: '0.2rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Print Mart Assistant
-            </span>
-            <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
-              Customer Player Roster Entry
-            </h1>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentSlide(0);
-                setShowTutorial(true);
-              }}
-              style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-            >
-              ❓ Guide Tutorial
-            </button>
-
-            <div>
-              <span style={{ fontSize: '0.72rem', color: '#8b949e' }}>Ref: </span>
-              <strong style={{ fontSize: '1.05rem', color: '#ef4444', fontWeight: 900 }}>INFO #{order.infoNumber}</strong>
-            </div>
-          </div>
-        </header>
-
-        {/* Order Details Banner */}
-        <div style={{ background: '#161b22', borderRadius: '14px', border: '1px solid #30363d', padding: '0.85rem 1rem', marginBottom: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '0.65rem' }}>
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#8b949e', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>Customer Name</span>
-            <strong style={{ fontSize: '0.9rem', color: '#ffffff' }}>{order.customerName}</strong>
-          </div>
-
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#8b949e', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>Item / Team Title</span>
-            <strong style={{ fontSize: '0.9rem', color: '#3b82f6' }}>{order.orderTitle || order.itemType || 'JERSEY'}</strong>
-          </div>
-
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#8b949e', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>Fabric / Cloth</span>
-            <strong style={{ fontSize: '0.9rem', color: '#ffffff' }}>{order.clothType || 'SALEENA'}</strong>
-          </div>
-
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#8b949e', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>Master Specs</span>
-            <strong style={{ fontSize: '0.825rem', color: '#10b981' }}>{order.neckType || 'Round Neck'} ({order.sleeveType?.toUpperCase() || 'FULL'})</strong>
-          </div>
-        </div>
-
-        {/* Customer Note */}
-        <div style={{ background: 'rgba(59, 130, 246, 0.1)', borderLeft: '4px solid #3b82f6', padding: '0.65rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', color: '#c9d1d9', marginBottom: '1rem', lineHeight: 1.5 }}>
-          💡 <strong>Tip for Mobile Users:</strong> Add players 1-by-1 below, or copy-paste from WhatsApp/Excel!
-        </div>
-
-        {/* Main Roster Container */}
-        <div style={{ background: '#161b22', borderRadius: '16px', border: '1px solid #30363d', padding: '1rem', marginBottom: '1rem' }}>
-          {/* Roster Header + Excel Actions */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#ffffff' }}>
-              👥 Player Roster ({players.length} Total)
-            </h3>
-
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-start' }}>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mobile-full-btn"
-                style={{ flex: 1, minHeight: '40px', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #10b981', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-              >
-                📁 Excel Upload
-              </button>
-              <input type="file" ref={fileInputRef} accept=".xlsx, .xls, .csv" onChange={handleFileUpload} style={{ display: 'none' }} />
-
-              <button
-                type="button"
-                onClick={() => setShowExcelBox(!showExcelBox)}
-                className="mobile-full-btn"
-                style={{ flex: 1, minHeight: '40px', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-              >
-                {showExcelBox ? 'Hide Paste' : '📋 Paste Excel'}
-              </button>
-            </div>
-          </div>
-
-          {/* Paste Box */}
-          {showExcelBox && (
-            <div style={{ background: '#0d1117', padding: '0.75rem', borderRadius: '10px', border: '1px solid #3b82f6', marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#8b949e', marginBottom: '0.3rem' }}>
-                Paste columns directly from Excel / WhatsApp (Name, Size, Number, Sleeve, Collar):
-              </label>
-              <textarea
-                rows={4}
-                placeholder={`Paste lines here, e.g.:\nJAGAN\t42\t9\tF\tRound Neck\nADHI\t40\t3\tH\tV-Neck`}
-                value={excelInputText}
-                onChange={(e) => setExcelInputText(e.target.value)}
-                className="roster-input"
-                style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff', fontFamily: 'monospace' }}
-              />
-              <button
-                type="button"
-                onClick={handleParseExcelText}
-                style={{ width: '100%', minHeight: '42px', marginTop: '0.5rem', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer' }}
-              >
-                Import Parsed Players
-              </button>
-            </div>
-          )}
-
-          {/* Touch-Friendly Add Player Form Box */}
-          <div style={{ background: '#0d1117', padding: '0.85rem', borderRadius: '14px', border: '1px solid #30363d', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981', display: 'block', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              + Add New Player Entry
-            </span>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.65rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#8b949e', marginBottom: '0.2rem' }}>Player Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. JAGAN"
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  className="roster-input"
-                  style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '8px', border: isNewPlayerGK ? '1.5px solid #ef4444' : '1px solid #30363d', background: '#161b22', color: '#ffffff', fontWeight: 700 }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#8b949e', marginBottom: '0.2rem' }}>Jersey No.</label>
-                  <input
-                    type="text"
-                    placeholder="9"
-                    value={newPlayerNumber}
-                    onChange={(e) => setNewPlayerNumber(e.target.value)}
-                    className="roster-input"
-                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff', fontWeight: 700, textAlign: 'center' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#8b949e', marginBottom: '0.2rem' }}>Shirt Size</label>
-                  <input
-                    type="text"
-                    placeholder="42"
-                    value={newPlayerSize}
-                    onChange={(e) => setNewPlayerSize(e.target.value)}
-                    className="roster-input"
-                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff', fontWeight: 700, textAlign: 'center' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#8b949e', marginBottom: '0.2rem' }}>Sleeve</label>
-                  <select
-                    value={newPlayerSleeve}
-                    onChange={(e) => setNewPlayerSleeve(e.target.value)}
-                    className="roster-input"
-                    style={{ width: '100%', padding: '0.45rem 0.4rem', borderRadius: '8px', border: '1px solid #30363d', background: '#161b22', color: '#3b82f6', fontWeight: 800 }}
-                  >
-                    <option value="F">Full (F)</option>
-                    <option value="H">Half (H)</option>
-                    <option value="SL">Sleeveless (SL)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#8b949e', marginBottom: '0.2rem' }}>Collar Style</label>
-                  <select
-                    value={newPlayerCollar}
-                    onChange={(e) => setNewPlayerCollar(e.target.value)}
-                    className="roster-input"
-                    style={{ width: '100%', padding: '0.45rem 0.4rem', borderRadius: '8px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff' }}
-                  >
-                    {COLLAR_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {order.hasShorts && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#10b981', marginBottom: '0.2rem' }}>{bottomLabel} Size</label>
-                  <input
-                    type="text"
-                    placeholder="32"
-                    value={newPlayerShortsSize}
-                    onChange={(e) => setNewPlayerShortsSize(e.target.value)}
-                    className="roster-input"
-                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #10b981', background: '#161b22', color: '#10b981', fontWeight: 800, textAlign: 'center' }}
-                  />
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem', marginTop: '0.2rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsNewPlayerGK(!isNewPlayerGK)}
-                  style={{ minHeight: '44px', borderRadius: '8px', border: isNewPlayerGK ? '1.5px solid #ef4444' : '1px solid #30363d', background: isNewPlayerGK ? '#ef4444' : '#161b22', color: isNewPlayerGK ? '#ffffff' : '#8b949e', fontSize: '0.8rem', fontWeight: 900, cursor: 'pointer' }}
-                >
-                  {isNewPlayerGK ? '✓ GK' : '+ GK'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleAddPlayer}
-                  style={{ minHeight: '44px', borderRadius: '8px', border: 'none', background: '#10b981', color: '#ffffff', fontSize: '0.9rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}
-                >
-                  + Add Entry
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 1. Mobile Cards List View (< 640px) */}
-          {players.length > 0 ? (
-            <>
-              <div className="mobile-card-list" style={{ flexDirection: 'column', gap: '0.65rem' }}>
-                {players.map((p, idx) => {
-                  const isGK = Boolean(p.isGK);
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        background: isGK ? 'rgba(239, 68, 68, 0.15)' : '#0d1117',
-                        border: isGK ? '1.5px solid #ef4444' : '1px solid #30363d',
-                        borderRadius: '12px',
-                        padding: '0.75rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.4rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span style={{ fontSize: '0.75rem', color: '#8b949e', fontWeight: 800 }}>#{idx + 1}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateField(idx, 'isGK', !isGK)}
-                            style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', border: isGK ? '1px solid #ef4444' : '1px solid #30363d', background: isGK ? '#ef4444' : 'transparent', color: isGK ? '#fff' : '#8b949e', fontSize: '0.7rem', fontWeight: 800 }}
-                          >
-                            {isGK ? '✓ GK' : '+ GK'}
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePlayer(idx)}
-                          style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', padding: '0.2rem 0.5rem' }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.4rem', marginBottom: '0.4rem' }}>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.68rem', color: '#8b949e' }}>Name</label>
-                          <input
-                            type="text"
-                            value={p.name}
-                            onChange={(e) => handleUpdateField(idx, 'name', e.target.value)}
-                            className="roster-input"
-                            style={{ width: '100%', padding: '0.35rem 0.4rem', borderRadius: '6px', border: '1px solid #30363d', background: '#161b22', color: isGK ? '#ef4444' : '#ffffff', fontWeight: 700 }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.68rem', color: '#8b949e' }}>No.</label>
-                          <input
-                            type="text"
-                            value={p.number}
-                            onChange={(e) => handleUpdateField(idx, 'number', e.target.value)}
-                            className="roster-input"
-                            style={{ width: '100%', padding: '0.35rem 0.4rem', borderRadius: '6px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff', fontWeight: 700, textAlign: 'center' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.68rem', color: '#8b949e' }}>Shirt Size</label>
-                          <input
-                            type="text"
-                            value={p.size}
-                            onChange={(e) => handleUpdateField(idx, 'size', e.target.value)}
-                            className="roster-input"
-                            style={{ width: '100%', padding: '0.35rem 0.4rem', borderRadius: '6px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff', fontWeight: 700, textAlign: 'center' }}
-                          />
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: order.hasShorts ? '1fr 1.5fr 1fr' : '1fr 1.5fr', gap: '0.4rem' }}>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.68rem', color: '#8b949e' }}>Sleeve</label>
-                          <select
-                            value={p.sleeve || 'F'}
-                            onChange={(e) => handleUpdateField(idx, 'sleeve', e.target.value)}
-                            className="roster-input"
-                            style={{ width: '100%', padding: '0.35rem 0.2rem', borderRadius: '6px', border: '1px solid #3b82f6', background: '#161b22', color: '#3b82f6', fontWeight: 800 }}
-                          >
-                            <option value="F">F (Full)</option>
-                            <option value="H">H (Half)</option>
-                            <option value="SL">SL (Sleeveless)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.68rem', color: '#8b949e' }}>Collar</label>
-                          <select
-                            value={p.collar || order.neckType || 'Round Neck'}
-                            onChange={(e) => handleUpdateField(idx, 'collar', e.target.value)}
-                            className="roster-input"
-                            style={{ width: '100%', padding: '0.35rem 0.2rem', borderRadius: '6px', border: '1px solid #30363d', background: '#161b22', color: '#ffffff' }}
-                          >
-                            {COLLAR_OPTIONS.map((c) => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {order.hasShorts && (
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.68rem', color: '#10b981' }}>{bottomLabel}</label>
-                            <input
-                              type="text"
-                              value={p.shortsSize || ''}
-                              onChange={(e) => handleUpdateField(idx, 'shortsSize', e.target.value)}
-                              className="roster-input"
-                              style={{ width: '100%', padding: '0.35rem 0.4rem', borderRadius: '6px', border: '1px solid #10b981', background: '#161b22', color: '#10b981', fontWeight: 800, textAlign: 'center' }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* 2. Desktop Table View (>= 641px) */}
-              <div className="mobile-desktop-table" style={{ overflowX: 'auto', border: '1px solid #30363d', borderRadius: '10px', maxHeight: '350px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem', textAlign: 'left' }}>
-                  <thead style={{ background: '#21262d', color: '#8b949e', position: 'sticky', top: 0, zIndex: 1 }}>
-                    <tr>
-                      <th style={{ padding: '8px 10px', width: '30px' }}>#</th>
-                      <th style={{ padding: '8px 10px' }}>Player Name</th>
-                      <th style={{ padding: '8px 8px', width: '45px', color: '#ef4444', textAlign: 'center' }}>GK</th>
-                      <th style={{ padding: '8px 10px', width: '70px' }}>No.</th>
-                      <th style={{ padding: '8px 10px', width: '80px' }}>Shirt Size</th>
-                      <th style={{ padding: '8px 10px', width: '90px', color: '#3b82f6' }}>Sleeve</th>
-                      <th style={{ padding: '8px 10px', width: '130px' }}>Collar / Neck</th>
-                      {order.hasShorts && <th style={{ padding: '8px 10px', width: '90px', color: '#10b981' }}>{bottomLabel}</th>}
-                      <th style={{ padding: '8px 10px', textAlign: 'right', width: '40px' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {players.map((p, idx) => {
-                      const isGK = Boolean(p.isGK);
-                      return (
-                        <tr key={idx} style={{ borderTop: '1px solid #30363d', background: isGK ? 'rgba(239, 68, 68, 0.15)' : 'transparent' }}>
-                          <td style={{ padding: '6px 10px', color: '#8b949e' }}>{idx + 1}</td>
-                          <td style={{ padding: '4px 6px' }}>
-                            <input
-                              type="text"
-                              value={p.name}
-                              onChange={(e) => handleUpdateField(idx, 'name', e.target.value)}
-                              style={{ width: '100%', padding: '0.3rem 0.4rem', borderRadius: '4px', border: '1px solid #30363d', background: '#0d1117', color: isGK ? '#ef4444' : '#ffffff', fontWeight: 700, fontSize: '0.8rem' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 4px', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateField(idx, 'isGK', !isGK)}
-                              style={{ padding: '0.2rem 0.4rem', borderRadius: '4px', border: isGK ? '1px solid #ef4444' : '1px solid #30363d', background: isGK ? '#ef4444' : 'transparent', color: isGK ? '#fff' : '#8b949e', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}
-                            >
-                              {isGK ? 'GK' : '-'}
-                            </button>
-                          </td>
-                          <td style={{ padding: '4px 6px' }}>
-                            <input
-                              type="text"
-                              value={p.number}
-                              onChange={(e) => handleUpdateField(idx, 'number', e.target.value)}
-                              style={{ width: '100%', padding: '0.3rem 0.4rem', borderRadius: '4px', border: '1px solid #30363d', background: '#0d1117', color: '#ffffff', fontSize: '0.8rem' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px' }}>
-                            <input
-                              type="text"
-                              value={p.size}
-                              onChange={(e) => handleUpdateField(idx, 'size', e.target.value)}
-                              style={{ width: '100%', padding: '0.3rem 0.4rem', borderRadius: '4px', border: '1px solid #30363d', background: '#0d1117', color: '#ffffff', fontSize: '0.8rem' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px' }}>
-                            <select
-                              value={p.sleeve || 'F'}
-                              onChange={(e) => handleUpdateField(idx, 'sleeve', e.target.value)}
-                              style={{ width: '100%', padding: '0.3rem 0.2rem', borderRadius: '4px', border: '1px solid #3b82f6', background: '#0d1117', color: '#3b82f6', fontSize: '0.8rem', fontWeight: 700 }}
-                            >
-                              <option value="F">F (Full)</option>
-                              <option value="H">H (Half)</option>
-                              <option value="SL">SL (Sleeveless)</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: '4px 6px' }}>
-                            <select
-                              value={p.collar || order.neckType || 'Round Neck'}
-                              onChange={(e) => handleUpdateField(idx, 'collar', e.target.value)}
-                              style={{ width: '100%', padding: '0.3rem 0.2rem', borderRadius: '4px', border: '1px solid #30363d', background: '#0d1117', color: '#ffffff', fontSize: '0.78rem' }}
-                            >
-                              {COLLAR_OPTIONS.map((c) => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
-                          </td>
-                          {order.hasShorts && (
-                            <td style={{ padding: '4px 6px' }}>
-                              <input
-                                type="text"
-                                value={p.shortsSize || ''}
-                                onChange={(e) => handleUpdateField(idx, 'shortsSize', e.target.value)}
-                                style={{ width: '100%', padding: '0.3rem 0.4rem', borderRadius: '4px', border: '1px solid #10b981', background: '#0d1117', color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }}
-                              />
-                            </td>
-                          )}
-                          <td style={{ padding: '4px 6px', textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePlayer(idx)}
-                              style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '1rem', fontWeight: 700, cursor: 'pointer' }}
-                            >
-                              ✕
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '1.75rem 1rem', background: '#0d1117', borderRadius: '12px', border: '1px dashed #30363d', color: '#8b949e', fontSize: '0.85rem' }}>
-              No players added yet. Use the form above to add your team members.
-            </div>
-          )}
-
-          {/* Roster Summaries */}
-          {summaryString && (
-            <div style={{ marginTop: '0.75rem', padding: '0.55rem 0.75rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.3)', fontSize: '0.78rem', color: '#3b82f6', fontWeight: 700 }}>
-              👕 Shirt Size Summary: {summaryString}
-            </div>
-          )}
-          {order.hasShorts && shortsSummaryString && (
-            <div style={{ marginTop: '0.4rem', padding: '0.55rem 0.75rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.78rem', color: '#10b981', fontWeight: 700 }}>
-              🩳 {bottomLabel} Summary: {shortsSummaryString}
-            </div>
-          )}
-
-          {/* Customer Additional Remarks */}
-          <div style={{ marginTop: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#c9d1d9', marginBottom: '0.3rem' }}>
-              Customer Remarks / Special Requests (Optional)
-            </label>
-            <textarea
-              rows={2}
-              placeholder="e.g. Captain shirt needs a special star logo or custom sleeve line..."
-              value={customerNotes}
-              onChange={(e) => setCustomerNotes(e.target.value)}
-              className="roster-input"
-              style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #30363d', background: '#0d1117', color: '#ffffff', resize: 'vertical' }}
-            />
-          </div>
-        </div>
-
-        {/* Floating Mobile Bottom Action Bar */}
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#161b22', borderTop: '1px solid #30363d', padding: '0.75rem 1rem', backdropFilter: 'blur(12px)', zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -10px 25px rgba(0,0,0,0.5)' }}>
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#8b949e', display: 'block' }}>INFO #{order.infoNumber}</span>
-            <strong style={{ fontSize: '0.9rem', color: '#ffffff' }}>{players.length} Player(s) Added</strong>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleSubmitRoster}
-            disabled={submitting || players.length === 0}
-            style={{
-              minHeight: '44px',
-              padding: '0.65rem 1.25rem',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#10b981',
-              color: '#ffffff',
-              fontSize: '0.9rem',
-              fontWeight: 900,
-              cursor: submitting || players.length === 0 ? 'not-allowed' : 'pointer',
-              opacity: submitting || players.length === 0 ? 0.6 : 1,
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            <span>{submitting ? 'Submitting...' : '🚀 Submit Roster'}</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

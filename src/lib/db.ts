@@ -1093,6 +1093,7 @@ export interface PlayerItem {
   name: string;
   size: string;
   number: string;
+  xxx?: string; // Col 3 XXX / Detail / Category
   shortsSize?: string;
   sleeve?: string; // 'F' for Full, 'H' for Half, 'SL' for Sleeveless
   collar?: string; // Collar/Neck style preference per player
