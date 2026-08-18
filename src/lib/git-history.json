@@ -1,181 +1,181 @@
 [
   {
-    "id": "47a3ecd",
-    "version": "v1.8 - 47A3ECD",
-    "date": "Aug 7, 2026",
-    "title": "feat: implement order management system with creation, tracking, and info slip generation functionality",
+    "id": "d974358",
+    "version": "v1.8 - D974358",
+    "date": "Aug 17, 2026",
+    "title": "feat: create customer roster intake page for order management and bulk player entry",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1786060800,
+      "seconds": 1786924800,
       "nanoseconds": 0
     }
   },
   {
-    "id": "c7f881d",
-    "version": "v1.8 - C7F881D",
-    "date": "Aug 7, 2026",
-    "title": "feat: implement admin attendance reports page with PDF export and add billing, orders, and settings modules with AIChatbot component",
+    "id": "9253e7e",
+    "version": "v1.8 - 9253E7E",
+    "date": "Aug 17, 2026",
+    "title": "feat: implement customer-facing roster intake page with Excel import and order submission functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1786060800,
+      "seconds": 1786924800,
       "nanoseconds": 0
     }
   },
   {
-    "id": "0b497c0",
-    "version": "v1.8 - 0B497C0",
-    "date": "Aug 6, 2026",
-    "title": "feat: implement admin dashboard page for employee hours tracking, attendance reporting, and salary statement generation",
+    "id": "f835d1a",
+    "version": "v1.8 - F835D1A",
+    "date": "Aug 17, 2026",
+    "title": "feat: implement navbar with real-time punch notifications and add billing and invoice components",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785974400,
+      "seconds": 1786924800,
       "nanoseconds": 0
     }
   },
   {
-    "id": "36a1314",
-    "version": "v1.8 - 36A1314",
-    "date": "Aug 6, 2026",
-    "title": "feat: add admin hours reporting page and database utility functions",
+    "id": "6952c54",
+    "version": "v1.8 - 6952C54",
+    "date": "Aug 13, 2026",
+    "title": "feat: add InfoSheetSlip component with PDF/CSV export and create order page interface",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785974400,
+      "seconds": 1786579200,
       "nanoseconds": 0
     }
   },
   {
-    "id": "85f9dda",
-    "version": "v1.8 - 85F9DDA",
-    "date": "Aug 5, 2026",
-    "title": "feat: implement new order management page with full CRUD and import capabilities",
+    "id": "0ba0b0a",
+    "version": "v1.8 - 0BA0B0A",
+    "date": "Aug 13, 2026",
+    "title": "feat: implement order management system with database integration and Discord webhook notifications",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785888000,
+      "seconds": 1786579200,
       "nanoseconds": 0
     }
   },
   {
-    "id": "a98e6a6",
-    "version": "v1.8 - A98E6A6",
-    "date": "Aug 4, 2026",
-    "title": "feat: implement excel and text parser utilities for processing player order data",
+    "id": "90a4f3a",
+    "version": "v1.8 - 90A4F3A",
+    "date": "Aug 13, 2026",
+    "title": "feat: add global design system, navigation bar, and order management page layout",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785801600,
+      "seconds": 1786579200,
       "nanoseconds": 0
     }
   },
   {
-    "id": "cb6ed40",
-    "version": "v1.8 - CB6ED40",
-    "date": "Aug 2, 2026",
-    "title": "feat: implement comprehensive order management system with file-based processing, dynamic pricing, and role-based access control",
+    "id": "4bfac22",
+    "version": "v1.8 - 4BFAC22",
+    "date": "Aug 13, 2026",
+    "title": "feat: implement admin dashboard for user management, attendance tracking, and office settings",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785628800,
+      "seconds": 1786579200,
       "nanoseconds": 0
     }
   },
   {
-    "id": "8986fed",
-    "version": "v1.8 - 8986FED",
-    "date": "Aug 1, 2026",
-    "title": "feat: implement main application navigation, billing, orders, and price settings modules",
+    "id": "1d4a11b",
+    "version": "v1.8 - 1D4A11B",
+    "date": "Aug 13, 2026",
+    "title": "feat: implement admin dashboard with user management, attendance tracking, and office settings configuration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785542400,
+      "seconds": 1786579200,
       "nanoseconds": 0
     }
   },
   {
-    "id": "74c751f",
-    "version": "v1.8 - 74C751F",
-    "date": "Aug 1, 2026",
-    "title": "feat: add pricing configuration page and backend utilities for managing fabric, sleeve, and neck rates",
+    "id": "2090833",
+    "version": "v1.8 - 2090833",
+    "date": "Aug 13, 2026",
+    "title": "feat: implement admin dashboard with user management, office settings, and discord webhook integration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785542400,
+      "seconds": 1786579200,
       "nanoseconds": 0
     }
   },
   {
-    "id": "5422778",
-    "version": "v1.8 - 5422778",
-    "date": "Aug 1, 2026",
-    "title": "feat: implement employee attendance tracking, payroll calculation, and management utilities",
+    "id": "e6db8e2",
+    "version": "v1.8 - E6DB8E2",
+    "date": "Aug 11, 2026",
+    "title": "feat: implement order pricing engine and integrate billing page calculation logic",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785542400,
+      "seconds": 1786406400,
       "nanoseconds": 0
     }
   },
   {
-    "id": "1b8e6b2",
-    "version": "v1.8 - 1B8E6B2",
-    "date": "Aug 1, 2026",
-    "title": "feat: implement modular architecture including navigation, database, pricing, and order management utilities",
+    "id": "ad861a5",
+    "version": "v1.8 - AD861A5",
+    "date": "Aug 11, 2026",
+    "title": "feat: implement authentication, database schema, and core attendance tracking functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785542400,
+      "seconds": 1786406400,
       "nanoseconds": 0
     }
   },
   {
-    "id": "3c5b222",
-    "version": "v1.8 - 3C5B222",
-    "date": "Jul 31, 2026",
-    "title": "feat: add InfoSheetSlip component for printing and PDF generation of order details",
+    "id": "a193c71",
+    "version": "v1.8 - A193C71",
+    "date": "Aug 10, 2026",
+    "title": "feat: implement admin dashboard with user management, office geolocation settings, holiday calendar, and file sharing features",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
       "Developer: anantharamanmac"
     ],
     "createdAt": {
-      "seconds": 1785456000,
+      "seconds": 1786320000,
       "nanoseconds": 0
     }
   }

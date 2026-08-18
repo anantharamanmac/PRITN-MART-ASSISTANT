@@ -56,17 +56,23 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
       try {
         let foundOrder: OrderRecord | null = null;
 
-        const numVal = Number(rawId);
-        if (!isNaN(numVal) && numVal > 0) {
-          foundOrder = await findOrderByInfoNumber(numVal);
+        // 1. Try public server API endpoint first (unauthenticated friendly)
+        try {
+          const res = await fetch(`/api/public/roster-intake/${encodeURIComponent(rawId)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.order) {
+              foundOrder = data.order as OrderRecord;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('Public API order load failed, attempting client fallback:', apiErr);
         }
 
-        if (!foundOrder) {
-          const docRef = doc(db, 'orders', rawId);
-          const snap = await getDoc(docRef);
-          if (snap.exists()) {
-            foundOrder = { id: snap.id, ...snap.data() } as OrderRecord;
-          }
+        // 2. Fallback to client-side multi-strategy lookup if API was unavailable
+        if (!foundOrder && rawId) {
+          const numVal = Number(rawId);
+          foundOrder = await findOrderByInfoNumber(!isNaN(numVal) ? numVal : rawId);
         }
 
         if (foundOrder) {
@@ -209,12 +215,38 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
 
     setSubmitting(true);
     try {
-      await updateOrder(order.id, {
-        customerRosterDraft: players,
-        rosterStatus: 'pending_admin_approval',
-        customerSubmittedAt: serverTimestamp() as any,
-        customerNotes: customerNotes.trim(),
-      });
+      // 1. Attempt public API submission first (unauthenticated friendly)
+      let submittedViaApi = false;
+      try {
+        const res = await fetch(`/api/public/roster-intake/${encodeURIComponent(order.id)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: order.id,
+            players,
+            customerNotes: customerNotes.trim(),
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            submittedViaApi = true;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('API submission failed, falling back to direct Firestore update:', apiErr);
+      }
+
+      // 2. Fallback to direct client-side update if API was unreachable
+      if (!submittedViaApi) {
+        await updateOrder(order.id, {
+          customerRosterDraft: players,
+          rosterStatus: 'pending_admin_approval',
+          customerSubmittedAt: serverTimestamp() as any,
+          customerNotes: customerNotes.trim(),
+        });
+      }
 
       setSubmittedSuccess(true);
       toast.success('Roster submitted successfully to Print Mart!');

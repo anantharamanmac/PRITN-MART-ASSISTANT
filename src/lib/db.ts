@@ -1288,15 +1288,89 @@ export const deleteOrder = async (orderId: string) => {
   await deleteDoc(docRef);
 };
 
-// Find an existing order by INFO NO.
-export const findOrderByInfoNumber = async (infoNum: number): Promise<OrderRecord | null> => {
+// Find an existing order by INFO NO, ID, or Phone Number
+export const findOrderByInfoNumber = async (infoNum: number | string): Promise<OrderRecord | null> => {
+  if (!infoNum) return null;
   const colRef = collection(db, 'orders');
-  const q = query(colRef, where('infoNumber', '==', Number(infoNum)));
-  const snap = await getDocs(q);
-  if (!snap.empty) {
-    const docSnap = snap.docs[0];
-    return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
+  const strVal = String(infoNum).trim();
+  const numVal = Number(strVal);
+
+  // 1. Check if direct Firestore document ID
+  if (strVal && !strVal.includes(' ')) {
+    try {
+      const docRef = doc(db, 'orders', strVal);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
+      }
+    } catch {
+      // Ignore invalid doc ref errors and proceed to queries
+    }
   }
+
+  // 2. Try numeric infoNumber query
+  if (!isNaN(numVal) && numVal > 0) {
+    try {
+      const q = query(colRef, where('infoNumber', '==', numVal));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const docSnap = snap.docs[0];
+        return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
+      }
+    } catch (err) {
+      console.warn("Numeric infoNumber query failed:", err);
+    }
+  }
+
+  // 3. Try string infoNumber query
+  if (strVal) {
+    try {
+      const q = query(colRef, where('infoNumber', '==', strVal));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const docSnap = snap.docs[0];
+        return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
+      }
+    } catch (err) {
+      console.warn("String infoNumber query failed:", err);
+    }
+  }
+
+  // 4. Try customerPhone exact query
+  if (strVal) {
+    try {
+      const q = query(colRef, where('customerPhone', '==', strVal));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const docSnap = snap.docs[0];
+        return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
+      }
+    } catch (err) {
+      console.warn("Customer phone query failed:", err);
+    }
+  }
+
+  // 5. Try normalized phone digits match (e.g. 8848048733 vs +918848048733)
+  const cleanDigits = strVal.replace(/[^0-9]/g, '');
+  if (cleanDigits.length >= 7) {
+    try {
+      const snap = await getDocs(colRef);
+      for (const docSnap of snap.docs) {
+        const data = docSnap.data();
+        const pClean = (data.customerPhone || '').replace(/[^0-9]/g, '');
+        const infoStr = String(data.infoNumber || '').replace(/[^0-9]/g, '');
+        if (pClean && (pClean.endsWith(cleanDigits) || cleanDigits.endsWith(pClean))) {
+          return { id: docSnap.id, ...data } as OrderRecord;
+        }
+        if (infoStr && infoStr === cleanDigits) {
+          return { id: docSnap.id, ...data } as OrderRecord;
+        }
+      }
+    } catch (err) {
+      console.warn("Fallback orders scanning failed:", err);
+    }
+  }
+
   return null;
 };
 
