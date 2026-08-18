@@ -1,5 +1,20 @@
 [
   {
+    "id": "bea3627",
+    "version": "v1.8 - BEA3627",
+    "date": "Aug 18, 2026",
+    "title": "feat: implement customer-facing roster intake page with order lookup API and Firebase integration",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1787011200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "d974358",
     "version": "v1.8 - D974358",
     "date": "Aug 17, 2026",
@@ -161,21 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1786406400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "a193c71",
-    "version": "v1.8 - A193C71",
-    "date": "Aug 10, 2026",
-    "title": "feat: implement admin dashboard with user management, office geolocation settings, holiday calendar, and file sharing features",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786320000,
       "nanoseconds": 0
     }
   }

@@ -1303,8 +1303,8 @@ export const findOrderByInfoNumber = async (infoNum: number | string): Promise<O
       if (docSnap.exists()) {
         return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
       }
-    } catch {
-      // Ignore invalid doc ref errors and proceed to queries
+    } catch (err: any) {
+      if (err?.code === 'permission-denied') return null;
     }
   }
 
@@ -1317,7 +1317,8 @@ export const findOrderByInfoNumber = async (infoNum: number | string): Promise<O
         const docSnap = snap.docs[0];
         return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'permission-denied') return null;
       console.warn("Numeric infoNumber query failed:", err);
     }
   }
@@ -1331,7 +1332,8 @@ export const findOrderByInfoNumber = async (infoNum: number | string): Promise<O
         const docSnap = snap.docs[0];
         return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'permission-denied') return null;
       console.warn("String infoNumber query failed:", err);
     }
   }
@@ -1345,7 +1347,8 @@ export const findOrderByInfoNumber = async (infoNum: number | string): Promise<O
         const docSnap = snap.docs[0];
         return { id: docSnap.id, ...docSnap.data() } as OrderRecord;
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'permission-denied') return null;
       console.warn("Customer phone query failed:", err);
     }
   }
@@ -1366,7 +1369,8 @@ export const findOrderByInfoNumber = async (infoNum: number | string): Promise<O
           return { id: docSnap.id, ...data } as OrderRecord;
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'permission-denied') return null;
       console.warn("Fallback orders scanning failed:", err);
     }
   }
