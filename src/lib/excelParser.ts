@@ -73,7 +73,7 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', raw: true, cellText: true });
 
         if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
           return resolve([]);
@@ -82,8 +82,8 @@ export const parseExcelFile = async (file: File): Promise<PlayerDetail[]> => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        // Convert sheet to array of rows (header: 1 gives 2D array)
-        const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        // Convert sheet to array of rows (header: 1 gives 2D array, raw: false preserves formatted text like '01', '03')
+        const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false });
 
         if (!rows || rows.length === 0) return resolve([]);
 

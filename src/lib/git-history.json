@@ -1,5 +1,20 @@
 [
   {
+    "id": "8ad0019",
+    "version": "v1.8 - 8AD0019",
+    "date": "Aug 18, 2026",
+    "title": "feat: implement attendance tracking, break management, and user payroll configuration modules",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1787011200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "bea3627",
     "version": "v1.8 - BEA3627",
     "date": "Aug 18, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - E6DB8E2",
     "date": "Aug 11, 2026",
     "title": "feat: implement order pricing engine and integrate billing page calculation logic",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786406400,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "ad861a5",
-    "version": "v1.8 - AD861A5",
-    "date": "Aug 11, 2026",
-    "title": "feat: implement authentication, database schema, and core attendance tracking functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
