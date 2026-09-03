@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getUserAttendanceHistory, getUserTasks, AttendanceRecord, WorkTask, getCurrentSalaryPeriod } from '@/lib/db';
+import { getUserAttendanceHistory, getUserTasks, AttendanceRecord, WorkTask, getCurrentSalaryPeriod, parseTimestamp } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -333,8 +333,8 @@ export default function HistoryPage() {
                         </div>
                         {a.punchIn && (
                           <div className="text-xs text-secondary grid grid-cols-2 gap-y-1.5 mt-2 pt-2 border-t border-white/5">
-                            <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</div>
-                            <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</div>
+                            <div>In: {parseTimestamp(a.punchIn)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '-'}</div>
+                            <div>Out: {parseTimestamp(a.punchOut)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '-'}</div>
                             <div>Total: {formatHrsMins(a.totalHours || 0)}</div>
                             {a.overtimeHours > 0 && (
                               <div className="text-danger font-semibold flex items-center gap-1.5 flex-wrap col-span-2 mt-1">

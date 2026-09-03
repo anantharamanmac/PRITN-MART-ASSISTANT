@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getTodayAttendance, punchIn, punchOut, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings, pauseWork, resumeWork, getBreakTimeMs, getUserAttendanceHistory, get30WorkingDaysSalaryPeriod } from '@/lib/db';
+import { getTodayAttendance, punchIn, punchOut, undoPunchOut, listenToTodayAttendance, parseTimestamp, submitWorkTask, applyForLeave, AttendanceRecord, getTodayDateString, fillMissingLeaves, getOfficeSettings, pauseWork, resumeWork, getBreakTimeMs, getUserAttendanceHistory, get30WorkingDaysSalaryPeriod } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import WelcomeModal from '@/components/WelcomeModal';
@@ -212,9 +212,7 @@ export default function WorkerDashboard() {
 
   const loadAttendance = async (uid: string) => {
     try {
-      // First, backfill any missing days!
       await fillMissingLeaves(uid);
-
       const rec = await getTodayAttendance(uid);
       setAttendance(rec);
     } catch (error) {
@@ -232,7 +230,6 @@ export default function WorkerDashboard() {
         router.push('/pending');
       } else {
         setUser(appUser);
-        loadAttendance(appUser.uid);
       }
     });
     return () => unsubscribe();
@@ -241,12 +238,15 @@ export default function WorkerDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Silent background refresh every 1 minute
-    const interval = setInterval(() => {
-      loadAttendance(user.uid);
-    }, 60000);
+    fillMissingLeaves(user.uid).catch((err) => console.error("Error backfilling leaves:", err));
 
-    return () => clearInterval(interval);
+    // Real-time listener for today's attendance
+    const unsubAttendance = listenToTodayAttendance(user.uid, (rec) => {
+      setAttendance(rec);
+      setLoading(false);
+    });
+
+    return () => unsubAttendance();
   }, [user]);
 
   useEffect(() => {
@@ -259,9 +259,8 @@ export default function WorkerDashboard() {
 
   const getLiveHours = () => {
     if (!attendance || !attendance.punchIn) return '0h 00m 00s';
-    const punchInTime = typeof attendance.punchIn.toDate === 'function'
-      ? attendance.punchIn.toDate().getTime()
-      : new Date(attendance.punchIn as unknown as string).getTime();
+    const parsedIn = parseTimestamp(attendance.punchIn);
+    const punchInTime = parsedIn ? parsedIn.getTime() : Date.now();
     const breakMs = getBreakTimeMs(attendance.breaks, currentTime.getTime());
     const diffMs = Math.max(0, currentTime.getTime() - punchInTime - breakMs);
     const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
@@ -275,9 +274,8 @@ export default function WorkerDashboard() {
     if (!attendance || !attendance.breaks || attendance.breaks.length === 0) return '';
     const lastBreak = attendance.breaks[attendance.breaks.length - 1];
     if (lastBreak.end !== null) return '';
-    const breakStartTime = typeof lastBreak.start.toDate === 'function'
-      ? lastBreak.start.toDate().getTime()
-      : new Date(lastBreak.start as unknown as string).getTime();
+    const parsedStart = parseTimestamp(lastBreak.start);
+    const breakStartTime = parsedStart ? parsedStart.getTime() : Date.now();
     const diffMs = currentTime.getTime() - breakStartTime;
     const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
     const hrs = Math.floor(diffHrs);
@@ -452,7 +450,6 @@ export default function WorkerDashboard() {
       }
 
       await punchOut(user.uid, locationData);
-      await loadAttendance(user.uid);
       playCheckOutSound();
       triggerBurst(clientX, clientY, ['#f87171', '#ef4444', '#dc2626', '#fca5a5', '#fb7185']);
       toast.success("Successfully punched out!");
@@ -461,6 +458,20 @@ export default function WorkerDashboard() {
       toast.error("Error punching out.");
     } finally {
       setVerifyingLocation(false);
+    }
+  };
+
+  const handleUndoPunchOut = async () => {
+    if (!user) return;
+    const confirmUndo = confirm("Did you accidentally punch out? Click OK to resume your shift and clear the punch-out record.");
+    if (!confirmUndo) return;
+
+    try {
+      await undoPunchOut(user.uid);
+      toast.success("Shift resumed! Punch-out cleared.");
+    } catch (error) {
+      console.error("Error resuming shift:", error);
+      toast.error("Error resuming shift.");
     }
   };
 
@@ -766,7 +777,17 @@ export default function WorkerDashboard() {
                     </span>
                   )}
                 </div>
-                <p className="mt-6 text-secondary text-sm">Shift completed for today.</p>
+                <p className="mt-4 text-secondary text-sm">Shift completed for today.</p>
+                <button
+                  onClick={handleUndoPunchOut}
+                  className="mt-3 text-xs font-semibold text-amber-400 hover:text-amber-300 underline bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 mx-auto cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                  </svg>
+                  Accidentally punched out? Resume Shift
+                </button>
               </>
             ) : (
               <>
@@ -790,7 +811,7 @@ export default function WorkerDashboard() {
                           {getLiveHours()} {isOnBreak ? '(Paused)' : ''}
                         </span>
                         <span className="text-[10px] font-normal mt-1 text-white/90 bg-black/20 px-2 py-0.5 rounded-full">
-                          In: {new Date(attendance.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          In: {parseTimestamp(attendance.punchIn)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A'}
                         </span>
                       </div>
                     )}

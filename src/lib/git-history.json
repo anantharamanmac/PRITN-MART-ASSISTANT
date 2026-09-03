@@ -1,5 +1,20 @@
 [
   {
+    "id": "5e37d89",
+    "version": "v1.8 - 5E37D89",
+    "date": "Aug 23, 2026",
+    "title": "feat: add git history log and implement Excel player roster parser utility",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1787443200,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "8ad0019",
     "version": "v1.8 - 8AD0019",
     "date": "Aug 18, 2026",
@@ -161,21 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1786579200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "e6db8e2",
-    "version": "v1.8 - E6DB8E2",
-    "date": "Aug 11, 2026",
-    "title": "feat: implement order pricing engine and integrate billing page calculation logic",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786406400,
       "nanoseconds": 0
     }
   }

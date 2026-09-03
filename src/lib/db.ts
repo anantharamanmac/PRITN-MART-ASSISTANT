@@ -54,6 +54,15 @@ export const getTodayDateString = () => {
   return formatLocalDate(new Date());
 };
 
+// Safely parse Firestore Timestamps, Date strings, or timestamp objects into Date
+export const parseTimestamp = (ts: any): Date | null => {
+  if (!ts) return null;
+  if (typeof ts.toDate === 'function') return ts.toDate();
+  if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
+  const d = new Date(ts);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 // Check if user has punched in today
 export const getTodayAttendance = async (userId: string): Promise<AttendanceRecord | null> => {
   const dateStr = getTodayDateString();
@@ -63,6 +72,28 @@ export const getTodayAttendance = async (userId: string): Promise<AttendanceReco
     return { id: snap.id, ...snap.data() } as AttendanceRecord;
   }
   return null;
+};
+
+// Listen to today's attendance in real-time
+export const listenToTodayAttendance = (
+  userId: string,
+  callback: (record: AttendanceRecord | null) => void
+) => {
+  const dateStr = getTodayDateString();
+  const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
+  return onSnapshot(
+    docRef,
+    (snap) => {
+      if (snap.exists()) {
+        callback({ id: snap.id, ...snap.data() } as AttendanceRecord);
+      } else {
+        callback(null);
+      }
+    },
+    (error) => {
+      console.error("Error listening to today's attendance:", error);
+    }
+  );
 };
 
 // Punch In
@@ -168,7 +199,8 @@ export const punchOut = async (
   const data = snap.data() as AttendanceRecord;
   if (data.punchOut) throw new Error("Already punched out.");
 
-  const punchInTime = (data.punchIn as Timestamp).toDate().getTime();
+  const parsedPunchIn = parseTimestamp(data.punchIn);
+  const punchInTime = parsedPunchIn ? parsedPunchIn.getTime() : Date.now();
   const punchOutDate = new Date();
   const punchOutTime = punchOutDate.getTime();
 
@@ -220,6 +252,23 @@ export const punchOut = async (
 
   // Send punch out notification to admin/owner
   await createPunchNotification(userId, 'punch_out', data.workMode, location);
+};
+
+// Undo accidental punch out (Resumes shift)
+export const undoPunchOut = async (userId: string, dateStr?: string) => {
+  const targetDateStr = dateStr || getTodayDateString();
+  const docRef = doc(db, 'attendance', `${userId}_${targetDateStr}`);
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) throw new Error("No attendance record found for today.");
+
+  await updateDoc(docRef, {
+    punchOut: null,
+    totalHours: 0,
+    overtimeHours: 0,
+    status: 'present',
+    punchOutLocation: null
+  });
 };
 
 // Apply for leave

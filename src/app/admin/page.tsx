@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile, parseTimestamp, undoPunchOut } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -927,10 +927,31 @@ export default function AdminDashboard() {
                               {a.status}
                             </span>
                           </div>
-                          {a.punchIn && (
-                            <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
-                              <div>In: {a.punchIn ? new Date(a.punchIn.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
-                              <div>Out: {a.punchOut ? new Date(a.punchOut.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Working'}</div>
+                           {a.punchIn && (
+                            <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5 items-center">
+                              <div>In: {parseTimestamp(a.punchIn)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A'}</div>
+                              <div className="flex items-center justify-between">
+                                <span>Out: {a.punchOut ? (parseTimestamp(a.punchOut)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A') : 'Working'}</span>
+                                {a.punchOut && (
+                                  <button
+                                    onClick={async () => {
+                                      if (confirm("Reset punch out for this worker so they can resume their shift?")) {
+                                        try {
+                                          await undoPunchOut(a.userId, a.date);
+                                          toast.success("Punch out reset! Shift resumed for worker.");
+                                          loadData();
+                                        } catch {
+                                          toast.error("Failed to reset punch out.");
+                                        }
+                                      }
+                                    }}
+                                    className="text-[10px] text-amber-400 hover:text-amber-300 underline font-semibold cursor-pointer ml-1.5"
+                                    title="Reset Punch Out & Resume Shift"
+                                  >
+                                    Reset Out
+                                  </button>
+                                )}
+                              </div>
                               {a.punchInLocation && officeSettings && (
                                 <div className="col-span-2 text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/10 rounded-lg p-1.5 mt-1 flex items-center gap-1.5">
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="flex-shrink-0">

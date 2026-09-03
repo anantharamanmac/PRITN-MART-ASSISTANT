@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { AppUser } from '@/lib/auth';
-import { AttendanceRecord } from '@/lib/db';
+import { AttendanceRecord, parseTimestamp } from '@/lib/db';
 
 interface SalaryStatementSlipProps {
   user: AppUser;
@@ -501,8 +501,10 @@ export default function SalaryStatementSlip({
               </thead>
               <tbody>
                 {cycleRecords.map((rec, idx) => {
-                  const inStr = rec.punchIn ? new Date(rec.punchIn.toDate()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-";
-                  const outStr = rec.punchOut ? new Date(rec.punchOut.toDate()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-";
+                  const parsedIn = parseTimestamp(rec.punchIn);
+                  const parsedOut = parseTimestamp(rec.punchOut);
+                  const inStr = parsedIn ? parsedIn.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-";
+                  const outStr = parsedOut ? parsedOut.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "-";
                   const otPayVal = (rec.overtimeHours || 0) * 100;
 
                   // inline badge styles matching original tailwind
