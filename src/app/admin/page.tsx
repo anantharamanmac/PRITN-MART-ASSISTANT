@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
 import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile, parseTimestamp, undoPunchOut, adminCancelLeave, adminUpdateAttendanceStatus } from '@/lib/db';
+import { listenToEnrolledFaces, approveEnrolledFace, deleteEnrolledFace, EnrolledFace } from '@/lib/faceIdEngine';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -79,6 +80,36 @@ export default function AdminDashboard() {
   const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
   const [confirmDeleteFile, setConfirmDeleteFile] = useState<AdminFileRecord | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Face ID Real-Time Sync State
+  const [enrolledFaces, setEnrolledFaces] = useState<EnrolledFace[]>([]);
+
+  useEffect(() => {
+    const unsubFaces = listenToEnrolledFaces((faces) => {
+      setEnrolledFaces(faces);
+    });
+    return () => unsubFaces();
+  }, []);
+
+  const handleApproveFaceId = async (id: string, name: string) => {
+    try {
+      await approveEnrolledFace(id);
+      toast.success(`Access Granted! Approved ${name} for Face ID attendance.`);
+    } catch (err) {
+      toast.error("Failed to approve face profile.");
+    }
+  };
+
+  const handleDeleteFaceId = async (id: string, name: string) => {
+    if (confirm(`Reject and delete Face ID registration for ${name}?`)) {
+      try {
+        await deleteEnrolledFace(id);
+        toast.success(`Rejected Face ID profile for ${name}`);
+      } catch (err) {
+        toast.error("Failed to delete profile.");
+      }
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -1056,6 +1087,61 @@ export default function AdminDashboard() {
 
           {/* Main Content Pane */}
           <div className="flex-1 min-w-0">
+
+            {/* Pending Face ID Registration Approvals Banner */}
+            <div className="glass-card mb-8" style={{ border: '1px solid rgba(201, 162, 39, 0.3)', background: 'rgba(201, 162, 39, 0.03)' }}>
+              <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <div>
+                  <h2 className="subtitle !text-xl !text-white flex items-center gap-2">
+                    <span style={{ fontSize: '1.2rem' }}>👤</span> Face ID Access Approvals
+                    <span className="badge badge-pending">
+                      {enrolledFaces.filter(f => f.approvalStatus === 'pending').length} Pending
+                    </span>
+                  </h2>
+                  <p className="text-xs text-secondary mt-1">Review face registrations submitted from mobile phones or worker devices.</p>
+                </div>
+                <a href="/face-id-test" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+                  📷 Open Live Scanner →
+                </a>
+              </div>
+
+              {enrolledFaces.filter(f => f.approvalStatus === 'pending').length === 0 ? (
+                <div className="p-4 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-xl text-secondary text-sm flex items-center justify-between flex-wrap gap-2">
+                  <span>✓ No pending Face ID registrations waiting for approval.</span>
+                  <span className="text-xs text-[var(--gold)] font-semibold">
+                    {enrolledFaces.filter(f => f.approvalStatus === 'approved' || !f.approvalStatus).length} Approved Active Face Profiles
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {enrolledFaces.filter(f => f.approvalStatus === 'pending').map((face) => (
+                    <div key={face.id} className="p-4 bg-[rgba(0,0,0,0.3)] border border-[rgba(201,162,39,0.3)] rounded-xl flex flex-col justify-between">
+                      <div className="flex items-center gap-3 mb-3">
+                        {face.photoDataUrl ? (
+                          <img src={face.photoDataUrl} alt={face.name} className="w-12 h-12 rounded-full object-cover border-2 border-[var(--gold)]" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-xl">👤</div>
+                        )}
+                        <div>
+                          <div className="font-bold text-white text-base">{face.name}</div>
+                          <div className="text-xs text-secondary">Role: {face.role || 'Worker'} {face.employeeId ? `(${face.employeeId})` : ''}</div>
+                          <div className="text-[10px] text-[var(--gold)] mt-0.5">Submitted {new Date(face.createdAt).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <button onClick={() => handleApproveFaceId(face.id, face.name)} className="btn btn-success" style={{ padding: '0.35rem', fontSize: '0.8rem', fontWeight: 700 }}>
+                          ✓ Give Access
+                        </button>
+                        <button onClick={() => handleDeleteFaceId(face.id, face.name)} className="btn btn-danger" style={{ padding: '0.35rem', fontSize: '0.8rem' }}>
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Pending Users Column */}
               <div className="glass-card">
