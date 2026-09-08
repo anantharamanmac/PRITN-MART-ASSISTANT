@@ -15,6 +15,7 @@ interface FaceIdPunchModalProps {
   onClose: () => void;
   onVerified: (matchedProfile: EnrolledFace) => Promise<void>;
   targetUserName?: string;
+  mode?: 'punch_in' | 'punch_out';
 }
 
 export default function FaceIdPunchModal({
@@ -22,6 +23,7 @@ export default function FaceIdPunchModal({
   onClose,
   onVerified,
   targetUserName,
+  mode = 'punch_in',
 }: FaceIdPunchModalProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -269,7 +271,7 @@ export default function FaceIdPunchModal({
           📷 Face ID Attendance Scanner
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-          Position your face in the camera frame to verify identity and punch in.
+          Position your face in the camera frame to verify identity and {mode === 'punch_out' ? 'punch out' : 'punch in'}.
         </p>
 
         {isLoadingModels ? (
@@ -336,7 +338,7 @@ export default function FaceIdPunchModal({
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 900 }}>Verified: {matchedProfile.name}</h3>
                 <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>{confidence}% Neural Match Confidence</p>
                 <p style={{ fontSize: '0.8rem', marginTop: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.8rem', borderRadius: '20px' }}>
-                  Punching in attendance...
+                  {mode === 'punch_out' ? 'Punching out attendance...' : 'Punching in attendance...'}
                 </p>
               </div>
             )}

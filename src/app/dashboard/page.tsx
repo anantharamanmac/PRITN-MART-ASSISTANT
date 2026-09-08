@@ -140,6 +140,7 @@ export default function WorkerDashboard() {
   const [isShaking, setIsShaking] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showFaceModal, setShowFaceModal] = useState(false);
+  const [faceModalMode, setFaceModalMode] = useState<'punch_in' | 'punch_out'>('punch_in');
   const [previewData, setPreviewData] = useState<{
     user: AppUser;
     cycleRecords: AttendanceRecord[];
@@ -484,6 +485,36 @@ export default function WorkerDashboard() {
     } catch (error) {
       console.error("Error punching in:", error);
       toast.error("Error punching in.");
+    } finally {
+      setVerifyingLocation(false);
+    }
+  };
+
+  const executePunchOutVerified = async (matchedProfile?: any) => {
+    if (!user) return;
+    let locationData: { latitude: number; longitude: number; accuracy?: number } | undefined = undefined;
+
+    setVerifyingLocation(true);
+    try {
+      try {
+        const position = await getCoordinates();
+        locationData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        };
+      } catch {
+        console.log("Punch out location not recorded.");
+      }
+
+      await punchOut(user.uid, locationData);
+      await loadAttendance(user.uid);
+      playCheckOutSound();
+      triggerBurst(window.innerWidth / 2, window.innerHeight / 2, ['#f87171', '#ef4444', '#dc2626', '#fca5a5', '#fb7185']);
+      toast.success(`Face Verified! Punched out as ${matchedProfile?.name || user.displayName}!`);
+    } catch (error) {
+      console.error("Error punching out:", error);
+      toast.error("Error punching out.");
     } finally {
       setVerifyingLocation(false);
     }
@@ -915,10 +946,31 @@ export default function WorkerDashboard() {
                   </div>
                 )}
 
+                {isPunchedIn && (
+                  <div className="flex flex-col items-center gap-3 mt-6">
+                    <button
+                      onClick={() => {
+                        setFaceModalMode('punch_out');
+                        setShowFaceModal(true);
+                      }}
+                      className="btn btn-secondary flex items-center gap-2 text-sm font-bold border-rose-500/40 hover:border-rose-400 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                      Punch Out with Face ID (Neural AI)
+                    </button>
+                  </div>
+                )}
+
                 {!isPunchedIn && (
                   <div className="flex flex-col items-center gap-3 mt-6">
                     <button
-                      onClick={() => setShowFaceModal(true)}
+                      onClick={() => {
+                        setFaceModalMode('punch_in');
+                        setShowFaceModal(true);
+                      }}
                       className="btn btn-secondary flex items-center gap-2 text-sm font-bold border-amber-500/40 hover:border-amber-400 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1068,12 +1120,17 @@ export default function WorkerDashboard() {
           </div>
         </div>
       )}
-      {/* Face ID Neural AI Punch In Modal */}
+      {/* Face ID Neural AI Attendance Modal */}
       <FaceIdPunchModal
         isOpen={showFaceModal}
+        mode={faceModalMode}
         onClose={() => setShowFaceModal(false)}
         onVerified={async (matchedProfile) => {
-          await executePunchInVerified(matchedProfile);
+          if (faceModalMode === 'punch_out') {
+            await executePunchOutVerified(matchedProfile);
+          } else {
+            await executePunchInVerified(matchedProfile);
+          }
         }}
         targetUserName={user?.displayName}
       />
