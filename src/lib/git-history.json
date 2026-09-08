@@ -1,5 +1,20 @@
 [
   {
+    "id": "45e92d9",
+    "version": "v1.8 - 45E92D9",
+    "date": "Sep 8, 2026",
+    "title": "feat: add face recognition and webauthn enrollment system with neural engine integration",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1788825600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "e065396",
     "version": "v1.8 - E065396",
     "date": "Sep 8, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - 6952C54",
     "date": "Aug 13, 2026",
     "title": "feat: add InfoSheetSlip component with PDF/CSV export and create order page interface",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786579200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "0ba0b0a",
-    "version": "v1.8 - 0BA0B0A",
-    "date": "Aug 13, 2026",
-    "title": "feat: implement order management system with database integration and Discord webhook notifications",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

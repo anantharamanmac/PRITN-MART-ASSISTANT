@@ -9,6 +9,7 @@ import {
   recognizeFaceNeural,
   listenToEnrolledFaces,
   saveEnrolledFace,
+  approveEnrolledFace,
   deleteEnrolledFace,
   clearAllEnrolledFaces,
   isWebAuthnSupported,
@@ -296,6 +297,16 @@ export default function FaceIdTestPage() {
       setActiveTab("scanner");
     } catch (err) {
       toast.error("Failed to save face profile.");
+    }
+  };
+
+  // Approve Pending Face Profile (Admin Access)
+  const handleApproveFace = async (id: string, name: string) => {
+    try {
+      await approveEnrolledFace(id);
+      toast.success(`Access Granted! ${name} is now approved for face attendance.`);
+    } catch (err) {
+      toast.error("Failed to approve face profile.");
     }
   };
 
@@ -691,8 +702,51 @@ export default function FaceIdTestPage() {
         {/* ================= TAB 4: DATABASE & SETTINGS ================= */}
         {activeTab === "database" && (
           <div>
+            {/* 1. Pending Approvals Section */}
+            {enrolledFaces.filter(f => f.approvalStatus === "pending").length > 0 && (
+              <div style={{ marginBottom: "2rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                  <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--gold)" }}>⚠️ Pending Admin Access Approvals</h2>
+                  <span style={{ background: "rgba(201, 162, 39, 0.2)", color: "var(--gold)", padding: "0.15rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 700 }}>
+                    {enrolledFaces.filter(f => f.approvalStatus === "pending").length} Waiting for Admin
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
+                  {enrolledFaces.filter(f => f.approvalStatus === "pending").map((face) => (
+                    <div key={face.id} className="glass-card" style={{ padding: "1.25rem", border: "1px solid rgba(201, 162, 39, 0.4)", background: "rgba(201, 162, 39, 0.04)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                        {face.photoDataUrl ? (
+                          <img src={face.photoDataUrl} alt={face.name} style={{ width: "55px", height: "55px", borderRadius: "50%", objectFit: "cover", border: "2px solid var(--gold)" }} />
+                        ) : (
+                          <div style={{ width: "55px", height: "55px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>👤</div>
+                        )}
+                        <div>
+                          <h3 style={{ fontSize: "1.05rem", fontWeight: 700 }}>{face.name}</h3>
+                          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Role: {face.role || "Worker"} {face.employeeId ? `(${face.employeeId})` : ""}</p>
+                          <span style={{ fontSize: "0.7rem", color: "var(--gold)", display: "inline-block", marginTop: "0.2rem" }}>Status: Pending Approval</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "1rem" }}>
+                        <button onClick={() => handleApproveFace(face.id, face.name)} className="btn btn-success" style={{ padding: "0.45rem", fontSize: "0.8rem", fontWeight: 700 }}>
+                          ✓ Give Access
+                        </button>
+                        <button onClick={() => handleDeleteFace(face.id, face.name)} className="btn btn-danger" style={{ padding: "0.45rem", fontSize: "0.8rem" }}>
+                          Reject / Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Active Approved Profiles Section */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Enrolled Neural Profiles ({enrolledFaces.length})</h2>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>
+                Active Approved Face Profiles ({enrolledFaces.filter(f => f.approvalStatus === "approved" || !f.approvalStatus).length})
+              </h2>
               {enrolledFaces.length > 0 && (
                 <button onClick={handleClearAll} className="btn btn-danger" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}>
                   Clear All Profiles
@@ -700,19 +754,24 @@ export default function FaceIdTestPage() {
               )}
             </div>
 
-            {enrolledFaces.length === 0 ? (
+            {enrolledFaces.filter(f => f.approvalStatus === "approved" || !f.approvalStatus).length === 0 ? (
               <div className="glass-card" style={{ padding: "3rem", textAlign: "center" }}>
-                <p style={{ color: "var(--text-secondary)" }}>No profiles enrolled yet. Click "Register New Face" tab to add one.</p>
+                <p style={{ color: "var(--text-secondary)" }}>No approved face profiles yet. Enrolled profiles waiting for admin approval will appear above.</p>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
-                {enrolledFaces.map((face) => (
+                {enrolledFaces.filter(f => f.approvalStatus === "approved" || !f.approvalStatus).map((face) => (
                   <div key={face.id} className="glass-card" style={{ padding: "1rem", position: "relative" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      <img src={face.photoDataUrl} alt={face.name} style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover", border: "2px solid var(--gold)" }} />
+                      {face.photoDataUrl ? (
+                        <img src={face.photoDataUrl} alt={face.name} style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover", border: "2px solid #10b981" }} />
+                      ) : (
+                        <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>👤</div>
+                      )}
                       <div>
                         <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>{face.name}</h3>
                         <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{face.role || "Worker"}</p>
+                        <span style={{ fontSize: "0.65rem", color: "#10b981", fontWeight: 700 }}>✓ Active for Attendance</span>
                       </div>
                     </div>
 

@@ -9,11 +9,10 @@ import {
   collection,
   doc,
   setDoc,
+  updateDoc,
   deleteDoc,
-  getDocs,
   onSnapshot,
   query,
-  orderBy,
 } from 'firebase/firestore';
 
 export interface EnrolledFace {
@@ -23,6 +22,7 @@ export interface EnrolledFace {
   role?: string;
   embedding: number[]; // 128-dimensional FaceNet descriptor
   photoDataUrl: string;
+  approvalStatus: 'pending' | 'approved';
   createdAt: string;
 }
 
@@ -35,7 +35,7 @@ export interface FaceDetectionResult {
   distance: number; // Euclidean distance L2
 }
 
-const STORAGE_KEY = 'printmart_face_id_enrolled_profiles_v2';
+const STORAGE_KEY = 'printmart_face_id_enrolled_profiles_v3';
 const COLLECTION_NAME = 'face_profiles';
 const CDN_MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
 
@@ -44,8 +44,35 @@ let isModelLoaded = false;
 let modelLoadingPromise: Promise<boolean> | null = null;
 
 /**
+ * Helper to compress image data URL to lightweight thumbnail (<15 KB)
+ * Prevents Firestore document size limit (1MB) errors on high-res phone cameras.
+ */
+function compressPhotoDataUrl(source: HTMLCanvasElement | HTMLVideoElement, box: { x: number; y: number; width: number; height: number }): string {
+  const cropCanvas = document.createElement('canvas');
+  cropCanvas.width = 90;
+  cropCanvas.height = 90;
+  const cropCtx = cropCanvas.getContext('2d');
+
+  if (cropCtx) {
+    const srcW = source instanceof HTMLVideoElement ? source.videoWidth : source.width;
+    const srcH = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
+
+    const padX = box.width * 0.15;
+    const padY = box.height * 0.15;
+
+    const cropX = Math.max(0, box.x - padX);
+    const cropY = Math.max(0, box.y - padY);
+    const cropW = Math.min(srcW - cropX, box.width + padX * 2);
+    const cropH = Math.min(srcH - cropY, box.height + padY * 2);
+
+    cropCtx.drawImage(source, cropX, cropY, cropW, cropH, 0, 0, 90, 90);
+    return cropCanvas.toDataURL('image/jpeg', 0.5);
+  }
+  return '';
+}
+
+/**
  * Dynamically initializes and loads @vladmandic/face-api neural network models into browser WebGL.
- * Safe for Next.js SSR / Static Generation.
  */
 export async function loadFaceApiModels(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
@@ -59,7 +86,6 @@ export async function loadFaceApiModels(): Promise<boolean> {
       }
       const faceapi = faceapiModule;
 
-      // Load SSD MobileNet V1, 68 Landmark Net, and ResNet Face Recognition Net
       await Promise.all([
         faceapi.nets.ssdMobilenetv1.loadFromUri(CDN_MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(CDN_MODEL_URL),
@@ -67,7 +93,7 @@ export async function loadFaceApiModels(): Promise<boolean> {
       ]);
 
       isModelLoaded = true;
-      console.log('✓ @vladmandic/face-api neural models loaded successfully into WebGL');
+      console.log('✓ @vladmandic/face-api neural models loaded into WebGL');
       return true;
     } catch (err) {
       console.error('Failed to load face-api neural models from CDN, trying fallback...', err);
@@ -99,7 +125,6 @@ export function isNeuralModelReady(): boolean {
 
 /**
  * Detects a face and extracts 128-dimensional ResNet neural embedding vector.
- * Returns null if NO face is detected in the input canvas/video element.
  */
 export async function extractFaceNeuralDescriptor(
   sourceCanvas: HTMLCanvasElement | HTMLVideoElement
@@ -115,7 +140,6 @@ export async function extractFaceNeuralDescriptor(
 
   try {
     const faceapi = faceapiModule;
-    // Detect single face with 68 landmarks & 128D neural descriptor
     const detection = await faceapi
       .detectSingleFace(sourceCanvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
       .withFaceLandmarks()
@@ -126,33 +150,13 @@ export async function extractFaceNeuralDescriptor(
     const box = detection.detection.box;
     const landmarks = detection.landmarks.positions.map(p => ({ x: p.x, y: p.y }));
     const descriptor = Array.from(detection.descriptor);
-
-    // Create cropped preview snapshot
-    const cropCanvas = document.createElement('canvas');
-    cropCanvas.width = 150;
-    cropCanvas.height = 150;
-    const cropCtx = cropCanvas.getContext('2d');
-
-    if (cropCtx) {
-      const srcW = sourceCanvas instanceof HTMLVideoElement ? sourceCanvas.videoWidth : sourceCanvas.width;
-      const srcH = sourceCanvas instanceof HTMLVideoElement ? sourceCanvas.videoHeight : sourceCanvas.height;
-
-      const padX = box.width * 0.15;
-      const padY = box.height * 0.15;
-
-      const cropX = Math.max(0, box.x - padX);
-      const cropY = Math.max(0, box.y - padY);
-      const cropW = Math.min(srcW - cropX, box.width + padX * 2);
-      const cropH = Math.min(srcH - cropY, box.height + padY * 2);
-
-      cropCtx.drawImage(sourceCanvas, cropX, cropY, cropW, cropH, 0, 0, 150, 150);
-    }
+    const previewUrl = compressPhotoDataUrl(sourceCanvas, box);
 
     return {
       descriptor,
       boundingBox: { x: box.x, y: box.y, width: box.width, height: box.height },
       landmarks,
-      previewUrl: cropCanvas.toDataURL('image/jpeg', 0.85),
+      previewUrl,
     };
   } catch (err) {
     console.error('Error during neural face detection', err);
@@ -174,7 +178,7 @@ export function calculateEuclideanDistance(descriptor1: number[], descriptor2: n
 }
 
 /**
- * Compares live 128D face descriptor against enrolled face database using FaceNet L2 distance
+ * Compares live 128D face descriptor against APPROVED enrolled faces database
  */
 export function recognizeFaceNeural(
   liveDescriptor: number[] | null,
@@ -185,14 +189,17 @@ export function recognizeFaceNeural(
     return { detected: false, confidenceScore: 0, distance: 999 };
   }
 
-  if (!enrolledFaces || enrolledFaces.length === 0) {
+  // Filter ONLY approved faces for live attendance recognition
+  const approvedFaces = enrolledFaces.filter(f => f.approvalStatus === 'approved' || !f.approvalStatus);
+
+  if (!approvedFaces || approvedFaces.length === 0) {
     return { detected: true, confidenceScore: 0, distance: 999 };
   }
 
   let bestMatch: EnrolledFace | undefined = undefined;
   let minDistance = 999;
 
-  for (const face of enrolledFaces) {
+  for (const face of approvedFaces) {
     const dist = calculateEuclideanDistance(liveDescriptor, face.embedding);
     if (dist < minDistance) {
       minDistance = dist;
@@ -243,13 +250,11 @@ export function saveEnrolledFacesLocal(faces: EnrolledFace[]): void {
 }
 
 /**
- * Real-time Firebase Firestore Sync for Enrolled Faces
- * Syncs instantly across ALL devices (phones, laptops, admin PCs)
+ * Real-time Firebase Firestore Sync for Enrolled Faces across all devices
  */
 export function listenToEnrolledFaces(onUpdate: (faces: EnrolledFace[]) => void): () => void {
   if (typeof window === 'undefined') return () => {};
 
-  // First deliver local cache for zero delay
   const localFaces = getEnrolledFacesLocal();
   if (localFaces.length > 0) {
     onUpdate(localFaces);
@@ -264,18 +269,18 @@ export function listenToEnrolledFaces(onUpdate: (faces: EnrolledFace[]) => void)
       (snapshot) => {
         const faces: EnrolledFace[] = [];
         snapshot.forEach((docSnap) => {
-          faces.push(docSnap.data() as EnrolledFace);
+          const data = docSnap.data() as EnrolledFace;
+          // Default legacy items to approved
+          if (!data.approvalStatus) data.approvalStatus = 'approved';
+          faces.push(data);
         });
 
-        // Sort newest first
         faces.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
         saveEnrolledFacesLocal(faces);
         onUpdate(faces);
       },
       (err) => {
         console.error('Firestore listen error for face_profiles', err);
-        // Fallback to local cache
         onUpdate(getEnrolledFacesLocal());
       }
     );
@@ -289,12 +294,16 @@ export function listenToEnrolledFaces(onUpdate: (faces: EnrolledFace[]) => void)
 }
 
 /**
- * Saves a new enrolled face profile to both Firebase Firestore & local storage
+ * Saves a new enrolled face profile to Firebase Firestore & local storage
  */
-export async function saveEnrolledFace(face: Omit<EnrolledFace, 'id' | 'createdAt'>): Promise<EnrolledFace> {
+export async function saveEnrolledFace(
+  face: Omit<EnrolledFace, 'id' | 'createdAt' | 'approvalStatus'>,
+  autoApprove: boolean = true
+): Promise<EnrolledFace> {
   const newProfile: EnrolledFace = {
     ...face,
     id: `face_neural_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    approvalStatus: autoApprove ? 'approved' : 'pending',
     createdAt: new Date().toISOString(),
   };
 
@@ -303,27 +312,46 @@ export async function saveEnrolledFace(face: Omit<EnrolledFace, 'id' | 'createdA
   const updatedLocal = [newProfile, ...existingLocal];
   saveEnrolledFacesLocal(updatedLocal);
 
-  // 2. Sync to Firebase Firestore across all devices
+  // 2. Sync to Firebase Firestore
   try {
     const docRef = doc(db, COLLECTION_NAME, newProfile.id);
     await setDoc(docRef, newProfile);
-    console.log('✓ Enrolled face saved to Cloud Firestore for cross-device sync');
+    console.log('✓ Face profile saved to Firestore:', newProfile.id);
   } catch (err) {
-    console.error('Failed to sync enrolled face to Firestore cloud', err);
+    console.error('Firestore upload error for face profile:', err);
+    throw err;
   }
 
   return newProfile;
 }
 
 /**
- * Deletes an enrolled face profile from Firebase Firestore & local cache
+ * Approves a pending face profile (Admin action)
+ */
+export async function approveEnrolledFace(id: string): Promise<void> {
+  // Update Local Cache
+  const existing = getEnrolledFacesLocal();
+  const updated = existing.map(f => f.id === id ? { ...f, approvalStatus: 'approved' as const } : f);
+  saveEnrolledFacesLocal(updated);
+
+  // Update Firestore Cloud
+  try {
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await updateDoc(docRef, { approvalStatus: 'approved' });
+    console.log('✓ Approved face profile:', id);
+  } catch (err) {
+    console.error('Failed to approve face profile in Firestore', err);
+    throw err;
+  }
+}
+
+/**
+ * Deletes/Rejects an enrolled face profile
  */
 export async function deleteEnrolledFace(id: string): Promise<void> {
-  // 1. Local cache update
   const existing = getEnrolledFacesLocal();
   saveEnrolledFacesLocal(existing.filter(f => f.id !== id));
 
-  // 2. Firestore cloud deletion
   try {
     const docRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(docRef);
@@ -333,7 +361,7 @@ export async function deleteEnrolledFace(id: string): Promise<void> {
 }
 
 /**
- * Clears all enrolled face profiles from Firebase Firestore & local cache
+ * Clears all enrolled face profiles
  */
 export async function clearAllEnrolledFaces(): Promise<void> {
   const existing = getEnrolledFacesLocal();
