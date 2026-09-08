@@ -281,13 +281,16 @@ export default function FaceIdTestPage() {
     }
 
     try {
-      const saved = await saveEnrolledFace({
-        name: enrollName.trim(),
-        role: enrollRole,
-        employeeId: enrollEmployeeId.trim() || undefined,
-        embedding: capturedDescriptor,
-        photoDataUrl: capturedPreview,
-      });
+      const saved = await saveEnrolledFace(
+        {
+          name: enrollName.trim(),
+          role: enrollRole,
+          employeeId: enrollEmployeeId.trim() || '',
+          embedding: Array.from(capturedDescriptor),
+          photoDataUrl: capturedPreview,
+        },
+        true // Auto approve for testing
+      );
 
       setEnrollName("");
       setEnrollEmployeeId("");
@@ -295,8 +298,9 @@ export default function FaceIdTestPage() {
       setCapturedDescriptor(null);
       toast.success(`Successfully enrolled ${saved.name}! Synced across devices.`);
       setActiveTab("scanner");
-    } catch (err) {
-      toast.error("Failed to save face profile.");
+    } catch (err: any) {
+      console.error("Save enrollment error:", err);
+      toast.error(err?.message || "Failed to save face profile.");
     }
   };
 

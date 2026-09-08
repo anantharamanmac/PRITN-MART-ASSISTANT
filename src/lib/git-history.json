@@ -1,5 +1,20 @@
 [
   {
+    "id": "bfec044",
+    "version": "v1.8 - BFEC044",
+    "date": "Sep 8, 2026",
+    "title": "j",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1788825600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "1ea3e02",
     "version": "v1.8 - 1EA3E02",
     "date": "Sep 8, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - 9253E7E",
     "date": "Aug 17, 2026",
     "title": "feat: implement customer-facing roster intake page with Excel import and order submission functionality",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786924800,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "f835d1a",
-    "version": "v1.8 - F835D1A",
-    "date": "Aug 17, 2026",
-    "title": "feat: implement navbar with real-time punch notifications and add billing and invoice components",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

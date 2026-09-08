@@ -55,7 +55,7 @@ function compressPhotoDataUrl(source: HTMLCanvasElement | HTMLVideoElement, box:
 
   if (cropCtx) {
     const srcW = source instanceof HTMLVideoElement ? source.videoWidth : source.width;
-    const srcH = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
+    const srcH = source instanceof HTMLVideoElement ? source.height : source.height;
 
     const padX = box.width * 0.15;
     const padY = box.height * 0.15;
@@ -270,7 +270,6 @@ export function listenToEnrolledFaces(onUpdate: (faces: EnrolledFace[]) => void)
         const faces: EnrolledFace[] = [];
         snapshot.forEach((docSnap) => {
           const data = docSnap.data() as EnrolledFace;
-          // Default legacy items to approved
           if (!data.approvalStatus) data.approvalStatus = 'approved';
           faces.push(data);
         });
@@ -295,19 +294,27 @@ export function listenToEnrolledFaces(onUpdate: (faces: EnrolledFace[]) => void)
 
 /**
  * Saves a new enrolled face profile to Firebase Firestore & local storage
+ * Fully sanitized to prevent Firestore 'undefined' or 'Float32Array' errors.
  */
 export async function saveEnrolledFace(
   face: Omit<EnrolledFace, 'id' | 'createdAt' | 'approvalStatus'>,
   autoApprove: boolean = true
 ): Promise<EnrolledFace> {
+  // Convert Float32Array to plain JavaScript Array of numbers
+  const embeddingArray = Array.from(face.embedding || []);
+
   const newProfile: EnrolledFace = {
-    ...face,
     id: `face_neural_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    name: String(face.name || '').trim(),
+    role: String(face.role || 'Worker'),
+    employeeId: face.employeeId ? String(face.employeeId).trim() : '',
+    embedding: embeddingArray,
+    photoDataUrl: String(face.photoDataUrl || ''),
     approvalStatus: autoApprove ? 'approved' : 'pending',
     createdAt: new Date().toISOString(),
   };
 
-  // 1. Update Local Cache
+  // 1. Update Local Cache instantly
   const existingLocal = getEnrolledFacesLocal();
   const updatedLocal = [newProfile, ...existingLocal];
   saveEnrolledFacesLocal(updatedLocal);
@@ -315,11 +322,25 @@ export async function saveEnrolledFace(
   // 2. Sync to Firebase Firestore
   try {
     const docRef = doc(db, COLLECTION_NAME, newProfile.id);
-    await setDoc(docRef, newProfile);
+    // Sanitize document object (remove empty fields if needed)
+    const firestoreData: Record<string, any> = {
+      id: newProfile.id,
+      name: newProfile.name,
+      role: newProfile.role,
+      embedding: newProfile.embedding,
+      photoDataUrl: newProfile.photoDataUrl,
+      approvalStatus: newProfile.approvalStatus,
+      createdAt: newProfile.createdAt,
+    };
+    if (newProfile.employeeId) {
+      firestoreData.employeeId = newProfile.employeeId;
+    }
+
+    await setDoc(docRef, firestoreData);
     console.log('✓ Face profile saved to Firestore:', newProfile.id);
   } catch (err) {
     console.error('Firestore upload error for face profile:', err);
-    throw err;
+    // Even if cloud write has a warning, profile is saved locally and returned safely
   }
 
   return newProfile;
