@@ -1,5 +1,20 @@
 [
   {
+    "id": "64e0579",
+    "version": "v1.8 - 64E0579",
+    "date": "Sep 8, 2026",
+    "title": "face i teswt",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1788825600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "bfec044",
     "version": "v1.8 - BFEC044",
     "date": "Sep 8, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - D974358",
     "date": "Aug 17, 2026",
     "title": "feat: create customer roster intake page for order management and bulk player entry",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786924800,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "9253e7e",
-    "version": "v1.8 - 9253E7E",
-    "date": "Aug 17, 2026",
-    "title": "feat: implement customer-facing roster intake page with Excel import and order submission functionality",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

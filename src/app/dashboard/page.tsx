@@ -11,6 +11,7 @@ import WelcomeModal from '@/components/WelcomeModal';
 import SalaryNotificationModal from '@/components/SalaryNotificationModal';
 import AIChatbot from '@/components/AIChatbot';
 import SalaryStatementSlip from '@/components/SalaryStatementSlip';
+import FaceIdPunchModal from '@/components/FaceIdPunchModal';
 
 interface Particle {
   id: number;
@@ -138,6 +139,7 @@ export default function WorkerDashboard() {
   const [verifyingLocation, setVerifyingLocation] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showFaceModal, setShowFaceModal] = useState(false);
   const [previewData, setPreviewData] = useState<{
     user: AppUser;
     cycleRecords: AttendanceRecord[];
@@ -419,6 +421,66 @@ export default function WorkerDashboard() {
       playCheckInSound();
       triggerBurst(clientX, clientY, ['#34d399', '#059669', '#10b981', '#6ee7b7', '#a7f3d0']);
       toast.success("Successfully punched in!");
+    } catch (error) {
+      console.error("Error punching in:", error);
+      toast.error("Error punching in.");
+    } finally {
+      setVerifyingLocation(false);
+    }
+  };
+
+  const executePunchInVerified = async (matchedProfile?: any) => {
+    if (!user) return;
+    let locationData: { latitude: number; longitude: number; accuracy?: number } | undefined = undefined;
+
+    setVerifyingLocation(true);
+    try {
+      if (user.workMode !== 'remote') {
+        try {
+          const position = await getCoordinates();
+          locationData = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          };
+        } catch (geoError) {
+          console.error("GPS Error:", geoError);
+          triggerShake();
+          toast.error("Location access is required to punch in for Office shifts. Please enable location services.");
+          setVerifyingLocation(false);
+          return;
+        }
+
+        const officeSettings = await getOfficeSettings();
+        const distance = calculateDistance(
+          locationData.latitude,
+          locationData.longitude,
+          officeSettings.latitude,
+          officeSettings.longitude
+        );
+
+        if (distance > officeSettings.radius) {
+          const distStr = distance >= 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)}m`;
+          const radStr = officeSettings.radius >= 1000 ? `${(officeSettings.radius / 1000).toFixed(2)} km` : `${officeSettings.radius}m`;
+
+          triggerShake();
+          toast.error(`Access Denied: You are ${distStr} away from office boundary (${radStr}).`, { duration: 6000 });
+          setVerifyingLocation(false);
+          return;
+        }
+      } else {
+        try {
+          const position = await getCoordinates();
+          locationData = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy };
+        } catch {
+          console.log("Remote worker location not shared.");
+        }
+      }
+
+      await punchIn(user.uid, user.workMode || 'office', locationData);
+      await loadAttendance(user.uid);
+      playCheckInSound();
+      toast.success(`Face Verified! Punched in as ${matchedProfile?.name || user.displayName}!`);
     } catch (error) {
       console.error("Error punching in:", error);
       toast.error("Error punching in.");
@@ -854,10 +916,22 @@ export default function WorkerDashboard() {
                 )}
 
                 {!isPunchedIn && (
-                  <button
-                    onClick={handleApplyLeave}
-                    className="mt-8 btn btn-outline flex items-center gap-2 border-[rgba(245,158,11,0.3)] text-amber-500 hover:bg-[rgba(245,158,11,0.1)] hover:border-amber-500 transition-colors"
-                  >
+                  <div className="flex flex-col items-center gap-3 mt-6">
+                    <button
+                      onClick={() => setShowFaceModal(true)}
+                      className="btn btn-secondary flex items-center gap-2 text-sm font-bold border-amber-500/40 hover:border-amber-400 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                      Punch In with Face ID (Neural AI)
+                    </button>
+
+                    <button
+                      onClick={handleApplyLeave}
+                      className="btn btn-outline flex items-center gap-2 border-[rgba(245,158,11,0.3)] text-amber-500 hover:bg-[rgba(245,158,11,0.1)] hover:border-amber-500 transition-colors text-xs"
+                    >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                       <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -867,6 +941,7 @@ export default function WorkerDashboard() {
                     </svg>
                     Apply for Leave
                   </button>
+                </div>
                 )}
 
                 <a
@@ -993,6 +1068,15 @@ export default function WorkerDashboard() {
           </div>
         </div>
       )}
+      {/* Face ID Neural AI Punch In Modal */}
+      <FaceIdPunchModal
+        isOpen={showFaceModal}
+        onClose={() => setShowFaceModal(false)}
+        onVerified={async (matchedProfile) => {
+          await executePunchInVerified(matchedProfile);
+        }}
+        targetUserName={user?.displayName}
+      />
     </>
   );
 }
