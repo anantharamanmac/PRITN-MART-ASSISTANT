@@ -4,6 +4,18 @@
  * 100% Free & Local in Browser WebGL (0 API Cost)
  */
 
+import { db } from './firebase';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  orderBy,
+} from 'firebase/firestore';
+
 export interface EnrolledFace {
   id: string;
   name: string;
@@ -24,6 +36,7 @@ export interface FaceDetectionResult {
 }
 
 const STORAGE_KEY = 'printmart_face_id_enrolled_profiles_v2';
+const COLLECTION_NAME = 'face_profiles';
 const CDN_MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
 
 let faceapiModule: typeof import('@vladmandic/face-api') | null = null;
@@ -206,44 +219,130 @@ export function recognizeFaceNeural(
 }
 
 /**
- * LocalStorage helpers for enrolled neural faces
+ * Local Storage Synchronous Cache Helper
  */
-export function getEnrolledFaces(): EnrolledFace[] {
+export function getEnrolledFacesLocal(): EnrolledFace[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
-    console.error('Failed to read enrolled faces', err);
+    console.error('Failed to read enrolled faces local cache', err);
     return [];
   }
 }
 
-export function saveEnrolledFace(face: Omit<EnrolledFace, 'id' | 'createdAt'>): EnrolledFace {
-  const existing = getEnrolledFaces();
+export function saveEnrolledFacesLocal(faces: EnrolledFace[]): void {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(faces));
+    } catch (err) {
+      console.error('Failed to save faces local cache', err);
+    }
+  }
+}
+
+/**
+ * Real-time Firebase Firestore Sync for Enrolled Faces
+ * Syncs instantly across ALL devices (phones, laptops, admin PCs)
+ */
+export function listenToEnrolledFaces(onUpdate: (faces: EnrolledFace[]) => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  // First deliver local cache for zero delay
+  const localFaces = getEnrolledFacesLocal();
+  if (localFaces.length > 0) {
+    onUpdate(localFaces);
+  }
+
+  try {
+    const colRef = collection(db, COLLECTION_NAME);
+    const q = query(colRef);
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const faces: EnrolledFace[] = [];
+        snapshot.forEach((docSnap) => {
+          faces.push(docSnap.data() as EnrolledFace);
+        });
+
+        // Sort newest first
+        faces.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        saveEnrolledFacesLocal(faces);
+        onUpdate(faces);
+      },
+      (err) => {
+        console.error('Firestore listen error for face_profiles', err);
+        // Fallback to local cache
+        onUpdate(getEnrolledFacesLocal());
+      }
+    );
+
+    return unsubscribe;
+  } catch (err) {
+    console.error('Failed to attach Firestore listener', err);
+    onUpdate(getEnrolledFacesLocal());
+    return () => {};
+  }
+}
+
+/**
+ * Saves a new enrolled face profile to both Firebase Firestore & local storage
+ */
+export async function saveEnrolledFace(face: Omit<EnrolledFace, 'id' | 'createdAt'>): Promise<EnrolledFace> {
   const newProfile: EnrolledFace = {
     ...face,
     id: `face_neural_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     createdAt: new Date().toISOString(),
   };
-  const updated = [newProfile, ...existing];
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  // 1. Update Local Cache
+  const existingLocal = getEnrolledFacesLocal();
+  const updatedLocal = [newProfile, ...existingLocal];
+  saveEnrolledFacesLocal(updatedLocal);
+
+  // 2. Sync to Firebase Firestore across all devices
+  try {
+    const docRef = doc(db, COLLECTION_NAME, newProfile.id);
+    await setDoc(docRef, newProfile);
+    console.log('✓ Enrolled face saved to Cloud Firestore for cross-device sync');
+  } catch (err) {
+    console.error('Failed to sync enrolled face to Firestore cloud', err);
   }
+
   return newProfile;
 }
 
-export function deleteEnrolledFace(id: string): void {
-  const existing = getEnrolledFaces();
-  const updated = existing.filter(f => f.id !== id);
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+/**
+ * Deletes an enrolled face profile from Firebase Firestore & local cache
+ */
+export async function deleteEnrolledFace(id: string): Promise<void> {
+  // 1. Local cache update
+  const existing = getEnrolledFacesLocal();
+  saveEnrolledFacesLocal(existing.filter(f => f.id !== id));
+
+  // 2. Firestore cloud deletion
+  try {
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.error('Failed to delete face from Firestore', err);
   }
 }
 
-export function clearAllEnrolledFaces(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEY);
+/**
+ * Clears all enrolled face profiles from Firebase Firestore & local cache
+ */
+export async function clearAllEnrolledFaces(): Promise<void> {
+  const existing = getEnrolledFacesLocal();
+  saveEnrolledFacesLocal([]);
+
+  try {
+    await Promise.all(existing.map(f => deleteDoc(doc(db, COLLECTION_NAME, f.id))));
+  } catch (err) {
+    console.error('Failed to clear faces from Firestore', err);
   }
 }
 

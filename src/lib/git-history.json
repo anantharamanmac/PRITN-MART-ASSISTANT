@@ -1,5 +1,20 @@
 [
   {
+    "id": "e065396",
+    "version": "v1.8 - E065396",
+    "date": "Sep 8, 2026",
+    "title": "feat: implement neural face recognition system using face-api.js with real-time detection and enrollment capabilities",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1788825600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "21be6f9",
     "version": "v1.8 - 21BE6F9",
     "date": "Sep 8, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - 0BA0B0A",
     "date": "Aug 13, 2026",
     "title": "feat: implement order management system with database integration and Discord webhook notifications",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786579200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "90a4f3a",
-    "version": "v1.8 - 90A4F3A",
-    "date": "Aug 13, 2026",
-    "title": "feat: add global design system, navigation bar, and order management page layout",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

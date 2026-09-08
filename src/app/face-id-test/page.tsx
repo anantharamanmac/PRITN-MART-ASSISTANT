@@ -7,7 +7,7 @@ import {
   loadFaceApiModels,
   extractFaceNeuralDescriptor,
   recognizeFaceNeural,
-  getEnrolledFaces,
+  listenToEnrolledFaces,
   saveEnrolledFace,
   deleteEnrolledFace,
   clearAllEnrolledFaces,
@@ -49,14 +49,17 @@ export default function FaceIdTestPage() {
   const [webAuthnSupported, setWebAuthnSupported] = useState<boolean>(false);
   const [webAuthnUser, setWebAuthnUser] = useState("");
 
-  // Load Neural Models & Enrolled Profiles on Mount
+  // Load Neural Models & Real-time Cloud Enrolled Profiles on Mount
   useEffect(() => {
     let isMounted = true;
+
+    // Real-time Cloud Firestore subscription for cross-device sync
+    const unsubscribeFaces = listenToEnrolledFaces((faces) => {
+      if (isMounted) setEnrolledFaces(faces);
+    });
+
     const init = async () => {
       setIsModelLoading(true);
-      const faces = getEnrolledFaces();
-      if (isMounted) setEnrolledFaces(faces);
-
       const webAuthnOk = await isWebAuthnSupported();
       if (isMounted) setWebAuthnSupported(webAuthnOk);
 
@@ -87,6 +90,7 @@ export default function FaceIdTestPage() {
 
     return () => {
       isMounted = false;
+      unsubscribeFaces();
     };
   }, []);
 
@@ -264,7 +268,7 @@ export default function FaceIdTestPage() {
   };
 
   // Submit enrollment
-  const handleSaveEnrollment = (e: React.FormEvent) => {
+  const handleSaveEnrollment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enrollName.trim()) {
       toast.error("Please enter a person's name.");
@@ -275,37 +279,38 @@ export default function FaceIdTestPage() {
       return;
     }
 
-    const saved = saveEnrolledFace({
-      name: enrollName.trim(),
-      role: enrollRole,
-      employeeId: enrollEmployeeId.trim() || undefined,
-      embedding: capturedDescriptor,
-      photoDataUrl: capturedPreview,
-    });
+    try {
+      const saved = await saveEnrolledFace({
+        name: enrollName.trim(),
+        role: enrollRole,
+        employeeId: enrollEmployeeId.trim() || undefined,
+        embedding: capturedDescriptor,
+        photoDataUrl: capturedPreview,
+      });
 
-    setEnrolledFaces(getEnrolledFaces());
-    setEnrollName("");
-    setEnrollEmployeeId("");
-    setCapturedPreview(null);
-    setCapturedDescriptor(null);
-    toast.success(`Successfully enrolled ${saved.name}!`);
-    setActiveTab("scanner");
+      setEnrollName("");
+      setEnrollEmployeeId("");
+      setCapturedPreview(null);
+      setCapturedDescriptor(null);
+      toast.success(`Successfully enrolled ${saved.name}! Synced across devices.`);
+      setActiveTab("scanner");
+    } catch (err) {
+      toast.error("Failed to save face profile.");
+    }
   };
 
   // Delete Enrolled Profile
-  const handleDeleteFace = (id: string, name: string) => {
+  const handleDeleteFace = async (id: string, name: string) => {
     if (confirm(`Remove enrolled profile for ${name}?`)) {
-      deleteEnrolledFace(id);
-      setEnrolledFaces(getEnrolledFaces());
+      await deleteEnrolledFace(id);
       toast.success(`Removed ${name}`);
     }
   };
 
   // Clear Database
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm("Are you sure you want to clear ALL enrolled face profiles?")) {
-      clearAllEnrolledFaces();
-      setEnrolledFaces([]);
+      await clearAllEnrolledFaces();
       setMatchResult(null);
       toast.success("Face database reset.");
     }
