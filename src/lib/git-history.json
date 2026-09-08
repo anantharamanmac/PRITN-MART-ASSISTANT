@@ -1,5 +1,20 @@
 [
   {
+    "id": "5a42668",
+    "version": "v1.8 - 5A42668",
+    "date": "Sep 8, 2026",
+    "title": "feat: implement administrative dashboard with user, attendance, office, and file management capabilities",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1788825600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "9fe7d1e",
     "version": "v1.8 - 9FE7D1E",
     "date": "Sep 3, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - 4BFAC22",
     "date": "Aug 13, 2026",
     "title": "feat: implement admin dashboard for user management, attendance tracking, and office settings",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786579200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "1d4a11b",
-    "version": "v1.8 - 1D4A11B",
-    "date": "Aug 13, 2026",
-    "title": "feat: implement admin dashboard with user management, attendance tracking, and office settings configuration",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "react-hot-toast";
 import {
   extractFaceEmbedding,
+  extractFaceEmbeddingAsync,
   recognizeFace,
   getEnrolledFaces,
   saveEnrolledFace,
@@ -114,12 +115,13 @@ export default function FaceIdTestPage() {
     let animationFrameId: number;
     let lastScanTime = 0;
 
-    const detectLoop = (timestamp: number) => {
+    const detectLoop = async (timestamp: number) => {
       if (activeTab === "scanner" && isCameraActive && videoRef.current && videoRef.current.readyState === 4) {
-        if (timestamp - lastScanTime > 300) {
-          // Scan every 300ms
+        if (timestamp - lastScanTime > 250) {
+          // Scan every 250ms
           lastScanTime = timestamp;
-          const extracted = extractFaceEmbedding(videoRef.current);
+          const extracted = await extractFaceEmbeddingAsync(videoRef.current);
+
           if (extracted) {
             const res = recognizeFace(extracted.embedding, enrolledFaces, threshold);
             res.boundingBox = extracted.boundingBox;
@@ -159,7 +161,7 @@ export default function FaceIdTestPage() {
                   ctx.fillRect(bx, Math.max(10, by - 32), bw, 28);
                   ctx.fillStyle = "#ffffff";
                   ctx.font = "bold 13px Inter, sans-serif";
-                  const labelText = res.match ? `${res.match.name} (${res.confidenceScore}%)` : `Scanning... (${res.confidenceScore}%)`;
+                  const labelText = res.match ? `${res.match.name} (${res.confidenceScore}%)` : `Face Detected (${res.confidenceScore}% match)`;
                   ctx.fillText(labelText, bx + 8, Math.max(28, by - 12));
                 }
               }
@@ -168,6 +170,13 @@ export default function FaceIdTestPage() {
             if (res.match && autoClockIn && res.match.name !== lastClockInUser) {
               setLastClockInUser(res.match.name);
               toast.success(`Face Recognized! Verified as ${res.match.name} (${res.confidenceScore}% Match)`);
+            }
+          } else {
+            // NO face in camera view: clear match result & canvas reticle
+            setMatchResult(null);
+            if (canvasRef.current) {
+              const ctx = canvasRef.current.getContext("2d");
+              if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             }
           }
         }
@@ -185,14 +194,14 @@ export default function FaceIdTestPage() {
   }, [activeTab, isCameraActive, enrolledFaces, threshold, autoClockIn, lastClockInUser]);
 
   // Capture face photo for enrollment
-  const captureEnrollmentFace = () => {
+  const captureEnrollmentFace = async () => {
     if (!videoRef.current || videoRef.current.readyState !== 4) {
       toast.error("Camera feed not ready yet.");
       return;
     }
-    const extracted = extractFaceEmbedding(videoRef.current);
+    const extracted = await extractFaceEmbeddingAsync(videoRef.current);
     if (!extracted) {
-      toast.error("No clear face detected in frame. Please center your face.");
+      toast.error("No clear face detected in frame. Please position your face clearly in front of the camera.");
       return;
     }
 
