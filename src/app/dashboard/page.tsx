@@ -755,8 +755,11 @@ export default function WorkerDashboard() {
             </div>
 
             {isLeave ? (
-              <div className="p-6 rounded-full bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.3)] mb-4">
-                <div className="text-xl font-bold text-amber-500">On Leave Today</div>
+              <div className="p-6 rounded-2xl bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.3)] mb-4 max-w-sm flex flex-col items-center text-center">
+                <div className="text-xl font-bold text-amber-400 mb-1">On Leave Today</div>
+                <p className="text-xs text-secondary leading-relaxed">
+                  Accidentally applied for leave? Ask your Administrator to <strong className="text-amber-300">Cancel Leave</strong> in the Admin panel to restore your shift and punch in.
+                </p>
               </div>
             ) : isPunchedOut ? (
               <>

@@ -283,6 +283,103 @@ export const applyForLeave = async (userId: string, date: string) => {
   await setDoc(docRef, record);
 };
 
+// Admin: Cancel Accidental Leave (clears accidental leave record or updates status to present)
+export const adminCancelLeave = async (userId: string, dateStr?: string) => {
+  const targetDateStr = dateStr || getTodayDateString();
+  const docRef = doc(db, 'attendance', `${userId}_${targetDateStr}`);
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) return;
+
+  const data = snap.data() as AttendanceRecord;
+  // If record has no punch-in (pure leave entry applied by employee or auto-fill), delete document so employee can punch in
+  if (!data.punchIn) {
+    await deleteDoc(docRef);
+  } else {
+    // If punch-in exists, restore status to present
+    await updateDoc(docRef, { status: 'present' });
+  }
+};
+
+// Admin: Update Attendance Status and Details for a user on a given date
+export const adminUpdateAttendanceStatus = async (
+  userId: string,
+  dateStr: string,
+  status: 'present' | 'half-day' | 'leave',
+  options?: {
+    punchIn?: Date | null;
+    punchOut?: Date | null;
+    totalHours?: number;
+    overtimeHours?: number;
+    workMode?: 'office' | 'remote';
+  }
+) => {
+  const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
+  const snap = await getDoc(docRef);
+
+  const updates: any = { status };
+
+  if (options) {
+    if (options.punchIn !== undefined) {
+      updates.punchIn = options.punchIn ? Timestamp.fromDate(options.punchIn) : null;
+    }
+    if (options.punchOut !== undefined) {
+      updates.punchOut = options.punchOut ? Timestamp.fromDate(options.punchOut) : null;
+    }
+    if (options.totalHours !== undefined) {
+      updates.totalHours = options.totalHours;
+    }
+    if (options.overtimeHours !== undefined) {
+      updates.overtimeHours = options.overtimeHours;
+    }
+    if (options.workMode !== undefined) {
+      updates.workMode = options.workMode;
+    }
+  }
+
+  if (snap.exists()) {
+    await updateDoc(docRef, updates);
+  } else {
+    // Create record if it didn't exist
+    const newRecord: AttendanceRecord = {
+      userId,
+      date: dateStr,
+      punchIn: options?.punchIn ? Timestamp.fromDate(options.punchIn) : serverTimestamp() as unknown as Timestamp,
+      punchOut: options?.punchOut ? Timestamp.fromDate(options.punchOut) : null,
+      totalHours: options?.totalHours ?? 0,
+      overtimeHours: options?.overtimeHours ?? 0,
+      status,
+      workMode: options?.workMode || 'office'
+    };
+    await setDoc(docRef, newRecord);
+  }
+};
+
+// Admin: Generic update function for attendance records
+export const adminUpdateAttendanceRecord = async (
+  userId: string,
+  dateStr: string,
+  updates: Partial<AttendanceRecord>
+) => {
+  const docRef = doc(db, 'attendance', `${userId}_${dateStr}`);
+  const snap = await getDoc(docRef);
+
+  if (snap.exists()) {
+    await updateDoc(docRef, updates);
+  } else {
+    await setDoc(docRef, {
+      userId,
+      date: dateStr,
+      status: 'present',
+      totalHours: 0,
+      overtimeHours: 0,
+      punchIn: null,
+      punchOut: null,
+      ...updates
+    });
+  }
+};
+
 // Submit a Work Task
 export const submitWorkTask = async (userId: string, taskDescription: string) => {
   const colRef = collection(db, 'tasks');

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { getAllUsers, getAttendanceForDateRange, AttendanceRecord, getBreakTimeMs, getTodayDateString, getUserAttendanceHistory, get30WorkingDaysSalaryPeriod } from '@/lib/db';
+import { getAllUsers, getAttendanceForDateRange, AttendanceRecord, getBreakTimeMs, getTodayDateString, getUserAttendanceHistory, get30WorkingDaysSalaryPeriod, adminCancelLeave, adminUpdateAttendanceStatus } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -73,6 +73,12 @@ export default function AdminHours() {
   const isFirstLoad = useRef(true);
   const [searchName, setSearchName] = useState('');
   const [now, setNow] = useState(new Date());
+
+  // Attendance Correction Modal states for any date
+  const [editingUserForAttendance, setEditingUserForAttendance] = useState<AppUser | null>(null);
+  const [customAttDate, setCustomAttDate] = useState<string>(getTodayDateString());
+  const [customAttStatus, setCustomAttStatus] = useState<'present' | 'half-day' | 'leave'>('present');
+  const [savingAttStatus, setSavingAttStatus] = useState(false);
 
   // Sorting states
   const [sortBy, setSortBy] = useState<'name' | 'totalHours' | 'overtimeHours' | 'pay' | 'salaryStartDay' | 'periodStartDate' | 'periodEndDate'>('name');
@@ -355,6 +361,184 @@ export default function AdminHours() {
   const startIndex = (activeReportPage - 1) * ITEMS_PER_PAGE;
   const paginatedUserStatsList = sortedUserStatsList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+  const renderAttendanceLogsEditorModal = () => {
+    if (!editingUserForAttendance) return null;
+    const workerRecords = allAttendance.filter(a => a.userId === editingUserForAttendance.uid);
+
+    const handleUpdateDateStatus = async (targetDate: string, status: 'present' | 'half-day' | 'leave') => {
+      setSavingAttStatus(true);
+      try {
+        await adminUpdateAttendanceStatus(
+          editingUserForAttendance.uid,
+          targetDate,
+          status,
+          { totalHours: status === 'present' ? 9 : status === 'half-day' ? 4.5 : 0 }
+        );
+        toast.success(`Updated ${editingUserForAttendance.displayName}'s attendance for ${targetDate} to ${status.toUpperCase()}!`);
+        if (startDateFilter && endDateFilter) {
+          await loadData(startDateFilter, endDateFilter);
+        }
+      } catch (err) {
+        console.error("Failed to update status:", err);
+        toast.error("Failed to update attendance status.");
+      } finally {
+        setSavingAttStatus(false);
+      }
+    };
+
+    const handleCancelAccidentalLeave = async (targetDate: string) => {
+      if (!confirm(`Cancel accidental leave for ${editingUserForAttendance.displayName} on ${targetDate}?`)) return;
+      setSavingAttStatus(true);
+      try {
+        await adminCancelLeave(editingUserForAttendance.uid, targetDate);
+        toast.success(`Accidental leave cancelled for ${targetDate}!`);
+        if (startDateFilter && endDateFilter) {
+          await loadData(startDateFilter, endDateFilter);
+        }
+      } catch (err) {
+        console.error("Failed to cancel leave:", err);
+        toast.error("Failed to cancel leave.");
+      } finally {
+        setSavingAttStatus(false);
+      }
+    };
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="animate-fade-in">
+        <div className="glass-card max-w-2xl w-full p-6 border border-white/10 shadow-2xl relative max-h-[90vh] flex flex-col" style={{ background: 'var(--bg-surface)' }}>
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10 flex-shrink-0">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Manage Attendance & Leave Records
+              </h3>
+              <p className="text-xs text-secondary mt-0.5">
+                Change any date's status from Leave to Present, Half-Day, or clear accidental leave for <strong className="text-white">{editingUserForAttendance.displayName}</strong>.
+              </p>
+            </div>
+            <button
+              onClick={() => setEditingUserForAttendance(null)}
+              className="text-secondary hover:text-white text-sm p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Quick Date Change Form */}
+          <div className="p-4 bg-indigo-500/5 border border-indigo-500/15 rounded-xl mb-4 flex flex-col sm:flex-row items-end gap-3 flex-shrink-0">
+            <div className="flex-1 w-full">
+              <label className="text-xs text-secondary font-semibold block mb-1 font-mono">Select Any Date to Change</label>
+              <input
+                type="date"
+                className="input-field w-full !py-1.5 !px-3 !text-xs"
+                value={customAttDate}
+                onChange={(e) => setCustomAttDate(e.target.value)}
+              />
+            </div>
+            <div className="w-full sm:w-auto">
+              <label className="text-xs text-secondary font-semibold block mb-1 font-mono">Set Target Status</label>
+              <select
+                className="input-field w-full !py-1.5 !px-3 !text-xs capitalize"
+                value={customAttStatus}
+                onChange={(e) => setCustomAttStatus(e.target.value as any)}
+              >
+                <option value="present">Present (Standard Shift)</option>
+                <option value="half-day">Half-Day</option>
+                <option value="leave">Leave</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              disabled={savingAttStatus || !customAttDate}
+              onClick={() => handleUpdateDateStatus(customAttDate, customAttStatus)}
+              className="btn btn-primary !py-2 !px-4 !text-xs font-bold w-full sm:w-auto flex-shrink-0"
+            >
+              {savingAttStatus ? 'Updating...' : `Set ${customAttStatus.toUpperCase()} for ${customAttDate}`}
+            </button>
+          </div>
+
+          {/* Attendance History Records List */}
+          <div className="overflow-y-auto flex-1 pr-1 space-y-2">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">
+              Existing Attendance Records ({workerRecords.length})
+            </h4>
+            {workerRecords.length === 0 ? (
+              <p className="text-xs text-secondary py-4 text-center">No existing attendance records found for this period. Use the date picker above to add/mark any date as Present.</p>
+            ) : (
+              workerRecords.sort((a, b) => b.date.localeCompare(a.date)).map((rec) => (
+                <div key={rec.date} className="p-3 bg-white/5 border border-white/5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-white font-mono">{rec.date}</span>
+                    <span className={`badge ${rec.status === 'present' ? 'badge-worker' : rec.status === 'half-day' ? 'badge-half-day' : 'badge-leave'}`}>
+                      {rec.status}
+                    </span>
+                    {rec.totalHours > 0 && (
+                      <span className="text-secondary text-[11px] font-medium">({rec.totalHours.toFixed(1)} hrs)</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {rec.status !== 'present' && (
+                      <button
+                        onClick={() => handleUpdateDateStatus(rec.date, 'present')}
+                        disabled={savingAttStatus}
+                        className="px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold text-[11px] cursor-pointer"
+                        title="Change date status to Present"
+                      >
+                        Change to Present
+                      </button>
+                    )}
+                    {rec.status !== 'half-day' && (
+                      <button
+                        onClick={() => handleUpdateDateStatus(rec.date, 'half-day')}
+                        disabled={savingAttStatus}
+                        className="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold text-[11px] cursor-pointer"
+                        title="Change date status to Half-Day"
+                      >
+                        Half-Day
+                      </button>
+                    )}
+                    {rec.status !== 'leave' && (
+                      <button
+                        onClick={() => handleUpdateDateStatus(rec.date, 'leave')}
+                        disabled={savingAttStatus}
+                        className="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold text-[11px] cursor-pointer"
+                        title="Change date status to Leave"
+                      >
+                        Set Leave
+                      </button>
+                    )}
+                    {rec.status === 'leave' && (
+                      <button
+                        onClick={() => handleCancelAccidentalLeave(rec.date)}
+                        disabled={savingAttStatus}
+                        className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-[11px] cursor-pointer"
+                        title="Cancel leave entry"
+                      >
+                        Cancel Leave
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex justify-end mt-4 pt-3 border-t border-white/10 flex-shrink-0">
+            <button
+              onClick={() => setEditingUserForAttendance(null)}
+              className="btn btn-secondary !py-1.5 !px-4 !text-xs"
+            >
+              Done / Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar user={currentUser} />
@@ -379,6 +563,13 @@ export default function AdminHours() {
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               Employee Work Hours
+            </a>
+            <a href="/face-id-test" className="sidebar-link" style={{ border: '1px solid rgba(201, 162, 39, 0.3)', background: 'rgba(201, 162, 39, 0.08)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Face ID Recognition (Beta)
             </a>
           </aside>
 
@@ -670,7 +861,23 @@ export default function AdminHours() {
                                 </div>
                               )}
                             </div>
-                            <div className="col-span-2 sm:col-span-1 flex items-center justify-end w-full">
+                            <div className="col-span-2 sm:col-span-1 flex items-center justify-end gap-2 w-full flex-wrap">
+                              <button
+                                onClick={() => {
+                                  setEditingUserForAttendance(user);
+                                  setCustomAttDate(getTodayDateString());
+                                  setCustomAttStatus('present');
+                                }}
+                                className="btn btn-secondary !py-1.5 !px-3 !text-xs"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', width: 'auto' }}
+                                title="Edit Attendance or Change Leave for Any Date"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                Edit Attendance
+                              </button>
                               <button
                                 onClick={() => handleOpenExportModal(user)}
                                 className="btn btn-primary !py-1.5 !px-3.5 !text-xs"
@@ -792,6 +999,7 @@ export default function AdminHours() {
           </div>
         </div>
       )}
+      {editingUserForAttendance && renderAttendanceLogsEditorModal()}
     </>
   );
 }

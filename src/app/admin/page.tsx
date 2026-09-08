@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { listenToAuthChanges, AppUser } from '@/lib/auth';
-import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile, parseTimestamp, undoPunchOut } from '@/lib/db';
+import { approveUser, getAllAttendance, AttendanceRecord, getTodayDateString, markHoliday, getAllUsers, updateUserProfile, HolidayRecord, getHolidayRecords, deleteHoliday, getOfficeSettings, updateOfficeSettings, OfficeSettings, getBreakTimeMs, AdminFileRecord, getAdminFiles, createAdminFileRecord, saveAdminFileChunk, getAdminFileChunks, deleteAdminFile, parseTimestamp, undoPunchOut, adminCancelLeave, adminUpdateAttendanceStatus } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
@@ -50,6 +50,13 @@ export default function AdminDashboard() {
   const [editSalaryTypeValue, setEditSalaryTypeValue] = useState<'monthly' | 'weekly'>('monthly');
   const [editSalaryStartDayValue, setEditSalaryStartDayValue] = useState<number>(1);
   const [editSalaryStartDateValue, setEditSalaryStartDateValue] = useState<string>('');
+
+  // Attendance Editing Modal state
+  const [editingAttendanceRecord, setEditingAttendanceRecord] = useState<AttendanceRecord | null>(null);
+  const [editAttDate, setEditAttDate] = useState<string>(getTodayDateString());
+  const [editAttStatus, setEditAttStatus] = useState<'present' | 'half-day' | 'leave'>('present');
+  const [editAttWorkMode, setEditAttWorkMode] = useState<'office' | 'remote'>('office');
+  const [savingAttendance, setSavingAttendance] = useState(false);
 
   // Office Location & System Settings state
   const [officeLat, setOfficeLat] = useState('12.9716');
@@ -823,6 +830,196 @@ export default function AdminDashboard() {
   const startIndexTeam = (activeTeamPage - 1) * ITEMS_PER_PAGE;
   const paginatedTeamUsers = teamUsers.slice(startIndexTeam, startIndexTeam + ITEMS_PER_PAGE);
 
+  const renderEditAttendanceModal = () => {
+    if (!editingAttendanceRecord) return null;
+    const targetUser = allUsers.find(u => u.uid === editingAttendanceRecord.userId);
+    const workerName = targetUser?.displayName || 'Worker';
+    const targetDate = editAttDate || editingAttendanceRecord.date;
+
+    const handleSaveAttendance = async () => {
+      setSavingAttendance(true);
+      try {
+        await adminUpdateAttendanceStatus(
+          editingAttendanceRecord.userId,
+          targetDate,
+          editAttStatus,
+          {
+            workMode: editAttWorkMode,
+            totalHours: editAttStatus === 'present' ? 9 : editAttStatus === 'half-day' ? 4.5 : 0
+          }
+        );
+        toast.success(`Attendance updated to ${editAttStatus.toUpperCase()} for ${workerName} on ${targetDate}!`);
+        setEditingAttendanceRecord(null);
+        await loadData();
+      } catch (err) {
+        console.error("Failed to update attendance:", err);
+        toast.error("Failed to update attendance.");
+      } finally {
+        setSavingAttendance(false);
+      }
+    };
+
+    const handleCancelAccidentalLeave = async () => {
+      if (!confirm(`Cancel accidental leave for ${workerName} on ${targetDate}? This will reset their attendance so they can punch in.`)) return;
+      setSavingAttendance(true);
+      try {
+        await adminCancelLeave(editingAttendanceRecord.userId, targetDate);
+        toast.success(`Accidental leave cancelled for ${workerName} on ${targetDate}!`);
+        setEditingAttendanceRecord(null);
+        await loadData();
+      } catch (err) {
+        console.error("Failed to cancel leave:", err);
+        toast.error("Failed to cancel leave.");
+      } finally {
+        setSavingAttendance(false);
+      }
+    };
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="animate-fade-in">
+        <div className="glass-card max-w-md w-full p-6 border border-white/10 shadow-2xl relative" style={{ background: 'var(--bg-surface)' }}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Edit Attendance Record
+            </h3>
+            <button
+              onClick={() => setEditingAttendanceRecord(null)}
+              className="text-secondary hover:text-white text-sm p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="mb-4 p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-secondary space-y-2">
+            <div><strong className="text-white">Employee:</strong> {workerName}</div>
+            <div>
+              <label className="text-xs text-secondary font-semibold block mb-1 font-mono">Select Target Date:</label>
+              <input
+                type="date"
+                className="input-field w-full !py-1.5 !px-3 !text-xs text-white"
+                value={editAttDate}
+                onChange={(e) => setEditAttDate(e.target.value)}
+              />
+            </div>
+            <div><strong className="text-white">Current Status:</strong> <span className="capitalize text-indigo-300 font-semibold">{editingAttendanceRecord.status}</span></div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-secondary mb-1.5 block font-semibold">Attendance Status</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditAttStatus('present')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    editAttStatus === 'present'
+                      ? 'bg-teal-500/20 text-teal-300 border-teal-500/40 shadow-[0_0_10px_rgba(20,184,166,0.2)]'
+                      : 'bg-white/5 text-secondary border-white/10 hover:text-white'
+                  }`}
+                >
+                  Present
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditAttStatus('half-day')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    editAttStatus === 'half-day'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                      : 'bg-white/5 text-secondary border-white/10 hover:text-white'
+                  }`}
+                >
+                  Half-Day
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditAttStatus('leave')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    editAttStatus === 'leave'
+                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.2)]'
+                      : 'bg-white/5 text-secondary border-white/10 hover:text-white'
+                  }`}
+                >
+                  Leave
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-secondary mb-1.5 block font-semibold">Work Mode</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditAttWorkMode('office')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    editAttWorkMode === 'office'
+                      ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                      : 'bg-white/5 text-secondary border-white/10 hover:text-white'
+                  }`}
+                >
+                  Office Shift
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditAttWorkMode('remote')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    editAttWorkMode === 'remote'
+                      ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
+                      : 'bg-white/5 text-secondary border-white/10 hover:text-white'
+                  }`}
+                >
+                  Remote Shift
+                </button>
+              </div>
+            </div>
+
+            {editingAttendanceRecord.status === 'leave' && (
+              <div className="pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={handleCancelAccidentalLeave}
+                  disabled={savingAttendance}
+                  className="w-full py-2.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  Cancel Accidental Leave (Reset to Punch In)
+                </button>
+                <p className="text-[10px] text-secondary mt-1 text-center">
+                  Clears accidental leave so worker can punch in on their dashboard today.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => setEditingAttendanceRecord(null)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-secondary hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAttendance}
+              disabled={savingAttendance}
+              className="btn btn-primary !py-2 !px-5 !text-xs font-bold"
+            >
+              {savingAttendance ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar user={currentUser} />
@@ -847,6 +1044,13 @@ export default function AdminDashboard() {
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               Employee Work Hours
+            </a>
+            <a href="/face-id-test" className="sidebar-link" style={{ border: '1px solid rgba(201, 162, 39, 0.3)', background: 'rgba(201, 162, 39, 0.08)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Face ID Recognition (Beta)
             </a>
           </aside>
 
@@ -919,13 +1123,46 @@ export default function AdminDashboard() {
                                 </div>
                               )}
                             </div>
-                            <span className={`badge ${a.status === 'present' ? 'badge-worker' :
-                              a.status === 'half-day' ? 'badge-half-day' :
-                                a.status === 'leave' ? 'badge-leave' :
-                                  'badge-pending'
-                              }`}>
-                              {a.status}
-                            </span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`badge ${a.status === 'present' ? 'badge-worker' :
+                                a.status === 'half-day' ? 'badge-half-day' :
+                                  a.status === 'leave' ? 'badge-leave' :
+                                    'badge-pending'
+                                }`}>
+                                {a.status}
+                              </span>
+                              {a.status === 'leave' && (
+                                <button
+                                  onClick={async () => {
+                                    const workerName = allUsers.find(u => u.uid === a.userId)?.displayName || 'Worker';
+                                    if (confirm(`Cancel accidental leave for ${workerName}? This will allow them to punch in today.`)) {
+                                      try {
+                                        await adminCancelLeave(a.userId, a.date);
+                                        toast.success(`Accidental leave cancelled for ${workerName}! Worker can now punch in.`);
+                                        loadData();
+                                      } catch {
+                                        toast.error("Failed to cancel leave.");
+                                      }
+                                    }
+                                  }}
+                                  className="text-[10px] text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-semibold cursor-pointer transition-colors"
+                                  title="Cancel Accidental Leave & Allow Punch In"
+                                >
+                                  Cancel Leave
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setEditingAttendanceRecord(a);
+                                  setEditAttStatus(a.status);
+                                  setEditAttWorkMode(a.workMode || 'office');
+                                }}
+                                className="text-[10px] text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded font-semibold cursor-pointer transition-colors"
+                                title="Change Attendance Status or Mode"
+                              >
+                                Edit
+                              </button>
+                            </div>
                           </div>
                            {a.punchIn && (
                             <div className="text-xs text-secondary grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5 items-center">
@@ -1188,26 +1425,52 @@ export default function AdminDashboard() {
                               <button onClick={() => handleUpdateProfile(user.uid)} className="team-btn-save">Save</button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => {
-                                setEditingUserId(user.uid);
-                                setEditNameValue(user.displayName);
-                                setEditDesignationValue(user.designation || '');
-                                setEditWorkModeValue(user.workMode || 'office');
-                                const type = user.salaryType || 'monthly';
-                                setEditSalaryTypeValue(type);
-                                const salary = type === 'weekly' ? user.weeklySalary : user.monthlySalary;
-                                setEditSalaryValue(salary ? salary.toString() : '');
-                                setEditSalaryStartDayValue(user.salaryStartDay !== undefined ? user.salaryStartDay : 1);
-                                setEditSalaryStartDateValue(user.salaryStartDate || new Date().toISOString().substring(0, 10));
-                              }}
-                              className="team-edit-btn"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                              </svg>
-                              Edit
-                            </button>
+                            <div className="flex gap-2 items-center flex-wrap">
+                              <button
+                                onClick={() => {
+                                  setEditingAttendanceRecord({
+                                    userId: user.uid,
+                                    date: getTodayDateString(),
+                                    status: 'present',
+                                    totalHours: 9,
+                                    overtimeHours: 0,
+                                    punchIn: null as any,
+                                    punchOut: null as any
+                                  });
+                                  setEditAttDate(getTodayDateString());
+                                  setEditAttStatus('present');
+                                  setEditAttWorkMode(user.workMode || 'office');
+                                }}
+                                className="team-edit-btn !bg-indigo-500/10 hover:!bg-indigo-500/20 !text-indigo-300 !border-indigo-500/30"
+                                title="Edit Attendance or Change Leave for Any Date"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                Edit Attendance
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingUserId(user.uid);
+                                  setEditNameValue(user.displayName);
+                                  setEditDesignationValue(user.designation || '');
+                                  setEditWorkModeValue(user.workMode || 'office');
+                                  const type = user.salaryType || 'monthly';
+                                  setEditSalaryTypeValue(type);
+                                  const salary = type === 'weekly' ? user.weeklySalary : user.monthlySalary;
+                                  setEditSalaryValue(salary ? salary.toString() : '');
+                                  setEditSalaryStartDayValue(user.salaryStartDay !== undefined ? user.salaryStartDay : 1);
+                                  setEditSalaryStartDateValue(user.salaryStartDate || new Date().toISOString().substring(0, 10));
+                                }}
+                                className="team-edit-btn"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                </svg>
+                                Profile
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1559,6 +1822,7 @@ export default function AdminDashboard() {
       </main>
       {showHolidayModal && renderHolidayCalendarModal()}
       {confirmDeleteFile && renderConfirmDeleteModal()}
+      {editingAttendanceRecord && renderEditAttendanceModal()}
     </>
   );
 }
