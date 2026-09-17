@@ -9,6 +9,8 @@ import { listenToEnrolledFaces, approveEnrolledFace, deleteEnrolledFace, Enrolle
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
 import Pagination from '@/components/Pagination';
+import BackupRestoreModal from '@/components/BackupRestoreModal';
+import { exportFullDatabaseBackupZip, checkIsBackupDue, getBackupScheduleConfig } from '@/lib/backupEngine';
 
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371000; // Earth radius in meters
@@ -84,6 +86,9 @@ export default function AdminDashboard() {
   // Face ID Real-Time Sync State
   const [enrolledFaces, setEnrolledFaces] = useState<EnrolledFace[]>([]);
 
+  // Backup & Disaster Recovery State
+  const [showBackupModal, setShowBackupModal] = useState(false);
+
   useEffect(() => {
     const unsubFaces = listenToEnrolledFaces((faces) => {
       setEnrolledFaces(faces);
@@ -147,6 +152,22 @@ export default function AdminDashboard() {
       } else {
         setCurrentUser(appUser);
         loadData();
+
+        // Check for due automated database backups
+        try {
+          const dueInfo = checkIsBackupDue();
+          const config = getBackupScheduleConfig();
+          if (dueInfo.isDue && config.autoDownloadOnVisit && config.schedule !== 'disabled') {
+            toast.success("Scheduled automated database backup is downloading...", { duration: 4000 });
+            exportFullDatabaseBackupZip(appUser.displayName || 'Admin')
+              .then(({ fileName, totalDocs }) => {
+                toast.success(`Automated backup complete: ${fileName} (${totalDocs} items)`);
+              })
+              .catch((err) => console.error("Auto backup error:", err));
+          }
+        } catch (err) {
+          console.error("Backup schedule check failed:", err);
+        }
       }
     });
     return () => unsubscribe();
@@ -1083,10 +1104,61 @@ export default function AdminDashboard() {
               </svg>
               Face ID Recognition (Beta)
             </a>
+            <button
+              type="button"
+              onClick={() => setShowBackupModal(true)}
+              className="sidebar-link text-left w-full"
+              style={{ border: '1px solid rgba(99, 102, 241, 0.3)', background: 'rgba(99, 102, 241, 0.08)', cursor: 'pointer' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+              Data Backup & Restore
+            </button>
           </aside>
 
           {/* Main Content Pane */}
           <div className="flex-1 min-w-0">
+
+            {/* Data Backup & Disaster Recovery Banner */}
+            <div className="glass-card mb-8" style={{ border: '1px solid rgba(99, 102, 241, 0.3)', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%)' }}>
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <div>
+                  <h2 className="subtitle !text-xl !text-white flex items-center gap-2">
+                    <span style={{ fontSize: '1.2rem' }}>💾</span> Data Backup & Disaster Recovery
+                    <span className="badge badge-admin">Compressed .ZIP</span>
+                  </h2>
+                  <p className="text-xs text-secondary mt-1">
+                    Download complete local backups of orders, users, attendance, settings, and face profiles or restore database snapshots anytime.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={async () => {
+                      try {
+                        toast.success("Preparing full database backup zip...", { duration: 3000 });
+                        const res = await exportFullDatabaseBackupZip(currentUser?.displayName || 'Admin');
+                        const locMsg = res.savedFilePath ? `\nSaved to C Drive: ${res.savedFilePath}` : '';
+                        toast.success(`Backup downloaded!\n${res.fileName} (${res.totalDocs} items)${locMsg}`, { duration: 6000 });
+                      } catch (err: any) {
+                        toast.error(`Download error: ${err?.message || 'Failed'}`);
+                      }
+                    }}
+                    className="btn btn-primary !py-2.5 !px-4 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-500/20"
+                  >
+                    <span>📥 Download Backup (.ZIP)</span>
+                  </button>
+                  <button
+                    onClick={() => setShowBackupModal(true)}
+                    className="btn btn-secondary !py-2.5 !px-4 text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <span>🔄 Restore Data Console</span>
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Pending Face ID Registration Approvals Banner */}
             <div className="glass-card mb-8" style={{ border: '1px solid rgba(201, 162, 39, 0.3)', background: 'rgba(201, 162, 39, 0.03)' }}>
@@ -1909,6 +1981,14 @@ export default function AdminDashboard() {
       {showHolidayModal && renderHolidayCalendarModal()}
       {confirmDeleteFile && renderConfirmDeleteModal()}
       {editingAttendanceRecord && renderEditAttendanceModal()}
+      {showBackupModal && (
+        <BackupRestoreModal
+          isOpen={showBackupModal}
+          onClose={() => setShowBackupModal(false)}
+          onRestoreCompleted={loadData}
+          adminName={currentUser?.displayName || 'Admin'}
+        />
+      )}
     </>
   );
 }
