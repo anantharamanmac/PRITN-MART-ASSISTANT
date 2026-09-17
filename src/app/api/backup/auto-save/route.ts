@@ -3,7 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import JSZip from 'jszip';
-import { adminDb } from '@/lib/firebaseAdmin';
 
 const BACKUP_COLLECTIONS = [
   'orders',
@@ -73,34 +72,13 @@ export async function POST(req: Request) {
     const collectionCounts: Record<string, number> = {};
     let totalDocs = 0;
 
-    // Use provided client data or fetch from Firestore adminDb
+    // Use provided dataset to write files into zip
     if (rawCollectionsData && typeof rawCollectionsData === 'object') {
       for (const colName of BACKUP_COLLECTIONS) {
         const docsList = rawCollectionsData[colName] || [];
         collectionCounts[colName] = docsList.length;
         totalDocs += docsList.length;
         zip.file(`${colName}.json`, JSON.stringify(docsList, null, 2));
-      }
-    } else {
-      try {
-        for (const colName of BACKUP_COLLECTIONS) {
-          try {
-            const snap = await adminDb.collection(colName).get();
-            const docsData = snap.docs.map((d) => ({
-              _docId: d.id,
-              ...serializeValue(d.data()),
-            }));
-            collectionCounts[colName] = docsData.length;
-            totalDocs += docsData.length;
-            zip.file(`${colName}.json`, JSON.stringify(docsData, null, 2));
-          } catch (err) {
-            console.warn(`Server backup export warning for ${colName}:`, err);
-            collectionCounts[colName] = 0;
-            zip.file(`${colName}.json`, JSON.stringify([], null, 2));
-          }
-        }
-      } catch (adminErr) {
-        console.warn('Firebase Admin default credentials not loaded on server:', adminErr);
       }
     }
 

@@ -38,6 +38,14 @@ export default function BackupRestoreModal({
     lastBackupCount: 0,
   });
 
+  // Download completion popup state
+  const [downloadCompleteResult, setDownloadCompleteResult] = useState<{
+    fileName: string;
+    totalDocs: number;
+    zipSize: number;
+    savedFilePath?: string | null;
+  } | null>(null);
+
   // Restore states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -76,8 +84,9 @@ export default function BackupRestoreModal({
     try {
       setDownloading(true);
       const res = await exportFullDatabaseBackupZip(adminName);
+      setDownloadCompleteResult(res);
       const locMsg = res.savedFilePath ? `\nSaved to C Drive: ${res.savedFilePath}` : '';
-      toast.success(`Backup created!\n${res.fileName} (${formatBytes(res.zipSize)}, ${res.totalDocs} items)${locMsg}`, { duration: 6000 });
+      toast.success(`✅ Backup Download Complete!\n${res.fileName} (${formatBytes(res.zipSize)}, ${res.totalDocs} items)${locMsg}`, { duration: 8000 });
       setScheduleConfig(getBackupScheduleConfig());
     } catch (err: any) {
       console.error('Backup export failed:', err);
@@ -189,6 +198,7 @@ export default function BackupRestoreModal({
           overflow: 'hidden',
           color: '#ffffff',
           fontFamily: 'inherit',
+          position: 'relative',
         }}
       >
         {/* Header */}
@@ -669,6 +679,94 @@ export default function BackupRestoreModal({
           </button>
         </div>
       </div>
+
+      {/* Download Completion Pop-up Modal Overlay */}
+      {downloadCompleteResult && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000000,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#0f172a',
+              border: '2px solid #10b981',
+              borderRadius: '24px',
+              maxWidth: '540px',
+              width: '100%',
+              padding: '2.25rem',
+              textAlign: 'center',
+              boxShadow: '0 25px 50px -12px rgba(16, 185, 129, 0.4)',
+              color: '#ffffff',
+              animation: 'fadeIn 0.25s ease-out',
+            }}
+          >
+            <div style={{ fontSize: '3.5rem', marginBottom: '0.5rem' }}>🎉</div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#34d399', margin: '0 0 0.5rem 0' }}>
+              Backup Download Finished!
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: '0 0 1.25rem 0', lineHeight: 1.4 }}>
+              Your complete database backup archive has been compressed, downloaded, and saved into your date-wise folder.
+            </p>
+
+            <div
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '14px',
+                padding: '1.25rem',
+                textAlign: 'left',
+                fontSize: '0.825rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.6rem',
+                marginBottom: '1.5rem',
+              }}
+            >
+              <div>📁 <strong>File Name:</strong> <span style={{ color: '#6ee7b7', fontFamily: 'monospace' }}>{downloadCompleteResult.fileName}</span></div>
+              <div>📊 <strong>Total Items Archived:</strong> <span style={{ color: '#fde047', fontWeight: 700 }}>{downloadCompleteResult.totalDocs} documents</span></div>
+              <div>📦 <strong>File Size:</strong> <span style={{ color: '#cbd5e1' }}>{formatBytes(downloadCompleteResult.zipSize)}</span></div>
+              {downloadCompleteResult.savedFilePath && (
+                <div style={{ wordBreak: 'break-all', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  🖥️ <strong>Local C Drive Path:</strong><br />
+                  <span style={{ color: '#a5b4fc', fontFamily: 'monospace', fontSize: '0.75rem' }}>{downloadCompleteResult.savedFilePath}</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setDownloadCompleteResult(null)}
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.4)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              ✓ Great, Got It!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
