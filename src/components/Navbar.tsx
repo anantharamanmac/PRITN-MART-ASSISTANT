@@ -183,6 +183,161 @@ export default function Navbar({ user }: { user: AppUser }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Interactive Liquid Glass Bending, Stretching & Swiping physics for Navbar & Mobile Tab Bar
+  useEffect(() => {
+    const bars = document.querySelectorAll<HTMLElement>('.navbar, .mobile-tab-bar');
+    const cleanupFns: (() => void)[] = [];
+
+    bars.forEach((bar) => {
+      let isInteracting = false;
+      let startX = 0;
+      let startY = 0;
+
+      const handleHoverMove = (e: MouseEvent) => {
+        if (isInteracting) return;
+        const rect = bar.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = e.clientX - centerX;
+        const dy = e.clientY - centerY;
+
+        // Subtle 3D tilt on hover (max +/- 6deg)
+        const tiltX = -((dy / (rect.height / 2)) * 6);
+        const tiltY = ((dx / (rect.width / 2)) * 6);
+
+        // Specular lens reflection & liquid inflow coordinates
+        const lensX = Math.max(10, Math.min(90, 50 + (dx / rect.width) * 80));
+        const lensY = Math.max(10, Math.min(90, 50 + (dy / rect.height) * 80));
+
+        // Subtle elastic stretch
+        const stretchX = 1 + Math.min(0.015, Math.abs(dx) * 0.00008);
+        const stretchY = 1 + Math.min(0.015, Math.abs(dy) * 0.00008);
+
+        bar.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`);
+        bar.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`);
+        bar.style.setProperty('--stretch-x', `${stretchX.toFixed(3)}`);
+        bar.style.setProperty('--stretch-y', `${stretchY.toFixed(3)}`);
+        bar.style.setProperty('--lens-x', `${lensX.toFixed(1)}%`);
+        bar.style.setProperty('--lens-y', `${lensY.toFixed(1)}%`);
+        bar.style.setProperty('--liquid-flow-opacity', '1');
+        bar.style.setProperty('--liquid-flow-scale', '1.2');
+      };
+
+      const handleHoverLeave = () => {
+        if (isInteracting) return;
+        bar.style.setProperty('--tilt-x', '0deg');
+        bar.style.setProperty('--tilt-y', '0deg');
+        bar.style.setProperty('--stretch-x', '1');
+        bar.style.setProperty('--stretch-y', '1');
+        bar.style.setProperty('--lens-x', '50%');
+        bar.style.setProperty('--lens-y', '50%');
+        bar.style.setProperty('--liquid-flow-opacity', '0');
+        bar.style.setProperty('--liquid-flow-scale', '0.8');
+      };
+
+      const handleStart = (clientX: number, clientY: number) => {
+        isInteracting = true;
+        startX = clientX;
+        startY = clientY;
+        bar.classList.add('is-swiping');
+      };
+
+      const handleMove = (clientX: number, clientY: number) => {
+        if (!isInteracting) return;
+        const rect = bar.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const dx = clientX - centerX;
+        const dy = clientY - centerY;
+        const swipeDx = clientX - startX;
+        const swipeDy = clientY - startY;
+
+        // Bending angles
+        const tiltX = -Math.max(-10, Math.min(10, (dy / (rect.height / 2)) * 8 + swipeDy * 0.04));
+        const tiltY = Math.max(-10, Math.min(10, (dx / (rect.width / 2)) * 8 + swipeDx * 0.04));
+
+        // Elastic stretch factor
+        const stretchX = Math.min(1.04, 1 + Math.abs(swipeDx) * 0.0003);
+        const stretchY = Math.min(1.04, 1 + Math.abs(swipeDy) * 0.0003);
+
+        const lensX = Math.max(15, Math.min(85, 50 + (dx / rect.width) * 60));
+        const lensY = Math.max(10, Math.min(90, 40 + (dy / rect.height) * 60));
+
+        bar.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`);
+        bar.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`);
+        bar.style.setProperty('--stretch-x', `${stretchX.toFixed(3)}`);
+        bar.style.setProperty('--stretch-y', `${stretchY.toFixed(3)}`);
+        bar.style.setProperty('--lens-x', `${lensX.toFixed(1)}%`);
+        bar.style.setProperty('--lens-y', `${lensY.toFixed(1)}%`);
+        bar.style.setProperty('--liquid-flow-opacity', '1');
+        bar.style.setProperty('--liquid-flow-scale', '1.3');
+      };
+
+      const handleEnd = () => {
+        if (!isInteracting) return;
+        isInteracting = false;
+        bar.classList.remove('is-swiping');
+        bar.style.setProperty('--tilt-x', '0deg');
+        bar.style.setProperty('--tilt-y', '0deg');
+        bar.style.setProperty('--stretch-x', '1');
+        bar.style.setProperty('--stretch-y', '1');
+        bar.style.setProperty('--lens-x', '50%');
+        bar.style.setProperty('--lens-y', '50%');
+        bar.style.setProperty('--liquid-flow-opacity', '0');
+        bar.style.setProperty('--liquid-flow-scale', '0.8');
+      };
+
+      const onPointerDown = (e: PointerEvent) => {
+        if ((e.target as HTMLElement).closest('button, a, input, select')) return;
+        handleStart(e.clientX, e.clientY);
+      };
+      const onPointerMove = (e: PointerEvent) => handleMove(e.clientX, e.clientY);
+      const onPointerUp = () => handleEnd();
+      const onPointerCancel = () => handleEnd();
+
+      const onTouchStart = (e: TouchEvent) => {
+        if (e.touches.length > 0) {
+          const t = e.touches[0];
+          if ((e.target as HTMLElement).closest('button, a, input, select')) return;
+          handleStart(t.clientX, t.clientY);
+        }
+      };
+      const onTouchMove = (e: TouchEvent) => {
+        if (e.touches.length > 0) {
+          handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      };
+      const onTouchEnd = () => handleEnd();
+
+      bar.addEventListener('mousemove', handleHoverMove);
+      bar.addEventListener('mouseleave', handleHoverLeave);
+      bar.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerCancel);
+      bar.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd);
+
+      cleanupFns.push(() => {
+        bar.removeEventListener('mousemove', handleHoverMove);
+        bar.removeEventListener('mouseleave', handleHoverLeave);
+        bar.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerCancel);
+        bar.removeEventListener('touchstart', onTouchStart);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onTouchEnd);
+      });
+    });
+
+    return () => {
+      cleanupFns.forEach(fn => fn());
+    };
+  }, [pathname]);
+
   // Listen to bug reports
   useEffect(() => {
     if (user.role !== 'admin') return;
