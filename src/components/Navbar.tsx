@@ -521,13 +521,14 @@ export default function Navbar({ user }: { user: AppUser }) {
 
   return (
     <>
-      {/* ── DESKTOP TOP NAVBAR ── */}
-      <nav className="navbar">
-        {/* Brand */}
-        <Link href="/dashboard" className="nav-brand">
-          <span className="nav-brand-dot" />
-          Print Mart
-        </Link>
+      {/* ── DESKTOP TOP NAVBAR WITH FIXED DARK BLUR BACKING ── */}
+      <header className="navbar-fixed-container">
+        <nav className="navbar">
+          {/* Brand */}
+          <Link href="/dashboard" className="nav-brand">
+            <span className="nav-brand-dot" />
+            Print Mart
+          </Link>
 
         {/* Desktop Nav Links */}
         <div className="nav-links">
@@ -687,6 +688,7 @@ export default function Navbar({ user }: { user: AppUser }) {
           </button>
         </div>
       </nav>
+    </header>
 
       {/* ── MOBILE BOTTOM TAB BAR ── */}
       <div className="mobile-tab-bar">
