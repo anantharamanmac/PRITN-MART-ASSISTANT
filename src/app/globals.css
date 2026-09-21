@@ -217,6 +217,7 @@
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -229,6 +230,16 @@ body {
   position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* Rubber-Band Elastic Overscroll Wrapper (Rubber Stretching Physics) */
+.rubber-band-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  will-change: transform;
+  transform-origin: center top;
+  position: relative;
 }
 
 /* Custom Scrollbars */
