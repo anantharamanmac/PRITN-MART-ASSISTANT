@@ -260,6 +260,113 @@ export default function WorkerDashboard() {
     return () => clearInterval(timer);
   }, [attendance]);
 
+  // Interactive Liquid Glass Bending, Stretching & Swiping physics
+  useEffect(() => {
+    const cards = document.querySelectorAll<HTMLElement>('.glass-card, .liquid-glass-card');
+    const cleanupFns: (() => void)[] = [];
+
+    cards.forEach((card) => {
+      let isInteracting = false;
+      let startX = 0;
+      let startY = 0;
+
+      const handleStart = (clientX: number, clientY: number) => {
+        isInteracting = true;
+        startX = clientX;
+        startY = clientY;
+        card.classList.add('is-swiping');
+      };
+
+      const handleMove = (clientX: number, clientY: number) => {
+        if (!isInteracting) return;
+        const rect = card.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const dx = clientX - centerX;
+        const dy = clientY - centerY;
+        const swipeDx = clientX - startX;
+        const swipeDy = clientY - startY;
+
+        // Bending angles
+        const tiltX = -Math.max(-14, Math.min(14, (dy / (rect.height / 2)) * 12 + swipeDy * 0.05));
+        const tiltY = Math.max(-14, Math.min(14, (dx / (rect.width / 2)) * 12 + swipeDx * 0.05));
+
+        // Elastic stretch factor
+        const stretchX = Math.min(1.05, 1 + Math.abs(swipeDx) * 0.0003);
+        const stretchY = Math.min(1.05, 1 + Math.abs(swipeDy) * 0.0003);
+
+        // Specular light lens reflection coordinates
+        const lensX = Math.max(15, Math.min(85, 50 + (dx / rect.width) * 60));
+        const lensY = Math.max(10, Math.min(90, 40 + (dy / rect.height) * 60));
+
+        card.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`);
+        card.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`);
+        card.style.setProperty('--stretch-x', `${stretchX.toFixed(3)}`);
+        card.style.setProperty('--stretch-y', `${stretchY.toFixed(3)}`);
+        card.style.setProperty('--lens-x', `${lensX.toFixed(1)}%`);
+        card.style.setProperty('--lens-y', `${lensY.toFixed(1)}%`);
+      };
+
+      const handleEnd = () => {
+        if (!isInteracting) return;
+        isInteracting = false;
+        card.classList.remove('is-swiping');
+        // Elastic spring reset
+        card.style.setProperty('--tilt-x', '0deg');
+        card.style.setProperty('--tilt-y', '0deg');
+        card.style.setProperty('--stretch-x', '1');
+        card.style.setProperty('--stretch-y', '1');
+        card.style.setProperty('--lens-x', '50%');
+        card.style.setProperty('--lens-y', '0%');
+      };
+
+      const onPointerDown = (e: PointerEvent) => {
+        if ((e.target as HTMLElement).closest('button, a, input, textarea, select')) return;
+        handleStart(e.clientX, e.clientY);
+      };
+      const onPointerMove = (e: PointerEvent) => handleMove(e.clientX, e.clientY);
+      const onPointerUp = () => handleEnd();
+      const onPointerCancel = () => handleEnd();
+
+      const onTouchStart = (e: TouchEvent) => {
+        if (e.touches.length > 0) {
+          const t = e.touches[0];
+          if ((e.target as HTMLElement).closest('button, a, input, textarea, select')) return;
+          handleStart(t.clientX, t.clientY);
+        }
+      };
+      const onTouchMove = (e: TouchEvent) => {
+        if (e.touches.length > 0) {
+          handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      };
+      const onTouchEnd = () => handleEnd();
+
+      card.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerCancel);
+      card.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd);
+
+      cleanupFns.push(() => {
+        card.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerCancel);
+        card.removeEventListener('touchstart', onTouchStart);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onTouchEnd);
+      });
+    });
+
+    return () => {
+      cleanupFns.forEach(fn => fn());
+    };
+  }, [loading]);
+
   const getLiveHours = () => {
     if (!attendance || !attendance.punchIn) return '0h 00m 00s';
     const parsedIn = parseTimestamp(attendance.punchIn);
