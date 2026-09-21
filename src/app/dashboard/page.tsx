@@ -694,11 +694,31 @@ export default function WorkerDashboard() {
 
   return (
     <>
+      {/* Apple Liquified Glass Ambient Background Canvas */}
+      <div className="liquid-canvas-bg">
+        <div className="liquid-blob-1" />
+        <div className="liquid-blob-2" />
+        <div className="liquid-blob-3" />
+      </div>
+
       <WelcomeModal displayName={user.displayName} photoURL={user.photoURL} />
       <SalaryNotificationModal salaryStartDay={user.salaryStartDay} />
       <Navbar user={user} />
       <main className={`container animate-fade-in ${isShaking ? 'animate-shake' : ''}`}>
-        <h1 className="title !text-4xl mb-8">Worker Dashboard</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+
+
+            <h1 className="title !text-4xl md:!text-5xl tracking-tight font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-blue-300">
+              Worker Dashboard
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-secondary shadow-inner">
+              Today: {getTodayDateString()}
+            </span>
+          </div>
+        </div>
 
         {/* Salary Cycle Ending Reminder Banner */}
         {showReminder && (
@@ -956,8 +976,8 @@ export default function WorkerDashboard() {
                       className="btn btn-secondary flex items-center gap-2 text-sm font-bold border-rose-500/40 hover:border-rose-400 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
                       </svg>
                       Punch Out with Face ID (Neural AI)
                     </button>
@@ -974,8 +994,8 @@ export default function WorkerDashboard() {
                       className="btn btn-secondary flex items-center gap-2 text-sm font-bold border-amber-500/40 hover:border-amber-400 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-5 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
                       </svg>
                       Punch In with Face ID (Neural AI)
                     </button>
@@ -984,16 +1004,16 @@ export default function WorkerDashboard() {
                       onClick={handleApplyLeave}
                       className="btn btn-outline flex items-center gap-2 border-[rgba(245,158,11,0.3)] text-amber-500 hover:bg-[rgba(245,158,11,0.1)] hover:border-amber-500 transition-colors text-xs"
                     >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                      <path d="M9 16l2 2 4-4"></path>
-                    </svg>
-                    Apply for Leave
-                  </button>
-                </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <path d="M9 16l2 2 4-4"></path>
+                      </svg>
+                      Apply for Leave
+                    </button>
+                  </div>
                 )}
 
                 <a
