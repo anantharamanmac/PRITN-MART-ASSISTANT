@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOutUser, AppUser } from '@/lib/auth';
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -134,6 +135,7 @@ const formatNotificationTime = (timestamp: any) => {
 
 export default function Navbar({ user }: { user: AppUser }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -142,6 +144,10 @@ export default function Navbar({ user }: { user: AppUser }) {
   const [punchNotifications, setPunchNotifications] = useState<PunchNotification[]>([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Request desktop notification permission on mount for admin
   useEffect(() => {
@@ -278,6 +284,7 @@ export default function Navbar({ user }: { user: AppUser }) {
         if (!isInteracting) return;
         isInteracting = false;
         bar.classList.remove('is-swiping');
+        bar.style.transition = 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.35s ease';
         bar.style.setProperty('--tilt-x', '0deg');
         bar.style.setProperty('--tilt-y', '0deg');
         bar.style.setProperty('--stretch-x', '1');
@@ -286,11 +293,15 @@ export default function Navbar({ user }: { user: AppUser }) {
         bar.style.setProperty('--lens-y', '50%');
         bar.style.setProperty('--liquid-flow-opacity', '0');
         bar.style.setProperty('--liquid-flow-scale', '0.8');
+        setTimeout(() => {
+          if (bar) bar.style.transition = '';
+        }, 450);
       };
 
       const onPointerDown = (e: PointerEvent) => {
-        if ((e.target as HTMLElement).closest('button, a, input, select')) return;
+        if ((e.target as HTMLElement).closest('input, select')) return;
         handleStart(e.clientX, e.clientY);
+        handleMove(e.clientX, e.clientY);
       };
       const onPointerMove = (e: PointerEvent) => handleMove(e.clientX, e.clientY);
       const onPointerUp = () => handleEnd();
@@ -299,8 +310,9 @@ export default function Navbar({ user }: { user: AppUser }) {
       const onTouchStart = (e: TouchEvent) => {
         if (e.touches.length > 0) {
           const t = e.touches[0];
-          if ((e.target as HTMLElement).closest('button, a, input, select')) return;
+          if ((e.target as HTMLElement).closest('input, select')) return;
           handleStart(t.clientX, t.clientY);
+          handleMove(t.clientX, t.clientY);
         }
       };
       const onTouchMove = (e: TouchEvent) => {
@@ -336,7 +348,7 @@ export default function Navbar({ user }: { user: AppUser }) {
     return () => {
       cleanupFns.forEach(fn => fn());
     };
-  }, [pathname]);
+  }, [pathname, mounted]);
 
   // Listen to bug reports
   useEffect(() => {
@@ -530,219 +542,222 @@ export default function Navbar({ user }: { user: AppUser }) {
             Print Mart
           </Link>
 
-        {/* Desktop Nav Links */}
-        <div className="nav-links">
-          {desktopNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-link ${pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)) ? 'active' : ''}`}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-            >
-              {item.label}
-              {item.badge != null && item.badge > 0 && (
-                <span className="nav-badge-count">{item.badge}</span>
-              )}
-            </Link>
-          ))}
-        </div>
-
-        {/* User + Notifications + Sign Out */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {user.role === 'admin' && (
-            <div className="nav-notif-container" ref={notifRef} style={{ position: 'relative' }}>
-              <button
-                className={`nav-notif-bell-btn ${showNotifDropdown ? 'active' : ''}`}
-                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                title="Punch Notifications"
-                aria-label="Punch Notifications"
+          {/* Desktop Nav Links */}
+          <div className="nav-links">
+            {desktopNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-link ${pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)) ? 'active' : ''}`}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
               >
-                <BellIcon size={18} />
-                {unreadNotifCount > 0 && (
-                  <span className="nav-badge-count animate-pulse nav-notif-badge">
-                    {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
-                  </span>
+                {item.label}
+                {item.badge != null && item.badge > 0 && (
+                  <span className="nav-badge-count">{item.badge}</span>
                 )}
-              </button>
+              </Link>
+            ))}
+          </div>
 
-              {showNotifDropdown && (
-                <div className="nav-notif-dropdown">
-                  <div className="nav-notif-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Punch Notifications</span>
+          {/* User + Notifications + Sign Out */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {user.role === 'admin' && (
+              <div className="nav-notif-container" ref={notifRef} style={{ position: 'relative' }}>
+                <button
+                  className={`nav-notif-bell-btn ${showNotifDropdown ? 'active' : ''}`}
+                  onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                  title="Punch Notifications"
+                  aria-label="Punch Notifications"
+                >
+                  <BellIcon size={18} />
+                  {unreadNotifCount > 0 && (
+                    <span className="nav-badge-count animate-pulse nav-notif-badge">
+                      {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifDropdown && (
+                  <div className="nav-notif-dropdown">
+                    <div className="nav-notif-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Punch Notifications</span>
+                        {unreadNotifCount > 0 && (
+                          <span className="notif-badge-pill">{unreadNotifCount} new</span>
+                        )}
+                      </div>
                       {unreadNotifCount > 0 && (
-                        <span className="notif-badge-pill">{unreadNotifCount} new</span>
+                        <button
+                          className="notif-mark-all-btn"
+                          onClick={() => markAllNotificationsAsRead(punchNotifications)}
+                        >
+                          Mark all read
+                        </button>
                       )}
                     </div>
-                    {unreadNotifCount > 0 && (
-                      <button
-                        className="notif-mark-all-btn"
-                        onClick={() => markAllNotificationsAsRead(punchNotifications)}
-                      >
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
 
-                  <div className="nav-notif-divider" />
+                    <div className="nav-notif-divider" />
 
-                  <div className="nav-notif-list">
-                    {punchNotifications.length === 0 ? (
-                      <div className="nav-notif-empty">
-                        <span style={{ fontSize: '1.2rem' }}>🔔</span>
-                        <span>No punch notifications today</span>
-                      </div>
-                    ) : (
-                      punchNotifications.map((n) => {
-                        const isPunchIn = n.type === 'punch_in';
-                        const timeStr = formatNotificationTime(n.timestamp);
-                        return (
-                          <div
-                            key={n.id}
-                            className={`nav-notif-item ${!n.read ? 'unread' : ''}`}
-                            onClick={() => n.id && markNotificationAsRead(n.id)}
-                          >
-                            <div className="notif-item-avatar">
-                              {n.userPhoto ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={n.userPhoto} alt={n.userName} />
-                              ) : (
-                                <span>{n.userName ? n.userName.charAt(0).toUpperCase() : 'U'}</span>
-                              )}
-                              <span className={`notif-status-dot ${isPunchIn ? 'in' : 'out'}`} />
-                            </div>
-                            <div className="notif-item-content">
-                              <div className="notif-item-title">
-                                <strong>{n.userName}</strong>
-                                <span className={`notif-action-tag ${isPunchIn ? 'in' : 'out'}`}>
-                                  {isPunchIn ? 'Punched In' : 'Punched Out'}
-                                </span>
-                              </div>
-                              <div className="notif-item-sub">
-                                {isPunchIn && n.workMode && (
-                                  <span className="notif-mode-tag">{n.workMode}</span>
+                    <div className="nav-notif-list">
+                      {punchNotifications.length === 0 ? (
+                        <div className="nav-notif-empty">
+                          <span style={{ fontSize: '1.2rem' }}>🔔</span>
+                          <span>No punch notifications today</span>
+                        </div>
+                      ) : (
+                        punchNotifications.map((n) => {
+                          const isPunchIn = n.type === 'punch_in';
+                          const timeStr = formatNotificationTime(n.timestamp);
+                          return (
+                            <div
+                              key={n.id}
+                              className={`nav-notif-item ${!n.read ? 'unread' : ''}`}
+                              onClick={() => n.id && markNotificationAsRead(n.id)}
+                            >
+                              <div className="notif-item-avatar">
+                                {n.userPhoto ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={n.userPhoto} alt={n.userName} />
+                                ) : (
+                                  <span>{n.userName ? n.userName.charAt(0).toUpperCase() : 'U'}</span>
                                 )}
-                                <span className="notif-item-time">{timeStr}</span>
+                                <span className={`notif-status-dot ${isPunchIn ? 'in' : 'out'}`} />
                               </div>
+                              <div className="notif-item-content">
+                                <div className="notif-item-title">
+                                  <strong>{n.userName}</strong>
+                                  <span className={`notif-action-tag ${isPunchIn ? 'in' : 'out'}`}>
+                                    {isPunchIn ? 'Punched In' : 'Punched Out'}
+                                  </span>
+                                </div>
+                                <div className="notif-item-sub">
+                                  {isPunchIn && n.workMode && (
+                                    <span className="notif-mode-tag">{n.workMode}</span>
+                                  )}
+                                  <span className="notif-item-time">{timeStr}</span>
+                                </div>
+                              </div>
+                              {!n.read && <div className="notif-unread-dot" />}
                             </div>
-                            {!n.read && <div className="notif-unread-dot" />}
-                          </div>
-                        );
-                      })
-                    )}
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="nav-user-container" ref={dropdownRef}>
+              <div
+                className={`nav-user-chip ${showDropdown ? 'active' : ''}`}
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <div className="nav-user-avatar">
+                  {user.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.photoURL} alt={user.displayName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  ) : (
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sapphire-light)' }}>{initials}</span>
+                  )}
+                </div>
+                <div>
+                  <div className="nav-user-name">{user.displayName}</div>
+                  <div className="nav-user-role">{user.role}</div>
+                </div>
+              </div>
+
+              {showDropdown && (
+                <div className="nav-dropdown-menu">
+                  <div className="nav-dropdown-header">Settings</div>
+                  <div className="nav-dropdown-divider" />
+                  <div className="nav-dropdown-theme-section">
+                    <div className="nav-dropdown-theme-title">Theme</div>
+                    <div className="theme-toggle-group">
+                      <button
+                        className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                        onClick={() => handleThemeChange('light')}
+                      >
+                        <SunIcon />
+                        <span>Light</span>
+                      </button>
+                      <button
+                        className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                        onClick={() => handleThemeChange('dark')}
+                      >
+                        <MoonIcon />
+                        <span>Dark</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-          )}
 
-          <div className="nav-user-container" ref={dropdownRef}>
-            <div
-              className={`nav-user-chip ${showDropdown ? 'active' : ''}`}
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              <div className="nav-user-avatar">
-                {user.photoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.photoURL} alt={user.displayName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sapphire-light)' }}>{initials}</span>
-                )}
-              </div>
-              <div>
-                <div className="nav-user-name">{user.displayName}</div>
-                <div className="nav-user-role">{user.role}</div>
-              </div>
-            </div>
+            <button onClick={handleSignOut} className="nav-signout-btn">
+              <SignOutIcon />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </nav>
+      </header>
 
-            {showDropdown && (
-              <div className="nav-dropdown-menu">
-                <div className="nav-dropdown-header">Settings</div>
-                <div className="nav-dropdown-divider" />
-                <div className="nav-dropdown-theme-section">
-                  <div className="nav-dropdown-theme-title">Theme</div>
-                  <div className="theme-toggle-group">
-                    <button
-                      className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
-                      onClick={() => handleThemeChange('light')}
+      {/* ── MOBILE BOTTOM TAB BAR (PORTALED TO BODY TO PREVENT SCROLL COUPLING) ── */}
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <div className="mobile-tab-bar" role="navigation" aria-label="Mobile Navigation">
+          {mobileNavItems.map((item) => {
+            const Icon = item.icon;
+            const isCombinedActive = item.isCombined && (pathname.startsWith('/billing') || pathname.startsWith('/price-settings'));
+            const isActive = isCombinedActive || pathname === item.href || (!item.isCombined && item.href !== '/dashboard' && pathname.startsWith(item.href));
+
+            // Target URL when tapping combined tab on mobile
+            const targetHref = item.isCombined
+              ? (pathname.startsWith('/billing') ? '/price-settings' : '/billing')
+              : item.href;
+
+            return (
+              <Link
+                key={item.label}
+                href={targetHref}
+                className={`mobile-tab-item ${isActive ? 'active' : ''}`}
+              >
+                <div className="mobile-tab-icon-wrap" style={{ position: 'relative' }}>
+                  <Icon size={20} />
+                  {item.badge != null && item.badge > 0 && (
+                    <span
+                      className="nav-badge-count"
+                      style={{
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-4px',
+                        fontSize: '0.55rem',
+                        width: '14px',
+                        height: '14px',
+                      }}
                     >
-                      <SunIcon />
-                      <span>Light</span>
-                    </button>
-                    <button
-                      className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
-                      onClick={() => handleThemeChange('dark')}
-                    >
-                      <MoonIcon />
-                      <span>Dark</span>
-                    </button>
-                  </div>
+                      {item.badge}
+                    </span>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+                <span className="mobile-tab-label">{item.label}</span>
+              </Link>
+            );
+          })}
 
-          <button onClick={handleSignOut} className="nav-signout-btn">
-            <SignOutIcon />
-            <span>Sign Out</span>
+          {/* Sign out tab */}
+          <button
+            onClick={handleSignOut}
+            className="mobile-tab-item"
+            style={{ border: 'none', cursor: 'pointer', background: 'transparent' }}
+          >
+            <div className="mobile-tab-icon-wrap">
+              <SignOutIcon size={20} />
+            </div>
+            <span className="mobile-tab-label">Sign Out</span>
           </button>
-        </div>
-      </nav>
-    </header>
-
-      {/* ── MOBILE BOTTOM TAB BAR ── */}
-      <div className="mobile-tab-bar">
-        {mobileNavItems.map((item) => {
-          const Icon = item.icon;
-          const isCombinedActive = item.isCombined && (pathname.startsWith('/billing') || pathname.startsWith('/price-settings'));
-          const isActive = isCombinedActive || pathname === item.href || (!item.isCombined && item.href !== '/dashboard' && pathname.startsWith(item.href));
-          
-          // Target URL when tapping combined tab on mobile
-          const targetHref = item.isCombined
-            ? (pathname.startsWith('/billing') ? '/price-settings' : '/billing')
-            : item.href;
-
-          return (
-            <Link
-              key={item.label}
-              href={targetHref}
-              className={`mobile-tab-item ${isActive ? 'active' : ''}`}
-            >
-              <div className="mobile-tab-icon-wrap" style={{ position: 'relative' }}>
-                <Icon size={20} />
-                {item.badge != null && item.badge > 0 && (
-                  <span
-                    className="nav-badge-count"
-                    style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      fontSize: '0.55rem',
-                      width: '14px',
-                      height: '14px',
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-              <span className="mobile-tab-label">{item.label}</span>
-            </Link>
-          );
-        })}
-
-        {/* Sign out tab */}
-        <button
-          onClick={handleSignOut}
-          className="mobile-tab-item"
-          style={{ border: 'none', cursor: 'pointer' }}
-        >
-          <div className="mobile-tab-icon-wrap">
-            <SignOutIcon size={20} />
-          </div>
-          <span className="mobile-tab-label">Sign Out</span>
-        </button>
-      </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

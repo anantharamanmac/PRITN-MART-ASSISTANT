@@ -187,21 +187,45 @@
 }
 
 @keyframes liquid-morph-1 {
-  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  50% { transform: translate(60px, 40px) rotate(90deg) scale(1.12); }
-  100% { transform: translate(-30px, 80px) rotate(180deg) scale(0.95); }
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: translate(60px, 40px) rotate(90deg) scale(1.12);
+  }
+
+  100% {
+    transform: translate(-30px, 80px) rotate(180deg) scale(0.95);
+  }
 }
 
 @keyframes liquid-morph-2 {
-  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  50% { transform: translate(-70px, -50px) rotate(-120deg) scale(1.15); }
-  100% { transform: translate(40px, -90px) rotate(-240deg) scale(0.9); }
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: translate(-70px, -50px) rotate(-120deg) scale(1.15);
+  }
+
+  100% {
+    transform: translate(40px, -90px) rotate(-240deg) scale(0.9);
+  }
 }
 
 @keyframes liquid-morph-3 {
-  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  50% { transform: translate(-40px, -70px) rotate(140deg) scale(1.1); }
-  100% { transform: translate(50px, 30px) rotate(280deg) scale(0.92); }
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: translate(-40px, -70px) rotate(140deg) scale(1.1);
+  }
+
+  100% {
+    transform: translate(50px, 30px) rotate(280deg) scale(0.92);
+  }
 }
 
 /* =============================================
@@ -237,7 +261,6 @@ body {
 .rubber-band-wrapper {
   width: 100%;
   min-height: 100vh;
-  will-change: transform;
   transform-origin: center top;
   position: relative;
 }
@@ -319,7 +342,8 @@ a {
 /* =============================================
    APPLE & VIVO NATURAL GLASS BENDING & LIQUID INFLOW CARD
    ============================================= */
-.glass-card, .liquid-glass-card {
+.glass-card,
+.liquid-glass-card {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
   --stretch-x: 1;
@@ -334,24 +358,25 @@ a {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.75rem;
-  box-shadow: 
+  box-shadow:
     inset 0 1.5px 2.5px 0 rgba(255, 255, 255, 0.5),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.3),
     0 24px 50px rgba(0, 0, 0, 0.5);
   transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
   transform-style: preserve-3d;
   will-change: transform, box-shadow;
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              border-color 0.35s ease, 
-              box-shadow 0.35s ease,
-              background 0.35s ease;
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
   position: relative;
   overflow: hidden;
   touch-action: pan-y;
 }
 
 /* Natural Lens Curved Specular Top Reflection */
-.glass-card::before, .liquid-glass-card::before {
+.glass-card::before,
+.liquid-glass-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -366,20 +391,19 @@ a {
 }
 
 /* Liquid Inflow Aura that surges and blooms under glass on hover */
-.glass-card::after, .liquid-glass-card::after {
+.glass-card::after,
+.liquid-glass-card::after {
   content: '';
   position: absolute;
   top: -20%;
   left: -20%;
   width: 140%;
   height: 140%;
-  background: radial-gradient(
-    circle at var(--lens-x, 50%) var(--lens-y, 50%),
-    rgba(80, 134, 255, 0.28) 0%,
-    rgba(168, 85, 247, 0.22) 30%,
-    rgba(16, 185, 129, 0.14) 55%,
-    transparent 75%
-  );
+  background: radial-gradient(circle at var(--lens-x, 50%) var(--lens-y, 50%),
+      rgba(80, 134, 255, 0.28) 0%,
+      rgba(168, 85, 247, 0.22) 30%,
+      rgba(16, 185, 129, 0.14) 55%,
+      transparent 75%);
   filter: blur(28px);
   pointer-events: none;
   opacity: var(--liquid-flow-opacity, 0);
@@ -389,11 +413,12 @@ a {
 }
 
 /* When hovering, liquid surges into the card & glass bends */
-.glass-card:hover, .liquid-glass-card:hover {
+.glass-card:hover,
+.liquid-glass-card:hover {
   --liquid-flow-opacity: 1;
   --liquid-flow-scale: 1.15;
   border-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 
+  box-shadow:
     inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.7),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35),
     0 35px 70px -10px rgba(0, 0, 0, 0.65),
@@ -402,12 +427,13 @@ a {
 }
 
 /* Elastic Bending & Stretching when Clicking / Holding / Pressing */
-.glass-card:active, .liquid-glass-card:active {
+.glass-card:active,
+.liquid-glass-card:active {
   --liquid-flow-scale: 1.25;
   --liquid-flow-opacity: 1;
   transform: perspective(800px) translateY(3px) scale3d(0.975, 0.985, 0.95) rotateX(-2.5deg);
   border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 
+  box-shadow:
     inset 0 3.5px 6px 0 rgba(255, 255, 255, 0.85),
     inset 0 -2.5px 4px 0 rgba(0, 0, 0, 0.45),
     0 14px 30px rgba(0, 0, 0, 0.55),
@@ -416,7 +442,8 @@ a {
 }
 
 /* Swiping state with real-time responsive tracking */
-.glass-card.is-swiping, .liquid-glass-card.is-swiping {
+.glass-card.is-swiping,
+.liquid-glass-card.is-swiping {
   transition: none !important;
 }
 
@@ -457,7 +484,8 @@ a {
 /* =============================================
    BUTTONS — Apple Liquified Glass Glossy Pills
    ============================================= */
-.btn, .btn-liquid {
+.btn,
+.btn-liquid {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -478,7 +506,8 @@ a {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
-.btn::before, .btn-liquid::before {
+.btn::before,
+.btn-liquid::before {
   content: '';
   position: absolute;
   top: 0;
@@ -490,7 +519,8 @@ a {
   pointer-events: none;
 }
 
-.btn:active, .btn-liquid:active {
+.btn:active,
+.btn-liquid:active {
   transform: scale(0.97);
 }
 
@@ -1171,6 +1201,7 @@ select.input-field option {
     opacity: 0;
     transform: translateY(12px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1288,10 +1319,10 @@ select.input-field option {
    MOBILE BOTTOM TAB BAR
    ============================================= */
 .mobile-tab-bar {
-  display: none;
+  display: none !important;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .navbar {
     padding: 0 1.25rem;
     height: 58px;
@@ -1767,15 +1798,31 @@ select.input-field option {
 }
 
 @keyframes blob-loader-morph-1 {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, -30px) scale(1.15); }
-  100% { transform: translate(-30px, 40px) scale(0.95); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(40px, -30px) scale(1.15);
+  }
+
+  100% {
+    transform: translate(-30px, 40px) scale(0.95);
+  }
 }
 
 @keyframes blob-loader-morph-2 {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-45px, 35px) scale(1.12); }
-  100% { transform: translate(35px, -35px) scale(0.92); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-45px, 35px) scale(1.12);
+  }
+
+  100% {
+    transform: translate(35px, -35px) scale(0.92);
+  }
 }
 
 /* Floating Glass Island Card */
@@ -1791,7 +1838,7 @@ select.input-field option {
   -webkit-backdrop-filter: blur(36px) saturate(220%);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 32px;
-  box-shadow: 
+  box-shadow:
     inset 0 2px 3px 0 rgba(255, 255, 255, 0.45),
     inset 0 -2px 3px 0 rgba(0, 0, 0, 0.4),
     0 24px 60px -12px rgba(0, 0, 0, 0.75),
@@ -1804,15 +1851,18 @@ select.input-field option {
 [data-theme="light"] .liquid-glass-loader-card {
   background: rgba(255, 255, 255, 0.88);
   border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 
+  box-shadow:
     inset 0 2px 3px 0 rgba(255, 255, 255, 0.95),
     0 20px 45px rgba(0, 0, 0, 0.08);
 }
 
 @keyframes glass-card-hover {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -1833,13 +1883,11 @@ select.input-field option {
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle, 
-    rgba(56, 189, 248, 0.45) 0%, 
-    rgba(168, 85, 247, 0.35) 45%, 
-    rgba(16, 185, 129, 0.2) 70%, 
-    transparent 85%
-  );
+  background: radial-gradient(circle,
+      rgba(56, 189, 248, 0.45) 0%,
+      rgba(168, 85, 247, 0.35) 45%,
+      rgba(16, 185, 129, 0.2) 70%,
+      transparent 85%);
   filter: blur(28px);
   pointer-events: none;
   animation: aura-swell 3.2s infinite ease-in-out;
@@ -1847,10 +1895,13 @@ select.input-field option {
 }
 
 @keyframes aura-swell {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(0.88);
     opacity: 0.65;
   }
+
   50% {
     transform: scale(1.18);
     opacity: 0.95;
@@ -1911,13 +1962,23 @@ select.input-field option {
 }
 
 @keyframes orbit-spin-cw {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes orbit-spin-ccw {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
 }
 
 /* Glass Liquid Orb Vessel */
@@ -1951,6 +2012,7 @@ select.input-field option {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-120px);
   }
@@ -1960,6 +2022,7 @@ select.input-field option {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-120px);
   }
@@ -1987,12 +2050,15 @@ select.input-field option {
     transform: translate(0, 0);
     opacity: 0;
   }
+
   25% {
     opacity: 0.85;
   }
+
   80% {
     opacity: 0.85;
   }
+
   100% {
     transform: translate(4px, -42px);
     opacity: 0;
@@ -2004,12 +2070,15 @@ select.input-field option {
     transform: translate(0, 0);
     opacity: 0;
   }
+
   25% {
     opacity: 0.75;
   }
+
   80% {
     opacity: 0.75;
   }
+
   100% {
     transform: translate(-5px, -46px);
     opacity: 0;
@@ -2021,12 +2090,15 @@ select.input-field option {
     transform: translate(0, 0);
     opacity: 0;
   }
+
   25% {
     opacity: 0.9;
   }
+
   80% {
     opacity: 0.9;
   }
+
   100% {
     transform: translate(3px, -36px);
     opacity: 0;
@@ -2038,12 +2110,15 @@ select.input-field option {
     transform: translate(0, 0);
     opacity: 0;
   }
+
   25% {
     opacity: 0.8;
   }
+
   80% {
     opacity: 0.8;
   }
+
   100% {
     transform: translate(-3px, -40px);
     opacity: 0;
@@ -2057,9 +2132,12 @@ select.input-field option {
 }
 
 @keyframes core-levitate {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-3.5px);
   }
@@ -2084,13 +2162,11 @@ select.input-field option {
   left: 0;
   width: 45%;
   height: 100%;
-  background: linear-gradient(
-    90deg, 
-    transparent 0%, 
-    #38bdf8 35%, 
-    #c084fc 70%, 
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      #38bdf8 35%,
+      #c084fc 70%,
+      transparent 100%);
   border-radius: 9999px;
   filter: drop-shadow(0 0 6px #38bdf8);
   animation: progress-flow 2.2s infinite ease-in-out;
@@ -2100,9 +2176,11 @@ select.input-field option {
   0% {
     transform: translateX(-110%);
   }
+
   50% {
     transform: translateX(240%);
   }
+
   100% {
     transform: translateX(-110%);
   }
@@ -2118,14 +2196,12 @@ select.input-field option {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: linear-gradient(
-    90deg, 
-    rgba(255, 255, 255, 0.7) 0%, 
-    #ffffff 25%, 
-    #93c5fd 50%, 
-    #c084fc 75%, 
-    rgba(255, 255, 255, 0.7) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.7) 0%,
+      #ffffff 25%,
+      #93c5fd 50%,
+      #c084fc 75%,
+      rgba(255, 255, 255, 0.7) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -2137,6 +2213,7 @@ select.input-field option {
   0% {
     background-position: 200% center;
   }
+
   100% {
     background-position: -200% center;
   }
@@ -2183,10 +2260,13 @@ select.input-field option {
 }
 
 @keyframes bead-squish-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(0.85);
     opacity: 0.65;
   }
+
   50% {
     transform: scale(1.3);
     opacity: 1;
@@ -4502,7 +4582,7 @@ select.input-field option {
   -webkit-backdrop-filter: blur(40px) saturate(220%);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
-  box-shadow: 
+  box-shadow:
     inset 0 1.5px 2.5px 0 rgba(255, 255, 255, 0.45),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4),
     0 16px 40px rgba(0, 0, 0, 0.6),
@@ -4510,10 +4590,10 @@ select.input-field option {
   transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
   transform-style: preserve-3d;
   will-change: transform, box-shadow;
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              border-color 0.35s ease, 
-              box-shadow 0.35s ease,
-              background 0.35s ease;
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
   overflow: hidden;
   touch-action: pan-y;
 }
@@ -4521,7 +4601,7 @@ select.input-field option {
 [data-theme="light"] .navbar {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 
+  box-shadow:
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.05),
     0 8px 24px rgba(0, 0, 0, 0.08);
@@ -4550,13 +4630,11 @@ select.input-field option {
   left: -20%;
   width: 140%;
   height: 160%;
-  background: radial-gradient(
-    circle at var(--lens-x, 50%) var(--lens-y, 50%),
-    rgba(80, 134, 255, 0.28) 0%,
-    rgba(168, 85, 247, 0.22) 35%,
-    rgba(16, 185, 129, 0.14) 60%,
-    transparent 80%
-  );
+  background: radial-gradient(circle at var(--lens-x, 50%) var(--lens-y, 50%),
+      rgba(80, 134, 255, 0.28) 0%,
+      rgba(168, 85, 247, 0.22) 35%,
+      rgba(16, 185, 129, 0.14) 60%,
+      transparent 80%);
   filter: blur(26px);
   pointer-events: none;
   opacity: var(--liquid-flow-opacity, 0);
@@ -4569,7 +4647,7 @@ select.input-field option {
   --liquid-flow-opacity: 1;
   --liquid-flow-scale: 1.15;
   border-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 
+  box-shadow:
     inset 0 2px 3.5px 0 rgba(255, 255, 255, 0.65),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4),
     0 24px 50px -10px rgba(0, 0, 0, 0.65),
@@ -4582,7 +4660,7 @@ select.input-field option {
   --liquid-flow-opacity: 1;
   transform: perspective(800px) translateY(2px) scale3d(0.985, 0.99, 0.96) rotateX(-1.5deg);
   border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 
+  box-shadow:
     inset 0 3px 5px 0 rgba(255, 255, 255, 0.8),
     0 10px 25px rgba(0, 0, 0, 0.5),
     0 0 45px rgba(80, 134, 255, 0.35);
@@ -4676,7 +4754,8 @@ select.input-field option {
   backdrop-filter: blur(16px);
 }
 
-.nav-user-chip:hover, .nav-user-chip.active {
+.nav-user-chip:hover,
+.nav-user-chip.active {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.28);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -4710,7 +4789,8 @@ select.input-field option {
   backdrop-filter: blur(16px);
 }
 
-.nav-notif-bell-btn:hover, .nav-notif-bell-btn.active {
+.nav-notif-bell-btn:hover,
+.nav-notif-bell-btn.active {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.3);
 }
@@ -4737,130 +4817,201 @@ select.input-field option {
   box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
 }
 
-/* Bottom Mobile Tab Bar with Liquid Glass Bending */
+/* =============================================
+   MOBILE BOTTOM TAB BAR (VISIBLE STRICTLY ON MOBILE <= 768PX)
+   DESKTOP (> 768PX) IS COMPLETELY HIDDEN
+   ============================================= */
 .mobile-tab-bar {
-  --tilt-x: 0deg;
-  --tilt-y: 0deg;
-  --stretch-x: 1;
-  --stretch-y: 1;
-  --lens-x: 50%;
-  --lens-y: 50%;
-  --liquid-flow-scale: 0.8;
-  --liquid-flow-opacity: 0;
-  position: fixed;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%) perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
-  transform-style: preserve-3d;
-  will-change: transform, box-shadow;
-  width: calc(100% - 2rem);
-  max-width: 500px;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0.6rem 0.5rem;
-  background: rgba(10, 15, 30, 0.8);
-  backdrop-filter: blur(32px) saturate(220%);
-  -webkit-backdrop-filter: blur(32px) saturate(220%);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 9999px;
-  box-shadow: 
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.3),
-    0 20px 50px rgba(0, 0, 0, 0.65);
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              border-color 0.35s ease, 
-              box-shadow 0.35s ease,
-              background 0.35s ease;
-  overflow: hidden;
-  touch-action: pan-y;
+  display: none !important;
 }
 
-/* Specular Lens for Mobile Tab Bar */
-.mobile-tab-bar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(85% 60% at var(--lens-x, 50%) var(--lens-y, 20%), rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 80%);
-  border-radius: 9999px;
-  pointer-events: none;
-  transition: background 0.15s ease-out, opacity 0.3s ease;
-  z-index: 1;
+@media (min-width: 769px) {
+  .mobile-tab-bar,
+  body > .mobile-tab-bar {
+    display: none !important;
+  }
 }
 
-/* Liquid Inflow Aura for Mobile Tab Bar */
-.mobile-tab-bar::after {
-  content: '';
-  position: absolute;
-  top: -30%;
-  left: -20%;
-  width: 140%;
-  height: 160%;
-  background: radial-gradient(
-    circle at var(--lens-x, 50%) var(--lens-y, 50%),
-    rgba(80, 134, 255, 0.28) 0%,
-    rgba(168, 85, 247, 0.22) 35%,
-    rgba(16, 185, 129, 0.14) 60%,
-    transparent 80%
-  );
-  filter: blur(24px);
-  pointer-events: none;
-  opacity: var(--liquid-flow-opacity, 0);
-  transform: scale(var(--liquid-flow-scale, 0.8));
-  transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  z-index: 0;
-}
+@media (max-width: 768px) {
+  .mobile-tab-bar {
+    --tilt-x: 0deg;
+    --tilt-y: 0deg;
+    --stretch-x: 1;
+    --stretch-y: 1;
+    --lens-x: 50%;
+    --lens-y: 50%;
+    --liquid-flow-scale: 0.8;
+    --liquid-flow-opacity: 0;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    padding: 0.45rem 0.35rem calc(0.5rem + env(safe-area-inset-bottom, 12px)) 0.35rem !important;
+    background: rgba(10, 15, 30, 0.92);
+    backdrop-filter: blur(32px) saturate(220%);
+    -webkit-backdrop-filter: blur(32px) saturate(220%);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow:
+      inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.4),
+      0 -10px 40px rgba(0, 0, 0, 0.7);
+    transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
+    transform-origin: center bottom;
+    transform-style: preserve-3d;
+    will-change: transform, box-shadow;
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      background 0.35s ease;
+    overflow: hidden;
+    touch-action: pan-y;
+    pointer-events: auto;
+  }
 
-.mobile-tab-bar:hover {
-  --liquid-flow-opacity: 1;
-  --liquid-flow-scale: 1.15;
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 
-    inset 0 2px 3.5px 0 rgba(255, 255, 255, 0.65),
-    0 24px 50px -10px rgba(0, 0, 0, 0.65),
-    0 0 35px 0 rgba(80, 134, 255, 0.25);
-}
+  [data-theme="light"] .mobile-tab-bar {
+    background: rgba(255, 255, 255, 0.94);
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow:
+      inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
+      0 -6px 25px rgba(0, 0, 0, 0.08);
+  }
 
-.mobile-tab-bar:active {
-  --liquid-flow-scale: 1.25;
-  --liquid-flow-opacity: 1;
-  transform: translateX(-50%) perspective(800px) translateY(2px) scale3d(0.98, 0.985, 0.96) rotateX(-1.5deg);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    inset 0 3px 5px 0 rgba(255, 255, 255, 0.8),
-    0 10px 25px rgba(0, 0, 0, 0.5),
-    0 0 45px rgba(80, 134, 255, 0.35);
-  transition: transform 0.12s ease-out;
-}
+  /* Specular Lens for Mobile Tab Bar */
+  .mobile-tab-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(85% 60% at var(--lens-x, 50%) var(--lens-y, 20%), rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 80%);
+    border-radius: 20px 20px 0 0;
+    pointer-events: none;
+    transition: background 0.15s ease-out, opacity 0.3s ease;
+    z-index: 1;
+  }
 
-.mobile-tab-bar.is-swiping {
-  transition: none !important;
-}
+  /* Liquid Inflow Aura for Mobile Tab Bar */
+  .mobile-tab-bar::after {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -20%;
+    width: 140%;
+    height: 160%;
+    background: radial-gradient(circle at var(--lens-x, 50%) var(--lens-y, 50%),
+        rgba(80, 134, 255, 0.28) 0%,
+        rgba(168, 85, 247, 0.22) 35%,
+        rgba(16, 185, 129, 0.14) 60%,
+        transparent 80%);
+    filter: blur(24px);
+    pointer-events: none;
+    opacity: var(--liquid-flow-opacity, 0);
+    transform: scale(var(--liquid-flow-scale, 0.8));
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 0;
+  }
 
-.mobile-tab-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  color: var(--text-secondary);
-  font-size: 0.65rem;
-  font-weight: 600;
-  transition: all 0.25s ease;
-  padding: 0.35rem 0.65rem;
-  border-radius: 9999px;
-  position: relative;
-  z-index: 2;
-}
+  .mobile-tab-bar:hover {
+    --liquid-flow-opacity: 1;
+    --liquid-flow-scale: 1.2;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow:
+      inset 0 2.5px 4px 0 rgba(255, 255, 255, 0.75),
+      0 -14px 45px rgba(0, 0, 0, 0.75),
+      0 0 35px 0 rgba(80, 134, 255, 0.3) !important;
+  }
 
-.mobile-tab-item.active {
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(80, 134, 255, 0.8) 0%, rgba(37, 99, 235, 0.9) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 14px rgba(80, 134, 255, 0.35);
+  .mobile-tab-bar:active {
+    --liquid-flow-scale: 1.35;
+    --liquid-flow-opacity: 1;
+    transform: perspective(800px) translateY(2px) scale3d(0.988, 0.988, 0.97) rotateX(-2deg) !important;
+    border-color: rgba(255, 255, 255, 0.55) !important;
+    box-shadow:
+      inset 0 3.5px 6px 0 rgba(255, 255, 255, 0.9),
+      0 -6px 20px rgba(0, 0, 0, 0.65),
+      0 0 50px rgba(80, 134, 255, 0.45) !important;
+    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+
+  .mobile-tab-bar.is-swiping {
+    transition: none !important;
+  }
+
+  .mobile-tab-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: var(--text-secondary);
+    font-size: 0.62rem;
+    font-weight: 600;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+      background 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+    padding: 0.38rem 0.25rem;
+    border-radius: 14px;
+    position: relative;
+    z-index: 2;
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid transparent;
+    outline: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: perspective(600px) translateZ(0);
+    transform-style: preserve-3d;
+  }
+
+  .mobile-tab-item:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    transform: perspective(600px) translateY(-3px) scale(1.06) rotateX(4deg);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), 0 0 14px rgba(80, 134, 255, 0.25);
+  }
+
+  .mobile-tab-item:active {
+    transform: perspective(600px) translateY(2px) scale(0.92) rotateX(-4deg) !important;
+    background: rgba(80, 134, 255, 0.22) !important;
+    border-color: rgba(80, 134, 255, 0.45) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(80, 134, 255, 0.45) !important;
+    transition: transform 0.08s ease-out !important;
+  }
+
+  .mobile-tab-item.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(80, 134, 255, 0.88) 0%, rgba(37, 99, 235, 0.96) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 16px rgba(80, 134, 255, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.6);
+    transform: perspective(600px) translateY(-1.5px) scale(1.02);
+  }
+
+  .mobile-tab-item.active:hover {
+    transform: perspective(600px) translateY(-3px) scale(1.07) rotateX(3deg);
+    box-shadow: 0 8px 22px rgba(80, 134, 255, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.7);
+  }
+
+  .mobile-tab-item.active:active {
+    transform: perspective(600px) translateY(2px) scale(0.93) rotateX(-3deg) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(80, 134, 255, 0.5) !important;
+  }
 }
 
 /* =============================================
@@ -4886,6 +5037,7 @@ select.input-field option {
 }
 
 @media (max-width: 768px) {
+
   /* Vibrant Mobile Gradient Mesh System */
   .liquid-canvas-bg {
     background: radial-gradient(circle at 50% 5%, rgba(30, 41, 59, 0.95) 0%, var(--bg-color) 85%);
@@ -4922,10 +5074,11 @@ select.input-field option {
   }
 
   /* Vibrant mobile glass surfaces with dual iridescent reflections */
-  .glass-card, .liquid-glass-card {
+  .glass-card,
+  .liquid-glass-card {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(80, 134, 255, 0.09) 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.25) !important;
-    box-shadow: 
+    box-shadow:
       inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.6),
       0 18px 40px rgba(0, 0, 0, 0.55),
       0 0 30px rgba(80, 134, 255, 0.2) !important;
@@ -4934,6 +5087,11 @@ select.input-field option {
   /* Hide desktop menu bar on mobile since bottom mobile tab bar handles navigation */
   .nav-links {
     display: none !important;
+  }
+
+  /* Universal bottom clearance on mobile to prevent content clipping under fixed bottom nav bar */
+  body {
+    padding-bottom: calc(5.2rem + env(safe-area-inset-bottom, 12px)) !important;
   }
 
   /* Container spacing to clear top sticky navbar and fixed bottom navigation bar */
@@ -4953,7 +5111,8 @@ select.input-field option {
   }
 
   /* Glass cards touch optimization for mobile */
-  .glass-card, .liquid-glass-card {
+  .glass-card,
+  .liquid-glass-card {
     padding: 1.15rem !important;
     border-radius: var(--radius-md) !important;
   }
@@ -4999,14 +5158,16 @@ select.input-field option {
   }
 
   /* Button touch optimization */
-  .btn, .btn-liquid {
+  .btn,
+  .btn-liquid {
     padding: 0.65rem 1.25rem !important;
     font-size: 0.85rem !important;
     min-height: 44px !important;
   }
 
   .input-field {
-    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    font-size: 16px !important;
+    /* Prevents iOS auto-zoom */
     padding: 0.75rem 1rem !important;
   }
 }
@@ -5032,16 +5193,20 @@ select.input-field option {
     font-size: 0.85rem !important;
   }
 
-  /* Mobile floating bottom tab bar geometry */
+  /* Mobile bottom tab bar stuck at screen height end */
   .mobile-tab-bar {
-    width: calc(100% - 1.25rem) !important;
-    bottom: 0.75rem !important;
-    padding: 0.45rem 0.35rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding: 0.38rem 0.2rem calc(0.48rem + env(safe-area-inset-bottom, 10px)) 0.2rem !important;
   }
 
   .mobile-tab-item {
-    padding: 0.3rem 0.4rem !important;
-    font-size: 0.6rem !important;
+    padding: 0.3rem 0.2rem !important;
+    font-size: 0.58rem !important;
   }
 }
 
@@ -5119,6 +5284,7 @@ select.input-field option {
 
 /* Hide navigation bars on printing documents and slips */
 @media print {
+
   .no-print,
   .navbar-fixed-container,
   .navbar,

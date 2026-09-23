@@ -290,7 +290,7 @@ export default function OrdersPage() {
   const handleShareCustomerLink = (ord: Partial<OrderRecord>) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const link = `${origin}/roster-intake/${ord.infoNumber || ord.id}`;
-    
+
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link);
       toast.success(`Copied Customer Link to Clipboard!`, { id: 'copy-link' });
@@ -300,7 +300,7 @@ export default function OrdersPage() {
     const msg = encodeURIComponent(
       `Hi ${ord.customerName || 'Customer'}, please fill out your team jersey details (Name, Number, Size, Sleeve & Collar) using our official Print Mart link: ${link}`
     );
-    
+
     if (cleanPhone) {
       window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
     } else {
@@ -483,7 +483,7 @@ export default function OrdersPage() {
     setClothImage(ord.clothImage || '');
     setBackImage(ord.backImage || '');
     setPieces(ord.pieces || 1);
-    
+
     if (NECK_TYPES.includes(ord.neckType)) {
       setNeckType(ord.neckType);
       setCustomNeckType('');
@@ -977,7 +977,7 @@ export default function OrdersPage() {
               }}
               title="Post current day order summary report to Discord channel"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
               <span>{sendingDiscordSummary ? 'Sending...' : '📊 Discord Summary'}</span>
             </button>
           </div>
@@ -1227,16 +1227,16 @@ export default function OrdersPage() {
               (o.orderTitle && o.orderTitle.toLowerCase().includes(q))
             );
           }) && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', color: '#eab308', fontSize: '0.78rem' }}>
-              <span>No results in {formatMonthLabel(selectedMonth)}, but matching orders were found in other months!</span>
-              <button
-                onClick={() => setSelectedMonth('all')}
-                style={{ padding: '0.25rem 0.65rem', borderRadius: '6px', border: 'none', background: '#eab308', color: '#000', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                Search All Months
-              </button>
-            </div>
-          )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', color: '#eab308', fontSize: '0.78rem' }}>
+                <span>No results in {formatMonthLabel(selectedMonth)}, but matching orders were found in other months!</span>
+                <button
+                  onClick={() => setSelectedMonth('all')}
+                  style={{ padding: '0.25rem 0.65rem', borderRadius: '6px', border: 'none', background: '#eab308', color: '#000', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                >
+                  Search All Months
+                </button>
+              </div>
+            )}
         </div>
 
         {/* Orders Grid */}
@@ -1285,8 +1285,8 @@ export default function OrdersPage() {
                     border: isOverdue
                       ? '1px solid rgba(239, 68, 68, 0.6)'
                       : isDueToday
-                      ? '1px solid rgba(234, 179, 8, 0.6)'
-                      : '1px solid var(--border)',
+                        ? '1px solid rgba(234, 179, 8, 0.6)'
+                        : '1px solid var(--border)',
                     boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
                     position: 'relative'
                   }}

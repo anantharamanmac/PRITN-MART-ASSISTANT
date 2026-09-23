@@ -25,6 +25,7 @@ export default function RubberBandScroll({ children }: { children: React.ReactNo
       // Elastic stretch scale
       const stretch = 1 + Math.min(0.045, Math.abs(clampedOffset) * 0.0004);
 
+      wrapper.style.willChange = 'transform';
       wrapper.style.transition = 'none';
       wrapper.style.transformOrigin = isBottom ? 'center top' : 'center bottom';
       wrapper.style.transform = `translate3d(0, ${-clampedOffset}px, 0) scaleY(${stretch})`;
@@ -42,6 +43,8 @@ export default function RubberBandScroll({ children }: { children: React.ReactNo
       setTimeout(() => {
         if (wrapper) {
           wrapper.style.transition = '';
+          wrapper.style.transform = '';
+          wrapper.style.willChange = '';
         }
         isResetting = false;
       }, 550);
