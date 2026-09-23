@@ -538,7 +538,6 @@ export default function Navbar({ user }: { user: AppUser }) {
         <nav className="navbar">
           {/* Brand */}
           <Link href="/dashboard" className="nav-brand">
-            <span className="nav-brand-dot" />
             Print Mart
           </Link>
 
