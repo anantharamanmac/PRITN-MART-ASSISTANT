@@ -1,9 +1,159 @@
 [
   {
-    "id": "64e0579",
-    "version": "v1.8 - 64E0579",
+    "id": "28d4b59",
+    "version": "v1.8 - 28D4B59",
+    "date": "Sep 23, 2026",
+    "title": "feat: add responsive Navbar component with liquid glass physics and theme toggling",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1790121600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "c7d5ff0",
+    "version": "v1.8 - C7D5FF0",
+    "date": "Sep 23, 2026",
+    "title": "feat: add core UI components, global glass styles, and orders page",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1790121600,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "47e27f2",
+    "version": "v1.8 - 47E27F2",
+    "date": "Sep 21, 2026",
+    "title": "feat: add global styles and loader components with liquid glass design",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789948800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "d166298",
+    "version": "v1.8 - D166298",
+    "date": "Sep 21, 2026",
+    "title": "feat: add global liquid glass stylesheet and Navbar component",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789948800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "e059c46",
+    "version": "v1.8 - E059C46",
+    "date": "Sep 21, 2026",
+    "title": "feat: add root layout, global liquid glass styles, and rubber band scroll component",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789948800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "e293316",
+    "version": "v1.8 - E293316",
+    "date": "Sep 21, 2026",
+    "title": "feat: visual change : implement worker dashboard, navigation bar, and global styles",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789948800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "76fbe6d",
+    "version": "v1.8 - 76FBE6D",
+    "date": "Sep 21, 2026",
+    "title": "feat: add worker dashboard page with attendance tracking and global styles",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789948800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "c0149ca",
+    "version": "v1.8 - C0149CA",
+    "date": "Sep 21, 2026",
+    "title": "feat: create worker dashboard page and global styles",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789948800,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "6ea7402",
+    "version": "v1.8 - 6EA7402",
+    "date": "Sep 17, 2026",
+    "title": "feat: add database backup and restore modal component and auto-save API route",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789603200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "0a0fa2a",
+    "version": "v1.8 - 0A0FA2A",
+    "date": "Sep 17, 2026",
+    "title": "feat: implement database backup and restore system with ZIP support and admin UI updates",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1789603200,
+      "nanoseconds": 0
+    }
+  },
+  {
+    "id": "bb802de",
+    "version": "v1.8 - BB802DE",
     "date": "Sep 8, 2026",
-    "title": "face i teswt",
+    "title": "feat: implement FaceIdPunchModal integration for attendance check-ins and check-outs on the dashboard",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
@@ -15,10 +165,10 @@
     }
   },
   {
-    "id": "bfec044",
-    "version": "v1.8 - BFEC044",
+    "id": "9e7eb87",
+    "version": "v1.8 - 9E7EB87",
     "date": "Sep 8, 2026",
-    "title": "j",
+    "title": "feat: implement neural face recognition component for biometric user verification",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [
@@ -26,156 +176,6 @@
     ],
     "createdAt": {
       "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "1ea3e02",
-    "version": "v1.8 - 1EA3E02",
-    "date": "Sep 8, 2026",
-    "title": "feat: add face recognition test page and neural engine integration for biometric enrollment and scanning",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "45e92d9",
-    "version": "v1.8 - 45E92D9",
-    "date": "Sep 8, 2026",
-    "title": "feat: add face recognition and webauthn enrollment system with neural engine integration",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "e065396",
-    "version": "v1.8 - E065396",
-    "date": "Sep 8, 2026",
-    "title": "feat: implement neural face recognition system using face-api.js with real-time detection and enrollment capabilities",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "21be6f9",
-    "version": "v1.8 - 21BE6F9",
-    "date": "Sep 8, 2026",
-    "title": "feat: add face recognition and webauthn enrollment test page with engine integration",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5a42668",
-    "version": "v1.8 - 5A42668",
-    "date": "Sep 8, 2026",
-    "title": "feat: implement administrative dashboard with user, attendance, office, and file management capabilities",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "9fe7d1e",
-    "version": "v1.8 - 9FE7D1E",
-    "date": "Sep 3, 2026",
-    "title": "feat: implement salary statement generation component with PDF export capabilities and add associated dashboard and admin view pages",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788393600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "5e37d89",
-    "version": "v1.8 - 5E37D89",
-    "date": "Aug 23, 2026",
-    "title": "feat: add git history log and implement Excel player roster parser utility",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1787443200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "8ad0019",
-    "version": "v1.8 - 8AD0019",
-    "date": "Aug 18, 2026",
-    "title": "feat: implement attendance tracking, break management, and user payroll configuration modules",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1787011200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "bea3627",
-    "version": "v1.8 - BEA3627",
-    "date": "Aug 18, 2026",
-    "title": "feat: implement customer-facing roster intake page with order lookup API and Firebase integration",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1787011200,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "d974358",
-    "version": "v1.8 - D974358",
-    "date": "Aug 17, 2026",
-    "title": "feat: create customer roster intake page for order management and bulk player entry",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1786924800,
       "nanoseconds": 0
     }
   }

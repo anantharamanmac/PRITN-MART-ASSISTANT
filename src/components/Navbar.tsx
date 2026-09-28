@@ -73,6 +73,16 @@ const TaxIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
+const SizeChartIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.3 8.7 8.7 21.3c-.4.4-1 .4-1.4 0l-5.6-5.6c-.4-.4-.4-1 0-1.4L14.3 1.7c.4-.4 1-.4 1.4 0l5.6 5.6c.4.4.4 1 0 1.4z" />
+    <path d="m14.5 4.5-2 2" />
+    <path d="m11.5 7.5-3 3" />
+    <path d="m8.5 10.5-2 2" />
+    <path d="m5.5 13.5-3 3" />
+  </svg>
+);
+
 const SignOutIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -496,6 +506,7 @@ export default function Navbar({ user }: { user: AppUser }) {
     { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
     { href: '/orders', label: 'Orders', icon: OrdersIcon },
     { href: '/billing', label: 'Billing', icon: BillingIcon },
+    { href: '/size-chart', label: 'Size Chart', icon: SizeChartIcon },
     { href: '/tally-export', label: 'Tally Tax', icon: TaxIcon },
     { href: '/price-settings', label: 'Prices', icon: PriceIcon },
     { href: '/history', label: 'History', icon: HistoryIcon },
@@ -513,6 +524,7 @@ export default function Navbar({ user }: { user: AppUser }) {
   const mobileNavItems = [
     { href: '/dashboard', label: 'Home', icon: DashboardIcon },
     { href: '/orders', label: 'Orders', icon: OrdersIcon },
+    { href: '/size-chart', label: 'Size Chart', icon: SizeChartIcon },
     { href: '/tally-export', label: 'Tally Tax', icon: TaxIcon },
     {
       href: '/billing',
@@ -668,7 +680,26 @@ export default function Navbar({ user }: { user: AppUser }) {
 
               {showDropdown && (
                 <div className="nav-dropdown-menu">
-                  <div className="nav-dropdown-header">Settings</div>
+                  <div className="nav-dropdown-header">Tools & Settings</div>
+                  <div className="nav-dropdown-divider" />
+                  <Link
+                    href="/size-chart"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.8rem',
+                      color: 'var(--text-primary)',
+                      textDecoration: 'none',
+                      borderRadius: '6px',
+                      transition: 'background 0.2s',
+                    }}
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    <SizeChartIcon size={16} />
+                    <span>Size Chart Studio</span>
+                  </Link>
                   <div className="nav-dropdown-divider" />
                   <div className="nav-dropdown-theme-section">
                     <div className="nav-dropdown-theme-title">Theme</div>
