@@ -79,44 +79,10 @@ export default function RubberBandScroll({ children }: { children: React.ReactNo
       }
     };
 
-    // ── MOBILE: Touch Gesture Drag & Stretch ──
-    let touchStartY = 0;
-    let touchStartScrollTop = 0;
-    let isTrackingTouch = false;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      touchStartY = e.touches[0].clientY;
-      const doc = document.documentElement;
-      touchStartScrollTop = window.scrollY || doc.scrollTop || 0;
-      isTrackingTouch = true;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isTrackingTouch || e.touches.length !== 1) return;
-      const currentY = e.touches[0].clientY;
-      const deltaY = touchStartY - currentY; // positive = scrolling down (towards bottom)
-      const doc = document.documentElement;
-      const scrollTop = window.scrollY || doc.scrollTop || 0;
-      const windowHeight = window.innerHeight;
-      const scrollHeight = Math.max(doc.scrollHeight, document.body.scrollHeight);
-      const isAtTop = scrollTop <= 2;
-      const isAtBottom = scrollTop + windowHeight >= scrollHeight - 3;
-
-      if (isAtTop && deltaY < 0) {
-        // Pulling down past top boundary
-        updateTransform(deltaY * 0.9, false);
-      } else if (isAtBottom && deltaY > 0) {
-        // Pulling up past bottom EOF boundary
-        updateTransform(deltaY * 0.9, true);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (!isTrackingTouch) return;
-      isTrackingTouch = false;
-      snapBack();
-    };
+    // ── MOBILE: Touch Gesture Drag & Stretch disabled to keep mobile touch fast and prevent cards from bouncing ──
+    const handleTouchStart = () => {};
+    const handleTouchMove = () => {};
+    const handleTouchEnd = () => {};
 
     window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });

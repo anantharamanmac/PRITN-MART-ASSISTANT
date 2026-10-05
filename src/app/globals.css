@@ -362,13 +362,11 @@ a {
     inset 0 1.5px 2.5px 0 rgba(255, 255, 255, 0.5),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.3),
     0 24px 50px rgba(0, 0, 0, 0.5);
-  transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
-  transform-style: preserve-3d;
-  will-change: transform, box-shadow;
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-color 0.35s ease,
-    box-shadow 0.35s ease,
-    background 0.35s ease;
+  transform: none;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
   position: relative;
   overflow: hidden;
   touch-action: pan-y;
@@ -412,7 +410,7 @@ a {
   z-index: 0;
 }
 
-/* When hovering, liquid surges into the card & glass bends */
+/* When hovering, liquid surges into the card & glass glows without physical shift */
 .glass-card:hover,
 .liquid-glass-card:hover {
   --liquid-flow-opacity: 1;
@@ -426,19 +424,11 @@ a {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(80, 134, 255, 0.08) 100%);
 }
 
-/* Elastic Bending & Stretching when Clicking / Holding / Pressing */
+/* Stable container when clicking - prevents buttons from jumping away */
 .glass-card:active,
 .liquid-glass-card:active {
-  --liquid-flow-scale: 1.25;
-  --liquid-flow-opacity: 1;
-  transform: perspective(800px) translateY(3px) scale3d(0.975, 0.985, 0.95) rotateX(-2.5deg);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow:
-    inset 0 3.5px 6px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2.5px 4px 0 rgba(0, 0, 0, 0.45),
-    0 14px 30px rgba(0, 0, 0, 0.55),
-    0 0 55px rgba(80, 134, 255, 0.45);
-  transition: transform 0.12s ease-out;
+  transform: none !important;
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* Swiping state with real-time responsive tracking */
@@ -533,8 +523,9 @@ a {
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(80, 134, 255, 0.6), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.7);
+  transform: none;
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(80, 134, 255, 0.5), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.7);
   background: linear-gradient(135deg, rgba(100, 150, 255, 0.95) 0%, rgba(50, 110, 245, 1) 100%);
 }
 
@@ -548,8 +539,8 @@ a {
 .btn-outline:hover {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1.5px 1px rgba(255, 255, 255, 0.4);
+  transform: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1.5px 1px rgba(255, 255, 255, 0.4);
 }
 
 .btn-success {
@@ -561,8 +552,9 @@ a {
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.6), inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
+  transform: none;
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.5), inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
   background: linear-gradient(135deg, rgba(20, 200, 140, 0.95) 0%, rgba(10, 165, 115, 1) 100%);
 }
 
@@ -575,8 +567,9 @@ a {
 }
 
 .btn-pause:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.6), inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
+  transform: none;
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.5), inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
 }
 
 .btn-resume {
@@ -588,8 +581,9 @@ a {
 }
 
 .btn-resume:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.6), inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
+  transform: none;
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.5), inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
 }
 
 /* =============================================
@@ -4587,13 +4581,11 @@ select.input-field option {
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4),
     0 16px 40px rgba(0, 0, 0, 0.6),
     0 2px 8px rgba(0, 0, 0, 0.4);
-  transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
-  transform-style: preserve-3d;
-  will-change: transform, box-shadow;
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-color 0.35s ease,
-    box-shadow 0.35s ease,
-    background 0.35s ease;
+  transform: none;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
   overflow: hidden;
   touch-action: pan-y;
 }
@@ -4656,15 +4648,8 @@ select.input-field option {
 }
 
 .navbar:active {
-  --liquid-flow-scale: 1.25;
-  --liquid-flow-opacity: 1;
-  transform: perspective(800px) translateY(2px) scale3d(0.985, 0.99, 0.96) rotateX(-1.5deg);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow:
-    inset 0 3px 5px 0 rgba(255, 255, 255, 0.8),
-    0 10px 25px rgba(0, 0, 0, 0.5),
-    0 0 45px rgba(80, 134, 255, 0.35);
-  transition: transform 0.12s ease-out;
+  transform: none !important;
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .navbar.is-swiping {
@@ -4865,14 +4850,7 @@ select.input-field option {
     box-shadow:
       inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.4),
       0 -10px 40px rgba(0, 0, 0, 0.7);
-    transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale3d(var(--stretch-x), var(--stretch-y), 1);
-    transform-origin: center bottom;
-    transform-style: preserve-3d;
-    will-change: transform, box-shadow;
-    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-      border-color 0.35s ease,
-      box-shadow 0.35s ease,
-      background 0.35s ease;
+    transform: none !important;
     overflow: hidden;
     touch-action: pan-y;
     pointer-events: auto;
@@ -4933,15 +4911,8 @@ select.input-field option {
   }
 
   .mobile-tab-bar:active {
-    --liquid-flow-scale: 1.35;
-    --liquid-flow-opacity: 1;
-    transform: perspective(800px) translateY(2px) scale3d(0.988, 0.988, 0.97) rotateX(-2deg) !important;
+    transform: none !important;
     border-color: rgba(255, 255, 255, 0.55) !important;
-    box-shadow:
-      inset 0 3.5px 6px 0 rgba(255, 255, 255, 0.9),
-      0 -6px 20px rgba(0, 0, 0, 0.65),
-      0 0 50px rgba(80, 134, 255, 0.45) !important;
-    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   }
 
   .mobile-tab-bar.is-swiping {
@@ -4959,7 +4930,7 @@ select.input-field option {
     color: var(--text-secondary);
     font-size: 0.62rem;
     font-weight: 600;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transition:
       background 0.2s ease,
       box-shadow 0.2s ease,
       color 0.2s ease,
@@ -4975,24 +4946,21 @@ select.input-field option {
     cursor: pointer;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    transform: perspective(600px) translateZ(0);
-    transform-style: preserve-3d;
+    transform: none;
   }
 
   .mobile-tab-item:hover {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.16);
-    transform: perspective(600px) translateY(-3px) scale(1.06) rotateX(4deg);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), 0 0 14px rgba(80, 134, 255, 0.25);
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   }
 
   .mobile-tab-item:active {
-    transform: perspective(600px) translateY(2px) scale(0.92) rotateX(-4deg) !important;
+    transform: none !important;
     background: rgba(80, 134, 255, 0.22) !important;
     border-color: rgba(80, 134, 255, 0.45) !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(80, 134, 255, 0.45) !important;
-    transition: transform 0.08s ease-out !important;
   }
 
   .mobile-tab-item.active {
@@ -5000,16 +4968,16 @@ select.input-field option {
     background: linear-gradient(135deg, rgba(80, 134, 255, 0.88) 0%, rgba(37, 99, 235, 0.96) 100%);
     border: 1px solid rgba(255, 255, 255, 0.35);
     box-shadow: 0 4px 16px rgba(80, 134, 255, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.6);
-    transform: perspective(600px) translateY(-1.5px) scale(1.02);
+    transform: none;
   }
 
   .mobile-tab-item.active:hover {
-    transform: perspective(600px) translateY(-3px) scale(1.07) rotateX(3deg);
-    box-shadow: 0 8px 22px rgba(80, 134, 255, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.7);
+    transform: none;
+    box-shadow: 0 6px 18px rgba(80, 134, 255, 0.45), inset 0 1px 1.5px rgba(255, 255, 255, 0.7);
   }
 
   .mobile-tab-item.active:active {
-    transform: perspective(600px) translateY(2px) scale(0.93) rotateX(-3deg) !important;
+    transform: none !important;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(80, 134, 255, 0.5) !important;
   }
 }
@@ -5110,11 +5078,87 @@ select.input-field option {
     margin-bottom: 1.25rem !important;
   }
 
-  /* Glass cards touch optimization for mobile */
+  /* Glass cards touch & performance optimization for mobile — remove all card animations and hover delays */
   .glass-card,
-  .liquid-glass-card {
-    padding: 1.15rem !important;
-    border-radius: var(--radius-md) !important;
+  .liquid-glass-card,
+  .card-glass,
+  .welcome-modal-card,
+  .liquid-glass-loader-card,
+  .modal-responsive-card,
+  .mobile-shift-card,
+  .feedback-item-card,
+  .dev-timeline-card,
+  .notfound-card,
+  .sc-card,
+  .sc-modal-card,
+  .popup-modal-container,
+  [class*="card"] {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  /* Completely disable card pseudo-element liquid aura and shine motion on mobile */
+  .glass-card::before,
+  .liquid-glass-card::before,
+  .glass-card::after,
+  .liquid-glass-card::after,
+  .card-glass::before,
+  .card-glass::after,
+  [class*="card"]::before,
+  [class*="card"]::after {
+    display: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Prevent any hover/active transforms, liquid inflow blooms, or motion on touch */
+  .glass-card:hover,
+  .liquid-glass-card:hover,
+  .card-glass:hover,
+  .glass-card:active,
+  .liquid-glass-card:active,
+  .card-glass:active,
+  .welcome-modal-card:hover,
+  .modal-responsive-card:hover,
+  [class*="card"]:hover,
+  [class*="card"]:active {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    --liquid-flow-opacity: 0 !important;
+    --liquid-flow-scale: 1 !important;
+  }
+
+  /* Strip card and container entry animations on mobile so cards render instantly */
+  .animate-scale-up,
+  .animate-fade-in,
+  .animate-shake,
+  .animate-float-slow-banner,
+  .animate-bounce,
+  .container.animate-fade-in,
+  .glass-card.animate-scale-up,
+  .liquid-glass-card.animate-scale-up,
+  .card-glass.animate-scale-up,
+  .welcome-modal-card.animate-scale-up,
+  .modal-responsive-card.animate-scale-up,
+  .glass-card.animate-fade-in,
+  .liquid-glass-card.animate-fade-in,
+  .card-glass.animate-fade-in,
+  .modal-content-wrapper.animate-scale-up,
+  .modal-content-wrapper.animate-fade-in,
+  .tshirt-ink-reveal,
+  .tshirt-squeegee,
+  .liquid-orbit-ring,
+  .liquid-wave,
+  .bubble,
+  .liquid-floating-core,
+  .liquid-progress-glow,
+  .cmyk-bead {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 
   /* Mobile Top Navbar spacing */
@@ -5279,6 +5323,88 @@ select.input-field option {
 
   .modal-overlay-container {
     padding: 0.35rem !important;
+  }
+}
+
+/* Mobile / Tablet / Touchscreen devices - eliminate card animations so customers can tap & act with zero delay */
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+  .glass-card,
+  .liquid-glass-card,
+  .card-glass,
+  .welcome-modal-card,
+  .liquid-glass-loader-card,
+  .modal-responsive-card,
+  .mobile-shift-card,
+  .feedback-item-card,
+  .dev-timeline-card,
+  .notfound-card,
+  .sc-card,
+  .sc-modal-card,
+  .popup-modal-container,
+  [class*="card"] {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .glass-card::before,
+  .liquid-glass-card::before,
+  .glass-card::after,
+  .liquid-glass-card::after,
+  .card-glass::before,
+  .card-glass::after,
+  [class*="card"]::before,
+  [class*="card"]::after {
+    display: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .glass-card:hover,
+  .liquid-glass-card:hover,
+  .card-glass:hover,
+  .glass-card:active,
+  .liquid-glass-card:active,
+  .card-glass:active,
+  .welcome-modal-card:hover,
+  .modal-responsive-card:hover,
+  [class*="card"]:hover,
+  [class*="card"]:active {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    --liquid-flow-opacity: 0 !important;
+    --liquid-flow-scale: 1 !important;
+  }
+
+  .animate-scale-up,
+  .animate-fade-in,
+  .animate-shake,
+  .animate-float-slow-banner,
+  .animate-bounce,
+  .container.animate-fade-in,
+  .glass-card.animate-scale-up,
+  .liquid-glass-card.animate-scale-up,
+  .card-glass.animate-scale-up,
+  .welcome-modal-card.animate-scale-up,
+  .modal-responsive-card.animate-scale-up,
+  .glass-card.animate-fade-in,
+  .liquid-glass-card.animate-fade-in,
+  .card-glass.animate-fade-in,
+  .modal-content-wrapper.animate-scale-up,
+  .modal-content-wrapper.animate-fade-in,
+  .tshirt-ink-reveal,
+  .tshirt-squeegee,
+  .liquid-orbit-ring,
+  .liquid-wave,
+  .bubble,
+  .liquid-floating-core,
+  .liquid-progress-glow,
+  .cmyk-bead {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 }
 

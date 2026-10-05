@@ -1,5 +1,20 @@
 [
   {
+    "id": "1d3cbcb",
+    "version": "v1.8 - 1D3CBCB",
+    "date": "Sep 28, 2026",
+    "title": "feat: add size chart management page with customizable tables and PDF export features",
+    "badge": "Git Update",
+    "badgeColor": "var(--primary)",
+    "items": [
+      "Developer: anantharamanmac"
+    ],
+    "createdAt": {
+      "seconds": 1790553600,
+      "nanoseconds": 0
+    }
+  },
+  {
     "id": "28d4b59",
     "version": "v1.8 - 28D4B59",
     "date": "Sep 23, 2026",
@@ -154,21 +169,6 @@
     "version": "v1.8 - BB802DE",
     "date": "Sep 8, 2026",
     "title": "feat: implement FaceIdPunchModal integration for attendance check-ins and check-outs on the dashboard",
-    "badge": "Git Update",
-    "badgeColor": "var(--primary)",
-    "items": [
-      "Developer: anantharamanmac"
-    ],
-    "createdAt": {
-      "seconds": 1788825600,
-      "nanoseconds": 0
-    }
-  },
-  {
-    "id": "9e7eb87",
-    "version": "v1.8 - 9E7EB87",
-    "date": "Sep 8, 2026",
-    "title": "feat: implement neural face recognition component for biometric user verification",
     "badge": "Git Update",
     "badgeColor": "var(--primary)",
     "items": [

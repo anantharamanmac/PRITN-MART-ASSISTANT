@@ -29,8 +29,8 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
   const [order, setOrder] = useState<OrderRecord | null>(null);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
-  // Animated Tutorial Modal State
-  const [showTutorial, setShowTutorial] = useState(true);
+  // Animated Tutorial Modal State (disabled by default on mobile so customers can work immediately)
+  const [showTutorial, setShowTutorial] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Form states
@@ -316,6 +316,15 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
             background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
             background-size: 200% 100%;
             animation: shimmerWave 1.8s infinite linear;
+          }
+          @media (max-width: 768px) {
+            .skeleton-shimmer,
+            .popup-modal-container,
+            .slide-animated-content {
+              animation: none !important;
+              transition: none !important;
+              transform: none !important;
+            }
           }
         `}</style>
 

@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 
 export const BACKUP_COLLECTIONS = [
   'orders',
+  'invoices',
   'users',
   'attendance',
   'tasks',

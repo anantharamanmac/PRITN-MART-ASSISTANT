@@ -1672,6 +1672,193 @@ export const markAllNotificationsAsRead = async (notifications: PunchNotificatio
   }
 };
 
+// =============================================
+// INVOICES & BILLING SYSTEM (MANUAL & ORDER BILLS)
+// =============================================
+
+export interface InvoiceRecord {
+  id?: string;
+  docType: 'INVOICE' | 'QUOTATION';
+  billType: 'GST' | 'NON_GST';
+  invoiceNumber: string;
+  quotationNumber?: string;
+  invoiceDate: string; // YYYY-MM-DD
+  dueDate?: string;
+
+  // Customer & Business Details
+  customerName: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  customerGstin?: string;
+  stateName?: string; // e.g. Kerala
+  stateCode?: string; // e.g. 32
+  isInterState?: boolean; // true = IGST, false = CGST + SGST
+
+  // Linked Order (optional)
+  orderId?: string;
+  infoNumber?: number;
+  orderTitle?: string;
+
+  // Items
+  items: BillingItem[];
+  totalPieces: number;
+
+  // Financial Calculations
+  subtotal: number;
+  discountAmount: number;
+  taxableAmount: number;
+  taxRate: number; // 0, 5, 12, 18, 28
+  taxAmount: number;
+  cgstRate?: number;
+  cgstAmount?: number;
+  sgstRate?: number;
+  sgstAmount?: number;
+  igstRate?: number;
+  igstAmount?: number;
+  roundOff?: number;
+  totalAmount: number;
+  advanceAmount: number;
+  balanceAmount: number;
+  paymentMode: string;
+  paymentStatus?: 'PAID' | 'PARTIAL' | 'UNPAID';
+  notes?: string;
+  hsnCode?: string; // e.g. 6109 / 9988
+
+  // Status & Metadata
+  isManualBill: boolean;
+  createdByUid?: string;
+  createdByName?: string;
+  createdAt?: Timestamp | any;
+  updatedAt?: Timestamp | any;
+}
+
+// Create a new Invoice / Bill in Database
+export const createInvoice = async (invoiceData: Omit<InvoiceRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const colRef = collection(db, 'invoices');
+  const newDocRef = doc(colRef);
+
+  const record: InvoiceRecord = {
+    ...invoiceData,
+    id: newDocRef.id,
+    createdAt: serverTimestamp() as unknown as Timestamp,
+    updatedAt: serverTimestamp() as unknown as Timestamp,
+  };
+
+  const sanitized = sanitizeForFirestore(record);
+  await setDoc(newDocRef, sanitized);
+
+  // If this bill is tied to an existing order, sync the order record as well
+  if (record.orderId) {
+    try {
+      await updateOrder(record.orderId, {
+        customerName: record.customerName,
+        customerPhone: record.customerPhone,
+        totalAmount: record.totalAmount,
+        discountAmount: record.discountAmount,
+        advanceAmount: record.advanceAmount,
+        balanceAmount: record.balanceAmount,
+        taxRate: record.taxRate,
+        invoiceNumber: record.invoiceNumber,
+        quotationNumber: record.quotationNumber,
+        items: record.items,
+        pieces: record.totalPieces
+      });
+    } catch (orderErr) {
+      console.warn("Failed to sync order financial status with invoice:", orderErr);
+    }
+  }
+
+  return newDocRef.id;
+};
+
+// Update an existing Invoice / Bill
+export const updateInvoice = async (invoiceId: string, invoiceData: Partial<InvoiceRecord>) => {
+  const docRef = doc(db, 'invoices', invoiceId);
+  const sanitized = sanitizeForFirestore({
+    ...invoiceData,
+    updatedAt: serverTimestamp(),
+  });
+  await updateDoc(docRef, sanitized);
+
+  // Sync linked order if orderId is provided
+  if (invoiceData.orderId) {
+    try {
+      await updateOrder(invoiceData.orderId, {
+        ...(invoiceData.customerName ? { customerName: invoiceData.customerName } : {}),
+        ...(invoiceData.customerPhone ? { customerPhone: invoiceData.customerPhone } : {}),
+        ...(invoiceData.totalAmount !== undefined ? { totalAmount: invoiceData.totalAmount } : {}),
+        ...(invoiceData.discountAmount !== undefined ? { discountAmount: invoiceData.discountAmount } : {}),
+        ...(invoiceData.advanceAmount !== undefined ? { advanceAmount: invoiceData.advanceAmount } : {}),
+        ...(invoiceData.balanceAmount !== undefined ? { balanceAmount: invoiceData.balanceAmount } : {}),
+        ...(invoiceData.taxRate !== undefined ? { taxRate: invoiceData.taxRate } : {}),
+        ...(invoiceData.invoiceNumber ? { invoiceNumber: invoiceData.invoiceNumber } : {}),
+        ...(invoiceData.items ? { items: invoiceData.items } : {}),
+        ...(invoiceData.totalPieces !== undefined ? { pieces: invoiceData.totalPieces } : {})
+      });
+    } catch (orderErr) {
+      console.warn("Failed to sync order with updated invoice:", orderErr);
+    }
+  }
+};
+
+// Delete an Invoice / Bill
+export const deleteInvoice = async (invoiceId: string) => {
+  const docRef = doc(db, 'invoices', invoiceId);
+  await deleteDoc(docRef);
+};
+
+// Subscribe to real-time Invoices list
+export const listenToInvoices = (callback: (invoices: InvoiceRecord[]) => void) => {
+  const colRef = collection(db, 'invoices');
+  return onSnapshot(colRef, (snapshot) => {
+    const list: InvoiceRecord[] = [];
+    snapshot.forEach((docSnap) => {
+      list.push({ id: docSnap.id, ...docSnap.data() } as InvoiceRecord);
+    });
+
+    // Sort newest date first, then by invoiceNumber
+    list.sort((a, b) => {
+      const aDate = a.invoiceDate || '';
+      const bDate = b.invoiceDate || '';
+      if (aDate !== bDate) return bDate.localeCompare(aDate);
+      return (b.invoiceNumber || '').localeCompare(a.invoiceNumber || '');
+    });
+
+    callback(list);
+  }, (err) => {
+    console.error("Error listening to invoices:", err);
+  });
+};
+
+// Auto-generate Next Sequential Invoice Number
+export const getNextInvoiceNumber = async (prefix: string = 'INV'): Promise<string> => {
+  try {
+    const colRef = collection(db, 'invoices');
+    const snap = await getDocs(colRef);
+    let maxNum = 100;
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data() as InvoiceRecord;
+      const inv = data.invoiceNumber || '';
+      const parts = inv.split('-');
+      const lastPart = parts[parts.length - 1];
+      const parsed = parseInt(lastPart, 10);
+      if (!isNaN(parsed) && parsed > maxNum) {
+        maxNum = parsed;
+      }
+    });
+
+    const nextVal = maxNum + 1;
+    const year = new Date().getFullYear();
+    return `${prefix}-${year}-${String(nextVal).padStart(4, '0')}`;
+  } catch (err) {
+    console.error("Error generating invoice number:", err);
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}-${new Date().getFullYear()}-${rand}`;
+  }
+};
+
+
 
 
 
