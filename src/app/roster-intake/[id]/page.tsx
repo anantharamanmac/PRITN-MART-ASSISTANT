@@ -5,7 +5,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import { OrderRecord, PlayerItem, findOrderByInfoNumber, updateOrder } from '@/lib/db';
 import { doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { parseExcelText, parseExcelFile, calculateSizeBreakdown, calculateShortsBreakdown, convertLetterSizeToNumber } from '@/lib/excelParser';
+import { parseExcelText, parseExcelFile, calculateSizeBreakdown, calculateShortsBreakdown, calculateFullSleeveBreakdown, convertLetterSizeToNumber } from '@/lib/excelParser';
 
 const COLLAR_OPTIONS = [
   'Round Neck',
@@ -260,6 +260,7 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
 
   const { summaryString } = calculateSizeBreakdown(players);
   const { summaryString: shortsSummaryString } = calculateShortsBreakdown(players);
+  const { summaryString: fullSleeveSummaryString, totalPieces: fullSleevePieces } = calculateFullSleeveBreakdown(players, order?.sleeveType);
 
   // Tutorial Slides Definition
   const tutorialSlides = [
@@ -901,6 +902,11 @@ export default function CustomerRosterIntakePage({ params }: PageProps) {
         {summaryString && (
           <div style={{ color: '#3b82f6', fontWeight: 700 }}>
             👕 Shirt Sizes: {summaryString}
+          </div>
+        )}
+        {fullSleevePieces > 0 && fullSleeveSummaryString && (
+          <div style={{ color: '#38bdf8', fontWeight: 700 }}>
+            🧥 Full Sleeve ({fullSleevePieces}): {fullSleeveSummaryString}
           </div>
         )}
         {order.hasShorts && shortsSummaryString && (

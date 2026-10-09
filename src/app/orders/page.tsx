@@ -19,7 +19,7 @@ import {
   findOrderByInfoNumber,
   formatLocalDate
 } from '@/lib/db';
-import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown, convertLetterSizeToNumber, exportPlayersToCSV } from '@/lib/excelParser';
+import { parseExcelText, parseExcelFile, parsePdfFile, calculateSizeBreakdown, calculateShortsBreakdown, calculateFullSleeveBreakdown, convertLetterSizeToNumber, exportPlayersToCSV } from '@/lib/excelParser';
 import { getPricingRates, calculateOrderPrice, PricingRates, DEFAULT_PRICING_RATES } from '@/lib/pricing';
 import Navbar from '@/components/Navbar';
 import PrinterLoader from '@/components/PrinterLoader';
@@ -1270,6 +1270,7 @@ export default function OrdersPage() {
               const isDueToday = ord.deliveryDate === todayStr && ord.status !== 'delivered' && ord.status !== 'cancelled';
               const statusInfo = STATUS_CONFIG[ord.status] || STATUS_CONFIG.pending;
               const ordBreakdown = calculateSizeBreakdown(ord.players || []);
+              const ordFsBreakdown = calculateFullSleeveBreakdown(ord.players || [], ord.sleeveType);
               const hasDesignerSpecs = (ord.players && ord.players.length > 0) || ord.clothImage || ord.backImage;
 
               return (
@@ -1427,6 +1428,11 @@ export default function OrdersPage() {
                         {ordBreakdown.summaryString && (
                           <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.05rem', wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
                             Sizes: {ordBreakdown.summaryString}
+                          </div>
+                        )}
+                        {ordFsBreakdown.totalPieces > 0 && ordFsBreakdown.summaryString && (
+                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0284c7', marginTop: '0.05rem', wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
+                            FS ({ordFsBreakdown.totalPieces}): {ordFsBreakdown.summaryString}
                           </div>
                         )}
                       </div>
@@ -2249,6 +2255,11 @@ export default function OrdersPage() {
                           {liveBreakdown.summaryString && (
                             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6' }}>
                               Jersey Summary: {liveBreakdown.summaryString}
+                            </span>
+                          )}
+                          {calculateFullSleeveBreakdown(players, sleeveType).totalPieces > 0 && calculateFullSleeveBreakdown(players, sleeveType).summaryString && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0284c7' }}>
+                              Full Sleeve ({calculateFullSleeveBreakdown(players, sleeveType).totalPieces}): {calculateFullSleeveBreakdown(players, sleeveType).summaryString}
                             </span>
                           )}
                           {hasShorts && calculateShortsBreakdown(players).summaryString && (

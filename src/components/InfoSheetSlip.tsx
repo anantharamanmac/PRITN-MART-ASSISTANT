@@ -3,7 +3,14 @@
 import React, { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { OrderRecord } from '@/lib/db';
-import { calculateSizeBreakdown, calculateShortsBreakdown, exportPlayersToCSV } from '@/lib/excelParser';
+import {
+  calculateSizeBreakdown,
+  calculateShortsBreakdown,
+  calculateFullSleeveBreakdown,
+  calculateKidsBreakdown,
+  calculateOversizeBreakdown,
+  exportPlayersToCSV
+} from '@/lib/excelParser';
 
 interface InfoSheetSlipProps {
   order: OrderRecord;
@@ -17,6 +24,14 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
   const players = order.players || [];
   const { summaryArray, totalPieces } = calculateSizeBreakdown(players);
   const { summaryArray: shortsSummaryArray } = calculateShortsBreakdown(players);
+  const { summaryArray: fullSleeveSummaryArray, summaryString: fullSleeveSummaryString, totalPieces: fullSleevePieces } = calculateFullSleeveBreakdown(players, order.sleeveType);
+  const { summaryString: kidsSummaryString, totalPieces: kidsPieces } = calculateKidsBreakdown(players);
+  const { summaryString: oversizeSummaryString, totalPieces: oversizePieces } = calculateOversizeBreakdown(players);
+
+  const effectiveFullSleevePieces = players.length > 0
+    ? fullSleevePieces
+    : (order.sleeveType === 'full' || (!order.sleeveType && order.sleeveType !== 'half' && order.sleeveType !== 'sleeveless') ? (order.pieces || 0) : 0);
+
   const hasShorts = order.hasShorts !== undefined ? Boolean(order.hasShorts) : players.some(p => p.shortsSize && p.shortsSize !== '' && p.shortsSize !== '-');
   const hasCustomCollars = true; // Always display CLR (Collar) column on Cutting & Fusing Info Slip PDF!
   const bottomType = order.bottomType || 'shorts';
@@ -436,16 +451,24 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
               <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid #000', fontSize: '10.5px', background: '#fff', marginTop: '6px' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #000' }}>
-                    <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000', width: '60%' }}>FULL SLEEVE</td>
-                    <td style={{ padding: '3px 6px' }}></td>
+                    <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000', width: '45%' }}>FULL SLEEVE</td>
+                    <td style={{ padding: '3px 6px', fontWeight: 900, color: effectiveFullSleevePieces > 0 ? '#d92525' : '#000' }}>
+                      {effectiveFullSleevePieces > 0
+                        ? (fullSleeveSummaryString ? `${fullSleeveSummaryString} (${effectiveFullSleevePieces})` : `${effectiveFullSleevePieces} PCS`)
+                        : '-'}
+                    </td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #000' }}>
                     <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000' }}>KIDS</td>
-                    <td style={{ padding: '3px 6px' }}></td>
+                    <td style={{ padding: '3px 6px', fontWeight: 900, color: kidsPieces > 0 ? '#d92525' : '#000' }}>
+                      {kidsPieces > 0 ? (kidsSummaryString ? `${kidsSummaryString} (${kidsPieces})` : `${kidsPieces} PCS`) : '-'}
+                    </td>
                   </tr>
                   <tr>
                     <td style={{ padding: '3px 6px', fontWeight: 'bold', borderRight: '1.5px solid #000' }}>OVER SIZE</td>
-                    <td style={{ padding: '3px 6px' }}></td>
+                    <td style={{ padding: '3px 6px', fontWeight: 900, color: oversizePieces > 0 ? '#d92525' : '#000' }}>
+                      {oversizePieces > 0 ? (oversizeSummaryString ? `${oversizeSummaryString} (${oversizePieces})` : `${oversizePieces} PCS`) : '-'}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -476,6 +499,32 @@ export default function InfoSheetSlip({ order, onClose }: InfoSheetSlipProps) {
                     <div>ALL SIZES : {order.pieces}</div>
                   )}
                 </div>
+
+                {/* Full Sleeve Breakdown (if full sleeves exist) */}
+                {effectiveFullSleevePieces > 0 && (
+                  <div style={{ marginTop: '10px', borderTop: '1.5px dashed #888', paddingTop: '6px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 900, color: '#004080', textDecoration: 'underline', marginBottom: '4px' }}>
+                      FULL SLEEVE : {effectiveFullSleevePieces}
+                    </div>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: fullSleeveSummaryArray.length > 5 ? '1fr 1fr' : '1fr',
+                      gap: '4px 8px',
+                      fontSize: fullSleeveSummaryArray.length > 8 ? '14px' : '16px',
+                      fontWeight: 900,
+                      color: '#005b96',
+                      letterSpacing: '0.06em'
+                    }}>
+                      {fullSleeveSummaryArray.length > 0 ? (
+                        fullSleeveSummaryArray.map((sumStr, idx) => (
+                          <div key={idx}>{sumStr}</div>
+                        ))
+                      ) : (
+                        <div>ALL SIZES : {effectiveFullSleevePieces}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Shorts / Track Pant Summary Breakdown (if enabled) */}
                 {hasShorts && (

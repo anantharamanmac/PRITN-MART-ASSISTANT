@@ -494,6 +494,120 @@ export const calculateShortsBreakdown = (players: PlayerDetail[]) => {
 };
 
 /**
+ * Auto-calculates full sleeve size summary counts e.g. "38X2  40X1"
+ * and total full sleeve piece counts from a player roster.
+ */
+export const calculateFullSleeveBreakdown = (
+  players: PlayerDetail[],
+  orderSleeveType?: string
+) => {
+  const countsBySize: Record<string, number> = {};
+  let totalPieces = 0;
+
+  for (const p of players) {
+    const sleeveRaw = (p.sleeve || '').trim();
+    let isFull = false;
+    if (sleeveRaw) {
+      const sUpper = sleeveRaw.toUpperCase();
+      if (sUpper === 'FULL' || sUpper === 'F') {
+        isFull = true;
+      }
+    } else {
+      const ordSlv = (orderSleeveType || '').toLowerCase();
+      // If order level sleeve is 'full', or not specified (defaults to full)
+      if (ordSlv === 'full' || (!ordSlv && ordSlv !== 'half' && ordSlv !== 'sleeveless')) {
+        isFull = true;
+      }
+    }
+
+    if (!isFull) continue;
+
+    let raw = (p.size || '').trim();
+    if (!raw || raw === 'XXX' || raw === '-' || raw === 'N/A' || raw === 'NIL' || raw === 'NONE' || raw === 'UNSPECIFIED') {
+      totalPieces += 1;
+      continue;
+    }
+    const sz = convertLetterSizeToNumber(raw);
+    countsBySize[sz] = (countsBySize[sz] || 0) + 1;
+    totalPieces += 1;
+  }
+
+  const sortedEntries = Object.entries(countsBySize).sort(([a], [b]) => {
+    const numA = parseInt(a, 10);
+    const numB = parseInt(b, 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
+  const summaryArray = sortedEntries.map(([size, count]) => `${size}X${count}`);
+  const summaryString = summaryArray.join('  ');
+
+  return { summaryString, summaryArray, totalPieces, countsBySize };
+};
+
+/**
+ * Auto-calculates kids size summary counts e.g. "28X1  30X2" and total pieces.
+ */
+export const calculateKidsBreakdown = (players: PlayerDetail[]) => {
+  const countsBySize: Record<string, number> = {};
+  let totalPieces = 0;
+
+  for (const p of players) {
+    let raw = (p.size || '').trim();
+    if (!raw || raw === 'XXX' || raw === '-' || raw === 'N/A' || raw === 'NIL' || raw === 'NONE' || raw === 'UNSPECIFIED') continue;
+    const sz = convertLetterSizeToNumber(raw);
+    const num = parseInt(sz, 10);
+    const isKids = /KID/i.test(raw) || (!isNaN(num) && num > 0 && num <= 34);
+    if (isKids) {
+      countsBySize[sz] = (countsBySize[sz] || 0) + 1;
+      totalPieces += 1;
+    }
+  }
+
+  const sortedEntries = Object.entries(countsBySize).sort(([a], [b]) => {
+    const numA = parseInt(a, 10);
+    const numB = parseInt(b, 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
+  const summaryArray = sortedEntries.map(([size, count]) => `${size}X${count}`);
+  const summaryString = summaryArray.join('  ');
+  return { summaryString, summaryArray, totalPieces, countsBySize };
+};
+
+/**
+ * Auto-calculates oversize summary counts e.g. "46X2  48X1" and total pieces.
+ */
+export const calculateOversizeBreakdown = (players: PlayerDetail[]) => {
+  const countsBySize: Record<string, number> = {};
+  let totalPieces = 0;
+
+  for (const p of players) {
+    let raw = (p.size || '').trim();
+    if (!raw || raw === 'XXX' || raw === '-' || raw === 'N/A' || raw === 'NIL' || raw === 'NONE' || raw === 'UNSPECIFIED') continue;
+    const sz = convertLetterSizeToNumber(raw);
+    const num = parseInt(sz, 10);
+    const isOversize = /OVER/i.test(raw) || (!isNaN(num) && num >= 46);
+    if (isOversize) {
+      countsBySize[sz] = (countsBySize[sz] || 0) + 1;
+      totalPieces += 1;
+    }
+  }
+
+  const sortedEntries = Object.entries(countsBySize).sort(([a], [b]) => {
+    const numA = parseInt(a, 10);
+    const numB = parseInt(b, 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
+  const summaryArray = sortedEntries.map(([size, count]) => `${size}X${count}`);
+  const summaryString = summaryArray.join('  ');
+  return { summaryString, summaryArray, totalPieces, countsBySize };
+};
+
+/**
  * Converts a player roster list into an Excel CSV file formatted with:
  * Column 1: NAME
  * Column 2: NUMBER
